@@ -1,0 +1,305 @@
+/* ---------- Tela de nova matéria ---------- */
+
+.nm-intro {
+  margin: 0 0 16px;
+  max-width: 65ch;
+}
+
+/* ---------- Passos ---------- */
+.nm-passos {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+
+.nm-passos__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding-top: 8px;
+  border-top: 3px solid var(--border);
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.nm-passos__item--feito {
+  border-top-color: var(--marca-escura);
+}
+
+.nm-passos__item--atual {
+  border-top-color: var(--marca);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.nm-passos__numero {
+  display: inline-grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
+.nm-passos__item--atual .nm-passos__numero {
+  background: var(--marca);
+  border-color: var(--marca);
+  color: #fff;
+}
+
+.nm-passos__nome {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* No celular não cabem os 5 nomes: só o do passo atual aparece (o título do passo
+   também diz). Os outros saem da tela, mas o leitor de tela continua lendo. */
+@media (max-width: 599px) {
+  .nm-passos__item:not(.nm-passos__item--atual) .nm-passos__nome {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  .nm-passos {
+    display: flex;
+  }
+
+  .nm-passos__item--atual {
+    flex: 1;
+  }
+}
+
+/* ---------- Formulário ---------- */
+.nm-form {
+  display: grid;
+  gap: 16px;
+  max-width: 760px;
+  min-width: 0;
+}
+
+.nm-form__titulo {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.nm-form__titulo:focus {
+  outline: none;
+}
+
+.nm-texto {
+  margin: 0;
+  max-width: 65ch;
+}
+
+.nm-campo {
+  display: grid;
+  gap: 4px;
+  align-content: start;
+  min-width: 0;
+}
+
+.nm-campo label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.nm-campo .campo {
+  width: 100%;
+}
+
+.nm-campo .campo.nm-campo--curto {
+  max-width: 12rem;
+}
+
+.nm-campo__dica,
+.nm-campo__erro {
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.nm-campo__erro {
+  color: var(--perigo);
+}
+
+/* Grupo (horários, avaliações de um RA, regra) e item (um horário, um RA, uma avaliação). */
+.nm-grupo,
+.nm-item {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pequeno);
+}
+
+.nm-grupo {
+  padding: 12px 16px 16px;
+}
+
+.nm-item {
+  padding: 10px 14px 14px;
+  background: var(--bg);
+}
+
+.nm-grupo > legend,
+.nm-item > legend {
+  padding: 0 6px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.nm-item > legend {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.nm-grupo__vazio {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.nm-item__campos {
+  display: grid;
+  gap: 12px;
+}
+
+@media (min-width: 560px) {
+  .nm-item__campos {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nm-item__campos--avaliacao > :first-child {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (min-width: 800px) {
+  .nm-item__campos--avaliacao {
+    grid-template-columns: 2fr 1fr 1fr 1.4fr;
+  }
+
+  .nm-item__campos--avaliacao > :first-child {
+    grid-column: auto;
+  }
+}
+
+.nm-grupo > .botao,
+.nm-form > .botao,
+.nm-item__remover {
+  justify-self: start;
+}
+
+.nm-caixa {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.nm-caixa input {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--marca);
+}
+
+.nm-soma {
+  margin: 0;
+}
+
+.nm-regra-resumo {
+  margin: 0;
+  padding-left: 34px;
+  font-size: 0.9rem;
+}
+
+.nm-grupo .nm-regra-resumo {
+  margin-top: -6px;
+}
+
+/* ---------- Revisar ---------- */
+.nm-revisao {
+  display: grid;
+  gap: 8px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+
+.nm-revisao__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.nm-revisao__topo h4 {
+  margin: 0 auto 0 0;
+  font-size: 1rem;
+}
+
+.nm-revisao__dados {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 16px;
+  margin: 0;
+}
+
+.nm-revisao__dados dt {
+  color: var(--text-muted);
+}
+
+.nm-revisao__dados dd {
+  margin: 0;
+}
+
+.nm-revisao__ras {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nm-revisao__ras ul {
+  margin: 4px 0 0;
+  padding-left: 20px;
+}
+
+.nm-revisao__ras p,
+.nm-revisao__ra {
+  margin: 0;
+}
+
+.nm-revisao .nm-regra-resumo {
+  padding-left: 20px;
+}
+
+/* ---------- Botões de navegação ---------- */
+.nm-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 4px;
+}
+
+.nm-acoes__cancelar {
+  margin-left: auto;
+}
+
+.nm-status {
+  margin: 0;
+  font-size: 0.9rem;
+}
