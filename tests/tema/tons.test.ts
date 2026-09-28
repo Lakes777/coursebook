@@ -5,7 +5,8 @@ import { tomFaltas, tomNota, tomPrazo, TONS } from '../../src/tema/tons'
 
 describe('tomNota', () => {
   it('verde para quem já passou', () => {
-    expect(tomNota({ tipo: 'aprovado', media: 8 })).toBe('ok')
+    expect(tomNota({ tipo: 'aprovado', media: 8, garantida: 8, fechada: true })).toBe('ok')
+    expect(tomNota({ tipo: 'aprovado', media: 10, garantida: 7.5, fechada: false })).toBe('ok')
   })
 
   it('cinza enquanto não dá para saber', () => {

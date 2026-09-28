@@ -1,0 +1,78 @@
+.barra-acoes {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 16px;
+}
+
+.vazio p {
+  margin-top: 0;
+  max-width: 60ch;
+  color: var(--text-muted);
+}
+
+.grade-materias {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cartao-materia {
+  /* Para o link do nome cobrir o cartão inteiro. */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cartao-materia:hover {
+  border-color: var(--marca);
+}
+
+.cartao-materia:focus-within {
+  outline: 2px solid var(--destaque);
+  outline-offset: 2px;
+}
+
+.cartao-materia__nome {
+  margin: 0;
+  font-size: 1.1rem;
+  overflow-wrap: anywhere;
+}
+
+.cartao-materia__nome a {
+  color: var(--text);
+  text-decoration: none;
+}
+
+/* O contorno de foco fica no cartão (focus-within), não só no texto. */
+.cartao-materia__nome a:focus-visible {
+  outline: none;
+}
+
+/*
+ * O link cobre o cartão inteiro, então clicar em qualquer parte abre a matéria.
+ * Custo escolhido: o professor e os selos ficam por baixo do link e não dá para
+ * selecionar o texto deles (o que se copia aqui é pouco; o detalhe mostra tudo).
+ */
+.cartao-materia__nome a::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  /* border-radius não é herdado do cartão; sem isto a área de clique sai quadrada. */
+  border-radius: var(--radius);
+}
+
+.cartao-materia__professor {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.cartao-materia__selos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: auto;
+}

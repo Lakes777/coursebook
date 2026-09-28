@@ -1,0 +1,62 @@
+import type { SituacaoFaltas } from '../logica/faltas'
+import { situacaoFaltas } from '../logica/faltas'
+import type { SituacaoNota } from '../logica/notas'
+import { situacaoNota, totalPontosExtras } from '../logica/notas'
+import { formatarNota } from '../logica/numeros'
+import type { Materia, RegraAprovacao } from '../logica/tipos'
+
+// Frases curtas das situações, iguais em todas as telas (lista, detalhe).
+
+export interface Resumo {
+  regra: RegraAprovacao
+  nota: SituacaoNota
+  faltas: SituacaoFaltas
+}
+
+/** Tudo o que a tela precisa saber de uma matéria, com a regra dela ou a padrão. */
+export function resumoMateria(materia: Materia, regraPadrao: RegraAprovacao): Resumo {
+  const regra = materia.regra ?? regraPadrao
+  return {
+    regra,
+    nota: situacaoNota(materia.ras, regra, totalPontosExtras(materia.pontosExtras)),
+    faltas: situacaoFaltas(materia.faltas, materia.cargaHoraria, regra.frequenciaMinima),
+  }
+}
+
+export function textoNota(situacao: SituacaoNota): string {
+  switch (situacao.tipo) {
+    case 'sem-avaliacoes':
+      return 'Sem avaliações'
+    case 'aprovado':
+      // Com avaliação pendente, a média de agora pode cair; o que vale é a garantida.
+      return situacao.fechada
+        ? `Aprovado com ${formatarNota(situacao.media)}`
+        : `Já passou: garante ${formatarNota(situacao.garantida)}`
+    case 'possivel':
+      // "(de 10)": numa prova que vale 3,0, "6,6" seria lido como pontos da prova.
+      return `Precisa de ${formatarNota(situacao.notaNecessaria)} (de 10) no que falta`
+    case 'impossivel':
+      return situacao.notaParaRecuperacao === undefined
+        ? 'Não alcança a média'
+        : situacao.notaParaRecuperacao === 0
+          ? 'Vai para a recuperação'
+          : `Precisa de ${formatarNota(situacao.notaParaRecuperacao)} (de 10) para a recuperação`
+    case 'recuperacao':
+      return 'Em recuperação'
+    case 'reprovado':
+      return `Reprovado com ${formatarNota(situacao.media)}`
+  }
+}
+
+/** "3 de 20 faltas". Aulas, não dias: um dia com 3 aulas são 3 faltas. */
+export function textoFaltas(situacao: SituacaoFaltas): string {
+  if (situacao.nivel === 'sem-carga-horaria') {
+    return situacao.total === 0 ? 'Sem carga horária' : `${situacao.total} ${plural(situacao.total, 'falta', 'faltas')}`
+  }
+  if (situacao.nivel === 'reprovado') return `Reprovado por faltas (${situacao.total} de ${situacao.limite})`
+  return `${situacao.total} de ${situacao.limite} ${plural(situacao.limite, 'falta', 'faltas')}`
+}
+
+export function plural(n: number, um: string, varios: string): string {
+  return n === 1 ? um : varios
+}
