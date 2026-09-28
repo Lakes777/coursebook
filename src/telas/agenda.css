@@ -1,0 +1,177 @@
+/* ---------- Tela de agenda ---------- */
+
+/* No celular, a lista e o formulário ficam um embaixo do outro; na tela larga, lado a lado. */
+.agenda {
+  display: grid;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (min-width: 800px) {
+  .agenda {
+    grid-template-columns: minmax(0, 1fr) 320px;
+  }
+}
+
+.agenda__listas {
+  min-width: 0;
+}
+
+.agenda__subtitulo {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+}
+
+.agenda__subtitulo:focus {
+  outline: none;
+}
+
+.agenda__lista + .agenda__subtitulo,
+.agenda__listas > p + .agenda__subtitulo {
+  margin-top: 28px;
+}
+
+.agenda__lista {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agenda__vazia {
+  margin: 0;
+}
+
+/* ---------- Item ---------- */
+.item-agenda {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+  padding: 14px 16px;
+}
+
+/* A borda da esquerda repete o tom do selo; o texto do selo continua dizendo a situação. */
+.item-agenda--atrasado {
+  border-left: 3px solid var(--perigo);
+}
+
+.item-agenda--hoje {
+  border-left: 3px solid var(--atencao);
+}
+
+.item-agenda--proximo {
+  border-left: 3px solid var(--marca);
+}
+
+.item-agenda--concluido .item-agenda__titulo {
+  color: var(--text-muted);
+}
+
+.item-agenda__info {
+  display: grid;
+  gap: 2px;
+  justify-items: start;
+  flex: 1 1 200px;
+  /* Sem isto, um título comprido sem espaços estoura a largura em 320 px. */
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.item-agenda__info p {
+  margin: 0;
+}
+
+.item-agenda__tipo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.item-agenda__titulo {
+  font-weight: 600;
+}
+
+.item-agenda__materia,
+.item-agenda__data {
+  font-size: 0.9rem;
+}
+
+.item-agenda__info .item-agenda__data {
+  margin-bottom: 4px;
+}
+
+.item-agenda__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.item-agenda__feito {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.item-agenda__feito input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--marca);
+}
+
+.item-agenda__confirmar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ---------- Formulário ---------- */
+.agenda-form {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.agenda-form .agenda__subtitulo {
+  margin: 0;
+}
+
+.agenda-form__campo {
+  display: grid;
+  gap: 4px;
+}
+
+.agenda-form__campo label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.agenda-form__campo .campo {
+  width: 100%;
+}
+
+.agenda-form__erro {
+  margin: 0;
+  color: var(--perigo);
+  font-size: 0.85rem;
+}
+
+.agenda-form .botao {
+  justify-self: start;
+}
+
+.agenda-form__status {
+  margin: 0;
+  font-size: 0.9rem;
+}
