@@ -123,3 +123,9 @@
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+.dados__coluna {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}

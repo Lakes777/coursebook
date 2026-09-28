@@ -81,3 +81,9 @@
   margin: 16px 0 0;
   font-size: 0.9rem;
 }
+
+.vazio__botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}

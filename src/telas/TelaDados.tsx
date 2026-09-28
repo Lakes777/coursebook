@@ -1,8 +1,10 @@
-import { Bot, Download, Upload } from 'lucide-react'
+import { Bot, Download, Eye, Trash2, Upload } from 'lucide-react'
 import { useRef, useState, type ChangeEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { CabecalhoTela } from '../componentes/CabecalhoTela'
 import { usePainel } from '../estado/contexto'
+import { dadosVazios } from '../logica/armazenamento'
+import { dadosDeExemplo } from '../logica/exemplo'
 import { INSTRUCOES_IA } from '../logica/instrucoesIA'
 import type { Dados } from '../logica/tipos'
 import {
@@ -26,7 +28,11 @@ export function TelaDados() {
         limpar o navegador.
       </p>
       <div className="dados">
-        <SecaoExportar />
+        {/* Uma coluna com as partes curtas, para não sobrar buraco ao lado do "Importar", que é alto. */}
+        <div className="dados__coluna">
+          <SecaoExportar />
+          <SecaoRecomecar />
+        </div>
         <SecaoImportar />
         <SecaoIA />
       </div>
@@ -63,6 +69,107 @@ function SecaoExportar() {
         <Download className="icone" size={16} />
         Baixar backup (JSON)
       </button>
+      <p role="status" className="dados__status muted">
+        {anuncio}
+      </p>
+    </section>
+  )
+}
+
+/** Ver o painel com o exemplo, ou apagar tudo para começar do zero. */
+function SecaoRecomecar() {
+  const { dados, despachar, podeSalvar } = usePainel()
+  const [confirmando, setConfirmando] = useState(false)
+  const [anuncio, setAnuncio] = useState('')
+  const titulo = useRef<HTMLHeadingElement>(null)
+  const botaoApagar = useRef<HTMLButtonElement>(null)
+  const botaoCancelar = useRef<HTMLButtonElement>(null)
+  // Adicionar de novo duplicaria as 3 matérias.
+  const jaTemExemplo = nomesRepetidos(dados, dadosDeExemplo()).length > 0
+
+  function adicionarExemplo() {
+    // O botão fica desativado em seguida (o exemplo já está lá); o foco vai para o título.
+    flushSync(() => {
+      despachar({ tipo: 'dados/substituir', dados: mesclar(dados, dadosDeExemplo()) })
+      setAnuncio('Adicionadas 3 matérias de exemplo e os eventos delas.')
+    })
+    titulo.current?.focus()
+  }
+
+  function apagarTudo() {
+    // A regra padrão fica: ela é uma configuração, não um dado do semestre.
+    flushSync(() => {
+      despachar({ tipo: 'dados/substituir', dados: { ...dadosVazios(), regraPadrao: dados.regraPadrao } })
+      setConfirmando(false)
+      setAnuncio('Tudo apagado. O painel está vazio.')
+    })
+    titulo.current?.focus()
+  }
+
+  function pedirConfirmacao() {
+    flushSync(() => setConfirmando(true))
+    botaoCancelar.current?.focus()
+  }
+
+  function cancelar() {
+    flushSync(() => setConfirmando(false))
+    botaoApagar.current?.focus()
+  }
+
+  return (
+    <section className="cartao dados__secao" aria-labelledby="dados-recomecar">
+      <h3 id="dados-recomecar" ref={titulo} tabIndex={-1} className="dados__subtitulo">
+        Exemplo e recomeço
+      </h3>
+      <p className="dados__texto">
+        Veja o painel em uso com 3 matérias inventadas. Depois, apague tudo para cadastrar as suas.
+      </p>
+      <div className="dados__botoes">
+        <button
+          type="button"
+          className="botao botao--fantasma"
+          onClick={adicionarExemplo}
+          disabled={!podeSalvar || jaTemExemplo}
+          aria-describedby={jaTemExemplo ? 'dados-exemplo-ja' : undefined}
+        >
+          <Eye className="icone" size={16} />
+          Adicionar dados de exemplo
+        </button>
+        {!vazio(dados) && !confirmando && (
+          <button
+            ref={botaoApagar}
+            type="button"
+            className="botao botao--fantasma"
+            onClick={pedirConfirmacao}
+            disabled={!podeSalvar}
+          >
+            <Trash2 className="icone" size={16} />
+            Apagar tudo
+          </button>
+        )}
+      </div>
+      {jaTemExemplo && (
+        <p id="dados-exemplo-ja" className="muted dados__nota">
+          O exemplo já está no painel.
+        </p>
+      )}
+      {confirmando && (
+        <div className="dados__confirmar">
+          <p className="dados__texto">
+            Isto apaga {resumoDados(dados)}, com as notas e as faltas. Não dá para desfazer: baixe um backup antes,
+            se quiser guardar.
+          </p>
+          <div className="dados__botoes">
+            {/* Outra aba pode salvar com a confirmação aberta: aí apagar não seria gravado. */}
+            <button type="button" className="botao botao--perigo" onClick={apagarTudo} disabled={!podeSalvar}>
+              Apagar tudo
+            </button>
+            <button ref={botaoCancelar} type="button" className="botao botao--fantasma" onClick={cancelar}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
       <p role="status" className="dados__status muted">
         {anuncio}
       </p>

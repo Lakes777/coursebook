@@ -177,6 +177,60 @@ describe('TelaDados', () => {
     expect(nav.itens.has(CHAVE)).toBe(false)
   })
 
+  it('adiciona o exemplo sem apagar o que já existe', async () => {
+    const nav = montar()
+    await userEvent.click(screen.getByRole('button', { name: 'Adicionar dados de exemplo' }))
+    expect(salvos(nav).materias.map((m) => m.nome)).toEqual([
+      'POO',
+      'Estruturas de Dados',
+      'Programação Orientada a Objetos',
+      'Cálculo Numérico',
+    ])
+    expect(screen.getByText('Adicionadas 3 matérias de exemplo e os eventos delas.')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Exemplo e recomeço' })).toHaveFocus()
+
+    // Uma segunda vez duplicaria tudo: o botão fica desativado e diz por quê.
+    const botao = screen.getByRole('button', { name: 'Adicionar dados de exemplo' })
+    expect(botao).toBeDisabled()
+    expect(botao).toHaveAccessibleDescription('O exemplo já está no painel.')
+  })
+
+  it('cancelar o "Apagar tudo" não apaga nada e devolve o foco', async () => {
+    const user = userEvent.setup()
+    const nav = montar()
+    const secao = screen.getByRole('region', { name: 'Exemplo e recomeço' })
+    await user.click(within(secao).getByRole('button', { name: 'Apagar tudo' }))
+    await user.click(within(secao).getByRole('button', { name: 'Cancelar' }))
+    expect(within(secao).getByRole('button', { name: 'Apagar tudo' })).toHaveFocus()
+    expect(within(secao).queryByText(/Isto apaga/)).not.toBeInTheDocument()
+    expect(nav.itens.has(CHAVE)).toBe(false)
+  })
+
+  it('apaga tudo depois de confirmar, mantendo a regra padrão', async () => {
+    const user = userEvent.setup()
+    const nav = navegador()
+    const regra = { mediaMinima: 6, frequenciaMinima: 0.75, arredondarUmaCasa: false }
+    render(
+      <ProvedorPainel
+        inicial={{ dados: { ...dadosVazios(), regraPadrao: regra, materias: [POO] }, aviso: null, podeSalvar: true }}
+        armazenamento={nav}
+      >
+        <TelaDados />
+      </ProvedorPainel>,
+    )
+    const secao = screen.getByRole('region', { name: 'Exemplo e recomeço' })
+    await user.click(within(secao).getByRole('button', { name: 'Apagar tudo' }))
+    expect(within(secao).getByText(/Isto apaga 1 matéria e 0 eventos na agenda/)).toBeInTheDocument()
+    expect(within(secao).getByRole('button', { name: 'Cancelar' })).toHaveFocus()
+    expect(nav.itens.has(CHAVE)).toBe(false)
+
+    await user.click(within(secao).getByRole('button', { name: 'Apagar tudo' }))
+    expect(salvos(nav)).toEqual({ ...dadosVazios(), regraPadrao: regra })
+    expect(screen.getByRole('heading', { name: 'Exemplo e recomeço' })).toHaveFocus()
+    // Com o painel vazio, não há o que apagar.
+    expect(within(secao).queryByRole('button', { name: 'Apagar tudo' })).not.toBeInTheDocument()
+  })
+
   it('copia as instruções para a IA', async () => {
     const user = userEvent.setup()
     montar()

@@ -1,7 +1,8 @@
 import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
-import { dadosVazios } from '../../src/logica/armazenamento'
+import { CHAVE, dadosVazios } from '../../src/logica/armazenamento'
 import type { Dados, Materia } from '../../src/logica/tipos'
 import { TelaMaterias } from '../../src/telas/TelaMaterias'
 
@@ -45,6 +46,32 @@ describe('TelaMaterias', () => {
       '#/nova-materia',
     )
     expect(screen.queryByRole('list')).not.toBeInTheDocument()
+  })
+
+  it('sem matérias, mostra o painel com os dados de exemplo, sem apagar a agenda', async () => {
+    const nav = new Map<string, string>()
+    const evento = { id: 'e', titulo: 'Rematrícula', tipo: 'trabalho', data: '2026-12-01', concluido: false } as const
+    render(
+      <ProvedorPainel
+        inicial={{ dados: { ...dadosVazios(), eventos: [evento] }, aviso: null, podeSalvar: true }}
+        armazenamento={{ getItem: (c) => nav.get(c) ?? null, setItem: (c, v) => void nav.set(c, v) }}
+      >
+        <TelaMaterias />
+      </ProvedorPainel>,
+    )
+    await userEvent.click(screen.getByRole('button', { name: 'Ver com dados de exemplo' }))
+    const nomes = within(screen.getByRole('list')).getAllByRole('heading').map((h) => h.textContent)
+    expect(nomes).toEqual(['Estruturas de Dados', 'Programação Orientada a Objetos', 'Cálculo Numérico'])
+    expect(screen.getByRole('heading', { level: 2, name: 'Matérias' })).toHaveFocus()
+    // O exemplo foi juntado: o evento que já estava continua lá.
+    const salvos = JSON.parse(nav.get(CHAVE)!) as Dados
+    expect(salvos.eventos[0]).toEqual(evento)
+    expect(salvos.eventos.length).toBeGreaterThan(1)
+  })
+
+  it('sem salvar, o exemplo não é oferecido (pareceria guardado sem estar)', () => {
+    montar(dadosVazios())
+    expect(screen.getByRole('button', { name: 'Ver com dados de exemplo' })).toBeDisabled()
   })
 
   it('mostra um cartão por matéria, com link, professor e situação', () => {
