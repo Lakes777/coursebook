@@ -8,6 +8,7 @@ export type Rota =
   | { tela: 'editar-materia'; id: string }
   | { tela: 'nova-materia' }
   | { tela: 'agenda' }
+  | { tela: 'dados' }
 
 export const INICIO: Rota = { tela: 'materias' }
 
@@ -17,6 +18,7 @@ export function lerRota(hash: string): Rota {
   const [tela, id, acao] = partes
   if (partes.length === 1 && tela === 'materias') return { tela: 'materias' }
   if (partes.length === 1 && tela === 'agenda') return { tela: 'agenda' }
+  if (partes.length === 1 && tela === 'dados') return { tela: 'dados' }
   if (partes.length === 1 && tela === 'nova-materia') return { tela: 'nova-materia' }
   const editar = partes.length === 3 && acao === 'editar'
   if ((partes.length === 2 || editar) && tela === 'materia') {

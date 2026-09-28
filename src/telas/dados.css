@@ -1,0 +1,125 @@
+/* ---------- Tela de dados (exportar, importar, IA) ---------- */
+
+.dados__intro {
+  margin: -4px 0 20px;
+  max-width: 70ch;
+}
+
+.dados {
+  display: grid;
+  gap: 16px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .dados {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  /* A IA ocupa a largura toda: as instruções são compridas. */
+  .dados > :last-child {
+    grid-column: 1 / -1;
+  }
+}
+
+.dados__secao {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  min-width: 0;
+}
+
+.dados__subtitulo {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.dados__texto,
+.dados__nota,
+.dados__status {
+  margin: 0;
+  max-width: 70ch;
+}
+
+.dados__nota,
+.dados__status {
+  font-size: 0.9rem;
+}
+
+/* O campo de arquivo fica escondido; o rótulo é o botão, e o contorno de foco vai nele. */
+.dados__arquivo:focus-within {
+  outline: 2px solid var(--destaque);
+  outline-offset: 2px;
+}
+
+.dados__campo {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+}
+
+.dados__campo label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.dados__texto-json {
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  resize: vertical;
+}
+
+.dados__previa,
+.dados__confirmar {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.dados__lista {
+  margin: 0;
+  padding-left: 1.2em;
+  overflow-wrap: anywhere;
+}
+
+.dados__aviso {
+  color: var(--atencao);
+}
+
+.dados__botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.dados__passos {
+  margin: 0;
+  padding-left: 1.4em;
+  max-width: 70ch;
+}
+
+.dados__instrucoes {
+  width: 100%;
+}
+
+.dados__instrucoes summary {
+  cursor: pointer;
+  color: var(--destaque);
+}
+
+.dados__instrucoes pre {
+  max-height: 360px;
+  overflow: auto;
+  margin: 8px 0 0;
+  padding: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pequeno);
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

@@ -5,6 +5,7 @@ describe('lerRota', () => {
   it('lê cada tela', () => {
     expect(lerRota('#/materias')).toEqual({ tela: 'materias' })
     expect(lerRota('#/agenda')).toEqual({ tela: 'agenda' })
+    expect(lerRota('#/dados')).toEqual({ tela: 'dados' })
     expect(lerRota('#/nova-materia')).toEqual({ tela: 'nova-materia' })
     expect(lerRota('#/materia/abc-123')).toEqual({ tela: 'materia', id: 'abc-123' })
     expect(lerRota('#/materia/abc-123/editar')).toEqual({ tela: 'editar-materia', id: 'abc-123' })
@@ -28,6 +29,7 @@ describe('paraHash', () => {
     const rotas: Rota[] = [
       { tela: 'materias' },
       { tela: 'agenda' },
+      { tela: 'dados' },
       { tela: 'nova-materia' },
       { tela: 'materia', id: 'abc' },
       { tela: 'materia', id: 'com espaço/e barra' },

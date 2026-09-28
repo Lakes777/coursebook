@@ -25,6 +25,10 @@ export function TelaMaterias() {
             <Plus className="icone" size={16} />
             Cadastrar a primeira matéria
           </a>
+          <p className="vazio__alternativa">
+            Tem um backup, ou quer que uma IA leia o plano de ensino?{' '}
+            <a href={paraHash({ tela: 'dados' })}>Importe em Dados</a>.
+          </p>
         </div>
       ) : (
         <>

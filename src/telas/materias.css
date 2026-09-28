@@ -76,3 +76,8 @@
   gap: 8px;
   margin-top: auto;
 }
+
+.vazio .vazio__alternativa {
+  margin: 16px 0 0;
+  font-size: 0.9rem;
+}

@@ -138,6 +138,17 @@ a {
   color: var(--destaque);
 }
 
+/* Celular estreito: as 3 abas não cabem com ícone; o texto fica e o ícone sai. */
+@media (max-width: 420px) {
+  .abas__item {
+    padding-inline: 10px;
+  }
+
+  .abas__item .icone {
+    display: none;
+  }
+}
+
 .topo__titulo {
   display: flex;
   align-items: center;
