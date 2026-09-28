@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { REGRA_PUCPR, VERSAO_ATUAL, type Materia, type RegraAprovacao } from '../../src/logica/tipos'
 import { validarDados } from '../../src/logica/validacao'
 import {
+  mudarHorarioForm,
+  novoHorario,
   aplicarEdicao,
   erroNotasNaEdicao,
   materiaParaForm,
@@ -45,7 +47,7 @@ function preenchido(): Formulario {
     nome: '  POO  ',
     professor: ' Ana ',
     cargaHoraria: '80',
-    horarios: [{ chave: 'h1', dia: 2, inicio: '07:45' }],
+    horarios: [{ chave: 'h1', dia: 2, inicio: '07:45', fim: '09:15', aulas: '2', aulasManual: false }],
     ras: [ra1, ra2],
   }
 }
@@ -99,11 +101,38 @@ describe('conferirMateria', () => {
     expect(conferirMateria({ ...preenchido(), cargaHoraria: '0' })).toBeNull()
   })
 
-  it('confere a hora de cada horário', () => {
-    const form = { ...preenchido(), horarios: [{ chave: 'h1', dia: 1 as const, inicio: '' }] }
+  it('confere o início, o fim e as aulas de cada horário', () => {
+    const horario = { chave: 'h1', dia: 1 as const, inicio: '', fim: '', aulas: '', aulasManual: false }
+    const form = { ...preenchido(), horarios: [horario] }
     expect(conferirMateria(form)?.campo).toBe(idHorario('h1', 'inicio'))
-    form.horarios[0].inicio = '25:00'
+    horario.inicio = '25:00'
     expect(conferirMateria(form)?.campo).toBe(idHorario('h1', 'inicio'))
+    horario.inicio = '19:00'
+    expect(conferirMateria(form)?.campo).toBe(idHorario('h1', 'fim'))
+    horario.fim = '18:00'
+    expect(conferirMateria(form)).toEqual({
+      campo: idHorario('h1', 'fim'),
+      mensagem: 'A aula precisa terminar depois de começar.',
+    })
+    horario.fim = '22:30'
+    expect(conferirMateria(form)?.campo).toBe(idHorario('h1', 'aulas'))
+    horario.aulas = '13'
+    expect(conferirMateria(form)?.campo).toBe(idHorario('h1', 'aulas'))
+    horario.aulas = '4'
+    expect(conferirMateria(form)).toBeNull()
+  })
+
+  it('sugere as aulas pelo início e fim até a pessoa mexer nelas', () => {
+    let h = novoHorario()
+    h = mudarHorarioForm(h, { inicio: '19:00' })
+    expect(h.aulas).toBe('')
+    h = mudarHorarioForm(h, { fim: '22:30' })
+    expect(h.aulas).toBe('4')
+    h = mudarHorarioForm(h, { fim: '20:30' })
+    expect(h.aulas).toBe('2')
+    h = mudarHorarioForm(h, { aulas: '3' })
+    h = mudarHorarioForm(h, { fim: '22:30' })
+    expect(h).toMatchObject({ aulas: '3', aulasManual: true })
   })
 })
 
@@ -219,7 +248,7 @@ describe('montarMateria', () => {
       id: 'poo',
       nome: 'POO',
       professor: 'Ana',
-      horarios: [{ dia: 2, inicio: '07:45' }],
+      horarios: [{ dia: 2, inicio: '07:45', fim: '09:15', aulas: 2 }],
       cargaHoraria: 80,
       ras: [
         {
@@ -317,7 +346,7 @@ describe('editar uma matéria', () => {
     id: 'poo',
     nome: 'POO',
     professor: 'Ana',
-    horarios: [{ dia: 2, inicio: '19:00' }],
+    horarios: [{ dia: 2, inicio: '19:00', fim: '22:30', aulas: 4 }],
     cargaHoraria: 120,
     ras: [
       {

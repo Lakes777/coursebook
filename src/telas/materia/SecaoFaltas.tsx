@@ -1,14 +1,16 @@
-import { Plus } from 'lucide-react'
+import { UserX } from 'lucide-react'
 import { useRef, useState, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { BotaoRemover } from '../../componentes/BotaoRemover'
 import { Selo } from '../../componentes/Selo'
+import { useHoje } from '../../componentes/useHoje'
 import { usePainel } from '../../estado/contexto'
 import { formatarData, paraDataISO } from '../../logica/datas'
 import type { SituacaoFaltas } from '../../logica/faltas'
+import { aulasNoDia } from '../../logica/horarios'
 import { novoId } from '../../logica/ids'
 import { formatarPorcentagem } from '../../logica/numeros'
-import type { Falta, Materia } from '../../logica/tipos'
+import type { DiaSemana, Falta, Materia } from '../../logica/tipos'
 import { plural, textoFaltas } from '../../tema/textos'
 import { tomFaltas } from '../../tema/tons'
 import { erroDaFalta, faltasOrdenadas, lerCampoNumero, type ErroCampo, type CampoFalta } from '../materiaUtil'
@@ -35,6 +37,7 @@ export function SecaoFaltas({ materia, situacao }: Props) {
   const { despachar } = usePainel()
   const [anuncio, setAnuncio] = useState('')
   const titulo = useRef<HTMLHeadingElement>(null)
+  const hoje = useHoje()
 
   function adicionar(falta: Falta) {
     despachar({ tipo: 'falta/adicionar', materiaId: materia.id, falta })
@@ -51,6 +54,9 @@ export function SecaoFaltas({ materia, situacao }: Props) {
 
   const restantes = textoRestantes(situacao)
   const faltas = faltasOrdenadas(materia.faltas)
+  /** Aulas da matéria no dia da semana de `data`, pelos horários (0 se não tem aula). */
+  const aulasDeHoje = (data: Date) => aulasNoDia(materia.horarios, data.getDay() as DiaSemana)
+  const aulasHoje = aulasDeHoje(hoje)
 
   return (
     <section className="cartao materia__secao" aria-labelledby={ID_TITULO}>
@@ -67,11 +73,23 @@ export function SecaoFaltas({ materia, situacao }: Props) {
       <button
         type="button"
         className="botao"
-        aria-label="Lançar 1 falta hoje"
-        onClick={() => adicionar({ id: novoId(), data: paraDataISO(new Date()), quantidade: 1 })}
+        onClick={() => {
+          // O dia é lido no clique: a aba pode ter ficado aberta de um dia para o outro.
+          const agora = new Date()
+          const quantidade = aulasDeHoje(agora) || 1
+          adicionar({ id: novoId(), data: paraDataISO(agora), quantidade })
+        }}
       >
-        <Plus className="icone" size={16} />1 falta hoje
+        <UserX className="icone" size={16} />
+        {aulasHoje > 0 ? `Faltei hoje (${aulasHoje} ${plural(aulasHoje, 'aula', 'aulas')})` : 'Faltei hoje (1 aula)'}
       </button>
+      {aulasHoje === 0 && (
+        <p className="muted materia__nota-rodape">
+          {materia.horarios.length === 0
+            ? 'Com os horários da matéria cadastrados, o botão lança as aulas do dia de uma vez.'
+            : 'Hoje não tem aula desta matéria pelos horários; para outro dia ou mais aulas, use o formulário abaixo.'}
+        </p>
+      )}
 
       <FormFalta aoAdicionar={adicionar} />
 

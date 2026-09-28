@@ -3,6 +3,7 @@ import { flushSync } from 'react-dom'
 import { BotaoRemover } from '../componentes/BotaoRemover'
 import { CabecalhoTela, ID_TITULO_TELA } from '../componentes/CabecalhoTela'
 import { Selo } from '../componentes/Selo'
+import { useHoje } from '../componentes/useHoje'
 import { usePainel } from '../estado/contexto'
 import { formatarData, paraDataISO } from '../logica/datas'
 import { agenda, NOMES_TIPO, textoPrazo, TIPOS_EVENTO, type EventoNaAgenda } from '../logica/eventos'
@@ -19,17 +20,7 @@ const ID_CONCLUIDOS = 'agenda-concluidos'
 
 export function TelaAgenda() {
   const { dados, despachar } = usePainel()
-  // "Hoje" é lido ao abrir a tela, e de novo quando a aba volta a ficar visível:
-  // ler a hora a cada desenho faria a tela mudar sozinha, e só ao abrir deixaria a
-  // aba esquecida de um dia para o outro mostrando "Amanhã" para a prova de hoje.
-  const [hoje, setHoje] = useState(() => new Date())
-  useEffect(() => {
-    const aoVoltar = () => {
-      if (document.visibilityState === 'visible') setHoje(new Date())
-    }
-    document.addEventListener('visibilitychange', aoVoltar)
-    return () => document.removeEventListener('visibilitychange', aoVoltar)
-  }, [])
+  const hoje = useHoje()
   const itens = agenda(dados.eventos, hoje)
   const pendentes = itens.filter((e) => !e.concluido)
   const concluidos = itens.filter((e) => e.concluido)

@@ -1,4 +1,5 @@
 import { erroFalta } from '../logica/faltas'
+import { faixaHorario } from '../logica/horarios'
 import { erroPontoExtra, naEscala, type SituacaoNota } from '../logica/notas'
 import { formatarNota, formatarPorcentagem, lerNumero, limpar } from '../logica/numeros'
 import type { Avaliacao, Falta, Horario, PontoExtra, RegraAprovacao, ResultadoAprendizagem } from '../logica/tipos'
@@ -99,11 +100,11 @@ export function lerCampoNumero(texto: string): number {
 
 const DIAS = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
 
-/** "Ter 19:00, Qui 19:00", na ordem da semana. */
+/** "Ter 19:00 às 22:30 (4 aulas), Qui 19:00 às 20:30 (2 aulas)", na ordem da semana. */
 export function textoHorarios(horarios: Horario[]): string {
   return [...horarios]
     .sort((a, b) => a.dia - b.dia || a.inicio.localeCompare(b.inicio))
-    .map((h) => `${DIAS[h.dia]} ${h.inicio}`)
+    .map((h) => `${DIAS[h.dia]} ${faixaHorario(h)}`)
     .join(', ')
 }
 

@@ -21,7 +21,7 @@ const POO: Materia = {
   id: 'poo',
   nome: 'POO',
   professor: 'Prof. Exemplo',
-  horarios: [{ dia: 2, inicio: '19:00' }],
+  horarios: [{ dia: 2, inicio: '19:00', fim: '22:30', aulas: 4 }],
   cargaHoraria: 120,
   ras: [
     {
@@ -99,7 +99,7 @@ describe('TelaMateria', () => {
   it('mostra o resumo, o peso de cada RA e quanto tirar na escala de cada avaliação', () => {
     montar()
     expect(screen.getByRole('heading', { level: 2, name: 'POO' })).toBeInTheDocument()
-    expect(screen.getByText('Prof. Exemplo · 120 aulas no semestre · Ter 19:00')).toBeInTheDocument()
+    expect(screen.getByText('Prof. Exemplo · 120 aulas no semestre · Ter 19:00 às 22:30 (4 aulas)')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Editar matéria' })).toHaveAttribute('href', '#/materia/poo/editar')
     // RA1 tem 7,0; faltam 70% da nota final: precisa de 7,0 no resto.
     expect(screen.getAllByText('Precisa de 7,0 (de 10) no que falta')[0]).toBeInTheDocument()
@@ -173,21 +173,32 @@ describe('TelaMateria', () => {
     expect(salvos(nav).materias[0].ras[1].notaRecuperacao).toBe(6.5)
   })
 
-  it('lança 1 falta hoje e mostra a frequência', async () => {
+  it('"Faltei hoje" lança as aulas do dia pelos horários e mostra a frequência', async () => {
     const user = userEvent.setup()
-    const nav = montar()
+    // 01/10/2026 é quinta: a matéria tem 4 aulas às quintas.
+    const nav = montar({ ...POO, horarios: [...POO.horarios, { dia: 4, inicio: '19:00', fim: '22:30', aulas: 4 }] })
     const faltas = screen.getByRole('region', { name: 'Faltas' })
     expect(within(faltas).getByText(/Pode faltar mais 28 aulas/)).toBeInTheDocument()
 
-    await user.click(within(faltas).getByRole('button', { name: 'Lançar 1 falta hoje' }))
+    await user.click(within(faltas).getByRole('button', { name: 'Faltei hoje (4 aulas)' }))
 
     const lancadas = salvos(nav).materias[0].faltas
     expect(lancadas).toHaveLength(2)
-    expect(lancadas[1]).toMatchObject({ data: '2026-10-01', quantidade: 1 })
-    expect(within(faltas).getByText(/Pode faltar mais 27 aulas/)).toBeInTheDocument()
+    expect(lancadas[1]).toMatchObject({ data: '2026-10-01', quantidade: 4 })
+    expect(within(faltas).getByText(/Pode faltar mais 24 aulas/)).toBeInTheDocument()
     // A mais recente vem primeiro.
     const itens = within(within(faltas).getByRole('list', { name: 'Faltas lançadas' })).getAllByRole('listitem')
     expect(itens[0]).toHaveTextContent('01/10/2026')
+  })
+
+  it('em dia sem aula da matéria, "Faltei hoje" lança 1 aula e explica', async () => {
+    const user = userEvent.setup()
+    // A POO só tem aula às terças; hoje é quinta.
+    const nav = montar()
+    const faltas = screen.getByRole('region', { name: 'Faltas' })
+    expect(within(faltas).getByText(/Hoje não tem aula desta matéria/)).toBeInTheDocument()
+    await user.click(within(faltas).getByRole('button', { name: 'Faltei hoje (1 aula)' }))
+    expect(salvos(nav).materias[0].faltas[1]).toMatchObject({ data: '2026-10-01', quantidade: 1 })
   })
 
   it('recusa quantidade de aulas inválida no formulário de falta', async () => {

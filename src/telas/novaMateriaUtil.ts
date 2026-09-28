@@ -1,5 +1,6 @@
 import { dataValida } from '../logica/datas'
 import { erroCargaHoraria } from '../logica/faltas'
+import { erroHorario, HORA, sugerirAulas } from '../logica/horarios'
 import { novoId } from '../logica/ids'
 import { erroAvaliacao, erroRA, NOTA_MAXIMA } from '../logica/notas'
 import { formatarNota, formatarPorcentagem, lerNumero, limpar } from '../logica/numeros'
@@ -27,14 +28,16 @@ export function nomeDia(dia: DiaSemana): string {
   return DIAS_SEMANA.find((d) => d.dia === dia)?.nome ?? ''
 }
 
-/** O mesmo formato que o carregamento aceita (validacao.ts). */
-const HORA = /^([01]\d|2[0-3]):[0-5]\d$/
 
 export interface HorarioForm {
   /** Chave da lista no React e parte do id dos campos. */
   chave: string
   dia: DiaSemana
   inicio: string
+  fim: string
+  aulas: string
+  /** Se a pessoa mexeu no número de aulas: aí mudar o início ou o fim não troca mais a sugestão. */
+  aulasManual: boolean
 }
 
 export interface AvaliacaoForm {
@@ -98,14 +101,28 @@ export const ID_FREQUENCIA = 'nm-regra-frequencia'
 export const ID_NOTA_MINIMA = 'nm-regra-nota-minima'
 export const ID_TETO = 'nm-regra-teto'
 
-export const idHorario = (chave: string, campo: 'dia' | 'inicio') => `nm-horario-${chave}-${campo}`
+export const idHorario = (chave: string, campo: 'dia' | 'inicio' | 'fim' | 'aulas') => `nm-horario-${chave}-${campo}`
 export const idRA = (chave: string, campo: 'nome' | 'peso') => `nm-ra-${chave}-${campo}`
 export const idAvaliacao = (chave: string, campo: 'nome' | 'valor' | 'peso' | 'data') => `nm-av-${chave}-${campo}`
 
 // ---------- Valores iniciais ----------
 
 export function novoHorario(): HorarioForm {
-  return { chave: novoId(), dia: 1, inicio: '' }
+  return { chave: novoId(), dia: 1, inicio: '', fim: '', aulas: '', aulasManual: false }
+}
+
+/**
+ * O horário com os `campos` mudados. Enquanto a pessoa não mexe nas aulas, elas
+ * acompanham o início e o fim (a sugestão de aulas de 45 min que cabem).
+ */
+export function mudarHorarioForm(horario: HorarioForm, campos: Partial<HorarioForm>): HorarioForm {
+  const novo = { ...horario, ...campos }
+  if ('aulas' in campos) return { ...novo, aulasManual: true }
+  if (!novo.aulasManual && ('inicio' in campos || 'fim' in campos)) {
+    const sugestao = sugerirAulas(novo.inicio, novo.fim)
+    return { ...novo, aulas: sugestao === null ? '' : String(sugestao) }
+  }
+  return novo
 }
 
 /** Vale 10 e tem peso 1 (pesos iguais), como na maioria dos planos. */
@@ -188,6 +205,14 @@ export function conferirMateria(form: Formulario): ErroCampo | null {
         mensagem: 'Informe a hora de início no formato HH:MM (ex.: 07:45).',
       }
     }
+    if (!HORA.test(h.fim)) {
+      return { campo: idHorario(h.chave, 'fim'), mensagem: 'Informe a hora do fim no formato HH:MM (ex.: 22:30).' }
+    }
+    const erroFim = erroHorario({ inicio: h.inicio, fim: h.fim })
+    if (erroFim) return { campo: idHorario(h.chave, 'fim'), mensagem: erroFim }
+    const aulas = lerNumero(h.aulas)
+    const erroAulas = erroHorario({ inicio: h.inicio, aulas: aulas ?? Number.NaN })
+    if (erroAulas) return { campo: idHorario(h.chave, 'aulas'), mensagem: erroAulas }
   }
   return null
 }
@@ -353,7 +378,7 @@ export function montarMateria(form: Formulario, id: string = novoId()): Materia 
     id,
     nome: form.nome.trim(),
     professor: form.professor.trim(),
-    horarios: form.horarios.map((h) => ({ dia: h.dia, inicio: h.inicio })),
+    horarios: form.horarios.map((h) => ({ dia: h.dia, inicio: h.inicio, fim: h.fim, aulas: numero(h.aulas) })),
     cargaHoraria: numero(form.cargaHoraria),
     ras,
     pontosExtras: [],
@@ -374,7 +399,15 @@ export function materiaParaForm(materia: Materia, regraPadrao: RegraAprovacao): 
     nome: materia.nome,
     professor: materia.professor,
     cargaHoraria: String(materia.cargaHoraria),
-    horarios: materia.horarios.map((h) => ({ chave: novoId(), dia: h.dia, inicio: h.inicio })),
+    horarios: materia.horarios.map((h) => ({
+      chave: novoId(),
+      dia: h.dia,
+      inicio: h.inicio,
+      // Horário salvo antes de existir o fim: fica vazio, e o formulário pede para completar.
+      fim: h.fim ?? '',
+      aulas: h.aulas === undefined ? '' : String(h.aulas),
+      aulasManual: h.aulas !== undefined,
+    })),
     ras: materia.ras.map((ra) => ({
       chave: novoId(),
       id: ra.id,

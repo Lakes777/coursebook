@@ -10,6 +10,12 @@ export interface Horario {
   dia: DiaSemana
   /** Hora de início, "HH:MM". */
   inicio: string
+  // Os dois abaixo são opcionais porque vieram depois: horários salvos antes deles
+  // continuam valendo, sem precisar de migração (VERSAO_ATUAL não mudou).
+  /** Hora do fim, "HH:MM". */
+  fim?: string
+  /** Quantas aulas de 45 min a matéria tem nesse horário (é o que "Faltei hoje" lança). */
+  aulas?: number
 }
 
 /**

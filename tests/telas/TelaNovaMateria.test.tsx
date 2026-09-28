@@ -190,6 +190,9 @@ describe('TelaNovaMateria', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
     await userEvent.selectOptions(within(grupo('Horário 1')).getByLabelText('Dia'), 'Terça-feira')
     fireEvent.change(within(grupo('Horário 1')).getByLabelText('Começa às'), { target: { value: '07:45' } })
+    fireEvent.change(within(grupo('Horário 1')).getByLabelText('Termina às'), { target: { value: '09:15' } })
+    // As aulas vêm sugeridas pela duração: 1h30 são 2 aulas de 45 min.
+    expect(within(grupo('Horário 1')).getByLabelText('Aulas')).toHaveValue('2')
     await continuar()
 
     // Passo 2
@@ -222,7 +225,7 @@ describe('TelaNovaMateria', () => {
     // Passo 5: o resumo
     expect(tituloPasso()).toHaveTextContent('Passo 5 de 5: Revisar e salvar')
     expect(screen.getByText('Programação Orientada a Objetos')).toBeInTheDocument()
-    expect(screen.getByText('Terça-feira às 07:45')).toBeInTheDocument()
+    expect(screen.getByText('Terça-feira, 07:45 às 09:15 (2 aulas)')).toBeInTheDocument()
     expect(screen.getByText('80 aulas de 45 min')).toBeInTheDocument()
     expect(screen.getByText(/Prova 1: vale 3,0, peso 1, em 05\/10\/2026/)).toBeInTheDocument()
     expect(screen.getByText('Regra padrão do painel')).toBeInTheDocument()
@@ -234,7 +237,7 @@ describe('TelaNovaMateria', () => {
       nome: 'Programação Orientada a Objetos',
       professor: 'Ana Souza',
       cargaHoraria: 80,
-      horarios: [{ dia: 2, inicio: '07:45' }],
+      horarios: [{ dia: 2, inicio: '07:45', fim: '09:15', aulas: 2 }],
       pontosExtras: [],
       faltas: [],
       ras: [

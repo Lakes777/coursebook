@@ -4,6 +4,7 @@ import { flushSync } from 'react-dom'
 import { CabecalhoTela } from '../componentes/CabecalhoTela'
 import { usePainel } from '../estado/contexto'
 import { formatarData } from '../logica/datas'
+import { faixaHorario } from '../logica/horarios'
 import { formatarNota, lerNumero } from '../logica/numeros'
 import { VERSAO_ATUAL, type DiaSemana, type Materia } from '../logica/tipos'
 import { validarDados } from '../logica/validacao'
@@ -22,6 +23,7 @@ import {
   idHorario,
   idRA,
   montarRegra,
+  mudarHorarioForm,
   nomeDia,
   novaAvaliacao,
   novoHorario,
@@ -228,7 +230,10 @@ export function FormularioMateria({
   }
 
   function mudarHorario(chave: string, campos: Partial<HorarioForm>, campo?: string) {
-    setForm((f) => ({ ...f, horarios: f.horarios.map((h) => (h.chave === chave ? { ...h, ...campos } : h)) }))
+    setForm((f) => ({
+      ...f,
+      horarios: f.horarios.map((h) => (h.chave === chave ? mudarHorarioForm(h, campos) : h)),
+    }))
     if (campo) limparErro(campo)
   }
 
@@ -391,6 +396,34 @@ export function FormularioMateria({
                       className="campo"
                       value={h.inicio}
                       onChange={(e) => mudarHorario(h.chave, { inicio: e.target.value }, p.id)}
+                    />
+                  )}
+                </Rotulado>
+                <Rotulado id={idHorario(h.chave, 'fim')} rotulo="Termina às" erro={erro}>
+                  {(p) => (
+                    <input
+                      {...p}
+                      type="time"
+                      className="campo"
+                      value={h.fim}
+                      onChange={(e) => mudarHorario(h.chave, { fim: e.target.value }, p.id)}
+                    />
+                  )}
+                </Rotulado>
+                <Rotulado
+                  id={idHorario(h.chave, 'aulas')}
+                  rotulo="Aulas"
+                  dica={h.aulasManual ? undefined : 'Aulas de 45 min que cabem no horário. Corrija se preciso.'}
+                  erro={erro}
+                >
+                  {(p) => (
+                    <input
+                      {...p}
+                      className="campo nm-campo--curto"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      value={h.aulas}
+                      onChange={(e) => mudarHorario(h.chave, { aulas: e.target.value }, p.id)}
                     />
                   )}
                 </Rotulado>
@@ -743,7 +776,11 @@ export function FormularioMateria({
             <dd>
               {form.horarios.length === 0
                 ? 'Nenhum'
-                : form.horarios.map((h) => `${nomeDia(h.dia)} às ${h.inicio}`).join('; ')}
+                : form.horarios
+                    .map((h) =>
+                      `${nomeDia(h.dia)}, ${faixaHorario({ inicio: h.inicio, fim: h.fim, aulas: lerNumero(h.aulas) ?? undefined })}`,
+                    )
+                    .join('; ')}
             </dd>
           </dl>
         </section>

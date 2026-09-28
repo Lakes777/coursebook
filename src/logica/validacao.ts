@@ -1,6 +1,7 @@
 import { dataValida } from './datas'
 import { erroEvento } from './eventos'
 import { erroCargaHoraria, erroFalta } from './faltas'
+import { erroHorario, HORA } from './horarios'
 import { novoId } from './ids'
 import { erroAvaliacao, erroPontoExtra, erroRA, NOTA_MAXIMA } from './notas'
 import type {
@@ -25,7 +26,6 @@ import { REGRA_PUCPR, VERSAO_ATUAL } from './tipos'
 // mensagem que diz onde está o erro.
 
 export const TAMANHO_MAXIMO_NOME = 100
-const HORA = /^([01]\d|2[0-3]):[0-5]\d$/
 
 export type Resultado<T> = { ok: true; valor: T } | { ok: false; erro: string }
 
@@ -148,7 +148,11 @@ function lerHorario(valor: unknown, onde: string): Horario {
   }
   const inicio = texto(h.inicio, `${onde} > inicio`)
   if (!HORA.test(inicio)) falhar(onde, 'o horário precisa estar no formato HH:MM (ex.: 07:45).')
-  return { dia: dia as DiaSemana, inicio }
+  const horario: Horario = { dia: dia as DiaSemana, inicio }
+  if (h.fim !== undefined && h.fim !== null && h.fim !== '') horario.fim = texto(h.fim, `${onde} > fim`)
+  if (h.aulas !== undefined && h.aulas !== null) horario.aulas = numero(h.aulas, `${onde} > aulas`)
+  conferir(onde, erroHorario(horario))
+  return horario
 }
 
 function lerAvaliacao(valor: unknown, onde: string, id: ReturnType<typeof criarIds>): Avaliacao {

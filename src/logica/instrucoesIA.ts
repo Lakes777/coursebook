@@ -16,8 +16,8 @@ export const EXEMPLO_IA = {
       professor: 'Nome do professor',
       cargaHoraria: 80,
       horarios: [
-        { dia: 2, inicio: '19:00' },
-        { dia: 4, inicio: '19:00' },
+        { dia: 2, inicio: '19:00', fim: '20:30', aulas: 2 },
+        { dia: 4, inicio: '19:00', fim: '20:30', aulas: 2 },
       ],
       ras: [
         {
@@ -54,7 +54,7 @@ ${JSON.stringify(EXEMPLO_IA, null, 2)}
 Regras:
 - Uma entrada em "materias" para cada plano de ensino anexado. Dê a cada matéria um "id" curto (ex.: "poo") e use o mesmo id em "materiaId" nos eventos dela.
 - "cargaHoraria": a carga horária total em horas-aula (HA), um número inteiro. Se o plano não disser, use 0.
-- "horarios": "dia" vai de 0 (domingo) a 6 (sábado); "inicio" no formato HH:MM. Se o plano não disser, use [].
+- "horarios": um item por dia de aula. "dia" vai de 0 (domingo) a 6 (sábado); "inicio" e "fim" no formato HH:MM; "aulas" é quantas aulas de 45 minutos a matéria tem nesse dia. Se o plano não disser os horários, use [].
 - "ras": um item para cada Resultado de Aprendizagem (RA). "peso" é quanto o RA vale na nota final (ex.: 40 para 40%).
 - "recuperacaoNoSemestre": true só para os RAs que o plano diz que têm recuperação durante o semestre.
 - "avaliacoes": as avaliações de cada RA. "valorMaximo" é quanto ela vale (10, ou 3 numa prova que vale 3,0 pontos). "peso" é o peso dentro do RA; se o plano não disser, use 1 em todas.
