@@ -12,6 +12,8 @@ describe('App', () => {
       </ProvedorPainel>,
     )
     expect(screen.getByRole('heading', { name: 'Painel de estudos' })).toBeInTheDocument()
+    // O ícone do capelo não entra no nome do título.
+    expect(screen.getByRole('heading').querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
   })
 
   it('roda no fuso de Brasília', () => {
