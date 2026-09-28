@@ -114,8 +114,11 @@ export interface Evento {
   concluido: boolean
 }
 
+/** Versão do formato de Dados. Ao mudar o formato, aumentar e escrever a migração em armazenamento.ts. */
+export const VERSAO_ATUAL = 1
+
 export interface Dados {
-  versao: 1
+  versao: typeof VERSAO_ATUAL
   materias: Materia[]
   eventos: Evento[]
   regraPadrao: RegraAprovacao

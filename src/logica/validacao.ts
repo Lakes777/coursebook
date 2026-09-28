@@ -16,7 +16,7 @@ import type {
   ResultadoAprendizagem,
   TipoEvento,
 } from './tipos'
-import { REGRA_PUCPR } from './tipos'
+import { REGRA_PUCPR, VERSAO_ATUAL } from './tipos'
 
 // Confere dados que vieram de fora do código (localStorage ou um JSON importado)
 // e devolve uma cópia limpa, no formato de tipos.ts. Campos opcionais que faltam
@@ -270,8 +270,8 @@ function lerEvento(
 export function validarDados(bruto: unknown): Resultado<Dados> {
   try {
     const d = objeto(bruto, '')
-    if (d.versao === undefined) falhar('', 'falta o campo "versao" (use 1).')
-    if (d.versao !== 1) falhar('', `versão ${String(d.versao)} desconhecida.`)
+    if (d.versao === undefined) falhar('', `falta o campo "versao" (use ${VERSAO_ATUAL}).`)
+    if (d.versao !== VERSAO_ATUAL) falhar('', `versão ${String(d.versao)} desconhecida.`)
     const idMateria = criarIds()
     const materias = lista(d.materias, 'materias').map((m, i) =>
       lerMateria(m, `Matéria ${i + 1}`, idMateria),
@@ -285,7 +285,7 @@ export function validarDados(bruto: unknown): Resultado<Dados> {
       d.regraPadrao === undefined || d.regraPadrao === null
         ? structuredClone(REGRA_PUCPR)
         : lerRegra(d.regraPadrao, 'Regra padrão')
-    return { ok: true, valor: { versao: 1, materias, eventos, regraPadrao } }
+    return { ok: true, valor: { versao: VERSAO_ATUAL, materias, eventos, regraPadrao } }
   } catch (e) {
     if (e instanceof ErroDados) return { ok: false, erro: e.message }
     throw e
