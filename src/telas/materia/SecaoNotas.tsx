@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { Selo } from '../../componentes/Selo'
 import { usePainel } from '../../estado/contexto'
 import { formatarData } from '../../logica/datas'
@@ -86,7 +86,8 @@ function CartaoRA({ ra, fracao, regra, situacao, aoSalvarNota, aoSalvarRecuperac
   const fechado = rec !== undefined && ra.notaRecuperacao !== null
   const semDica = fechado || fracao === 0
   const mostrarRecuperacao = rec !== undefined && (ra.recuperacaoNoSemestre || fechado || precisaRecuperar)
-  const idTitulo = `ra-${ra.id}`
+  // Gerado: o id do RA pode ter espaços (JSON importado), e aria-labelledby separa por espaço.
+  const idTitulo = useId()
   const variasAvaliacoes = ra.avaliacoes.length > 1
 
   return (
@@ -121,7 +122,6 @@ function CartaoRA({ ra, fracao, regra, situacao, aoSalvarNota, aoSalvarRecuperac
                   {detalhes.length > 0 && <p className="muted avaliacao__detalhes">{detalhes.join(' · ')}</p>}
                 </div>
                 <CampoNota
-                  id={`nota-${avaliacao.id}`}
                   rotulo={
                     <>
                       <span aria-hidden="true">Nota</span>
@@ -142,7 +142,6 @@ function CartaoRA({ ra, fracao, regra, situacao, aoSalvarNota, aoSalvarRecuperac
       {rec && mostrarRecuperacao && (
         <div className="ra__recuperacao">
           <CampoNota
-            id={`recuperacao-${ra.id}`}
             rotulo={
               <>
                 <span aria-hidden="true">Recuperação</span>

@@ -100,6 +100,7 @@ describe('TelaMateria', () => {
     montar()
     expect(screen.getByRole('heading', { level: 2, name: 'POO' })).toBeInTheDocument()
     expect(screen.getByText('Prof. Exemplo · 120 aulas no semestre · Ter 19:00')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Editar matéria' })).toHaveAttribute('href', '#/materia/poo/editar')
     // RA1 tem 7,0; faltam 70% da nota final: precisa de 7,0 no resto.
     expect(screen.getAllByText('Precisa de 7,0 (de 10) no que falta')[0]).toBeInTheDocument()
     expect(within(cartaoRA('RA3')).getByText('40% da nota final')).toBeInTheDocument()

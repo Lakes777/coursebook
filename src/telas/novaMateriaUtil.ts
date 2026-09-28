@@ -38,8 +38,13 @@ export interface HorarioForm {
 }
 
 export interface AvaliacaoForm {
-  /** Também vira o id da avaliação salva. */
+  /** Chave da lista e parte do id dos campos. Numa avaliação nova, também vira o id dela. */
   chave: string
+  /**
+   * Id da avaliação na matéria, ao editar. Fica separado da chave porque ids de um JSON
+   * importado podem ter espaços ou se repetir em RAs diferentes, e não servem de id de campo.
+   */
+  id?: string
   nome: string
   valorMaximo: string
   peso: string
@@ -47,8 +52,10 @@ export interface AvaliacaoForm {
 }
 
 export interface RAForm {
-  /** Também vira o id do RA salvo. */
+  /** Chave da lista e parte do id dos campos. Num RA novo, também vira o id dele. */
   chave: string
+  /** Id do RA na matéria, ao editar (veja AvaliacaoForm.id). */
+  id?: string
   nome: string
   peso: string
   recuperacaoNoSemestre: boolean
@@ -325,12 +332,12 @@ export function montarRegra(r: RegraForm): RegraAprovacao {
  */
 export function montarMateria(form: Formulario, id: string = novoId()): Materia {
   const ras: ResultadoAprendizagem[] = form.ras.map((ra) => ({
-    id: ra.chave,
+    id: ra.id ?? ra.chave,
     nome: ra.nome.trim(),
     peso: numero(ra.peso),
     avaliacoes: ra.avaliacoes.map((av) => {
       const avaliacao: Avaliacao = {
-        id: av.chave,
+        id: av.id ?? av.chave,
         nome: av.nome.trim(),
         peso: numero(av.peso),
         valorMaximo: numero(av.valorMaximo),
@@ -354,6 +361,103 @@ export function montarMateria(form: Formulario, id: string = novoId()): Materia 
   }
   if (!form.usarRegraPadrao) materia.regra = montarRegra(form.regra)
   return materia
+}
+
+// ---------- Editar uma matéria que já existe ----------
+// O formulário começa com a matéria e guarda os ids dela: ao salvar, dá para saber
+// que RA e que avaliação continuam lá e manter as notas deles. Os ids de avaliação só
+// são únicos dentro do RA, então a avaliação é sempre procurada dentro do RA dela.
+
+/** O formulário preenchido com a matéria, para editar. */
+export function materiaParaForm(materia: Materia, regraPadrao: RegraAprovacao): Formulario {
+  return {
+    nome: materia.nome,
+    professor: materia.professor,
+    cargaHoraria: String(materia.cargaHoraria),
+    horarios: materia.horarios.map((h) => ({ chave: novoId(), dia: h.dia, inicio: h.inicio })),
+    ras: materia.ras.map((ra) => ({
+      chave: novoId(),
+      id: ra.id,
+      nome: ra.nome,
+      peso: paraTexto(ra.peso),
+      recuperacaoNoSemestre: ra.recuperacaoNoSemestre,
+      avaliacoes: ra.avaliacoes.map((av) => ({
+        chave: novoId(),
+        id: av.id,
+        nome: av.nome,
+        valorMaximo: paraTexto(av.valorMaximo),
+        peso: paraTexto(av.peso),
+        data: av.data ?? '',
+      })),
+    })),
+    usarRegraPadrao: materia.regra === undefined,
+    regra: regraParaForm(materia.regra ?? regraPadrao),
+  }
+}
+
+/**
+ * A matéria editada, pronta para 'materia/substituir'. Mantém as notas dos RAs e das
+ * avaliações que continuam, e as faltas e os pontos extras (que o formulário não mexe).
+ * Só chamar depois de conferirPasso(4) e erroNotasNaEdicao darem null.
+ */
+export function aplicarEdicao(original: Materia, form: Formulario): Materia {
+  const nova = montarMateria(form, original.id)
+  const rasAntes = new Map(original.ras.map((ra) => [ra.id, ra]))
+  return {
+    ...nova,
+    ras: nova.ras.map((ra) => {
+      const antes = rasAntes.get(ra.id)
+      const notas = new Map(antes?.avaliacoes.map((av) => [av.id, av.nota]))
+      return {
+        ...ra,
+        notaRecuperacao: antes?.notaRecuperacao ?? null,
+        avaliacoes: ra.avaliacoes.map((av) => ({ ...av, nota: notas.get(av.id) ?? null })),
+      }
+    }),
+    faltas: original.faltas,
+    pontosExtras: original.pontosExtras,
+  }
+}
+
+/** As notas que somem ao salvar, porque a avaliação ou o RA delas foi removido. */
+export function perdasDaEdicao(original: Materia, form: Formulario): string[] {
+  const rasQueFicam = new Map(form.ras.flatMap((ra) => (ra.id === undefined ? [] : [[ra.id, ra] as const])))
+  const perdas: string[] = []
+  for (const ra of original.ras) {
+    const fica = rasQueFicam.get(ra.id)
+    const avaliacoesQueFicam = new Set(fica?.avaliacoes.map((av) => av.id))
+    for (const av of ra.avaliacoes) {
+      if (av.nota !== null && !avaliacoesQueFicam.has(av.id)) {
+        perdas.push(`Nota ${formatarNota(av.nota)} de ${av.nome} (${ra.nome})`)
+      }
+    }
+    if (ra.notaRecuperacao !== null && !fica) {
+      perdas.push(`Recuperação ${formatarNota(ra.notaRecuperacao)} de ${ra.nome}`)
+    }
+  }
+  return perdas
+}
+
+/**
+ * A avaliação que já tem nota não pode passar a valer menos que ela: a nota 8,0 de
+ * uma prova de 10 não cabe numa prova de 3,0. Aponta o campo do valor.
+ */
+export function erroNotasNaEdicao(original: Materia, form: Formulario): ErroCampo | null {
+  const rasAntes = new Map(original.ras.map((ra) => [ra.id, ra]))
+  for (const ra of form.ras) {
+    const antes = ra.id === undefined ? undefined : rasAntes.get(ra.id)
+    for (const av of ra.avaliacoes) {
+      const nota = antes?.avaliacoes.find((a) => a.id === av.id)?.nota
+      const valor = lerNumero(av.valorMaximo)
+      if (nota != null && valor !== null && nota > valor) {
+        return {
+          campo: idAvaliacao(av.chave, 'valor'),
+          mensagem: `Esta avaliação já tem nota ${formatarNota(nota)}; ela não pode valer menos que isso.`,
+        }
+      }
+    }
+  }
+  return null
 }
 
 // ---------- Textos ----------

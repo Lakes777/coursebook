@@ -7,6 +7,7 @@ describe('lerRota', () => {
     expect(lerRota('#/agenda')).toEqual({ tela: 'agenda' })
     expect(lerRota('#/nova-materia')).toEqual({ tela: 'nova-materia' })
     expect(lerRota('#/materia/abc-123')).toEqual({ tela: 'materia', id: 'abc-123' })
+    expect(lerRota('#/materia/abc-123/editar')).toEqual({ tela: 'editar-materia', id: 'abc-123' })
   })
 
   it('aceita barra no fim e falta da barra do começo', () => {
@@ -15,7 +16,8 @@ describe('lerRota', () => {
   })
 
   it('manda o que não conhece para o início', () => {
-    for (const hash of ['', '#', '#/', '#/nada', '#/materia', '#/materia/a/b', '#/agenda/x', '#/materia/%E0']) {
+    const desconhecidos = ['', '#', '#/', '#/nada', '#/materia', '#/materia/a/b', '#/materia/a/editar/x', '#/agenda/x']
+    for (const hash of [...desconhecidos, '#/materia/%E0', '#/materia/%E0/editar']) {
       expect(lerRota(hash), hash).toEqual(INICIO)
     }
   })
@@ -29,6 +31,7 @@ describe('paraHash', () => {
       { tela: 'nova-materia' },
       { tela: 'materia', id: 'abc' },
       { tela: 'materia', id: 'com espaço/e barra' },
+      { tela: 'editar-materia', id: 'com espaço/e barra' },
     ]
     for (const rota of rotas) expect(lerRota(paraHash(rota))).toEqual(rota)
   })

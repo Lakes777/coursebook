@@ -5,8 +5,18 @@
   font-size: 0.9rem;
 }
 
+.materia__topo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 16px;
+}
+
 .materia__detalhes {
-  margin: 0 0 16px;
+  margin: 0;
+  min-width: 0;
   overflow-wrap: anywhere;
 }
 

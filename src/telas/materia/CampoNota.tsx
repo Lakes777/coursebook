@@ -1,9 +1,8 @@
-import { useState, type ReactNode } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { formatarNota } from '../../logica/numeros'
 import { lerNotaDigitada, notaNoCampo } from '../materiaUtil'
 
 interface Props {
-  id: string
   rotulo: ReactNode
   valor: number | null
   /** Quanto a avaliação vale (3,0 numa prova de 3 pontos). */
@@ -18,7 +17,10 @@ interface Props {
  * foi digitado). Sem botão "Salvar" em cada linha: numa matéria com 8 avaliações,
  * seriam 8 botões iguais. Vazio quer dizer que a nota ainda não saiu.
  */
-export function CampoNota({ id, rotulo, valor, maximo, dica, aoSalvar }: Props) {
+export function CampoNota({ rotulo, valor, maximo, dica, aoSalvar }: Props) {
+  // Id gerado, e não o da avaliação: ids de um JSON importado podem ter espaços ou se
+  // repetir em RAs diferentes, e aí o rótulo e o erro ficariam ligados ao campo errado.
+  const id = useId()
   const [texto, setTexto] = useState(() => notaNoCampo(valor))
   const [erro, setErro] = useState<string | null>(null)
   // Se a nota mudar por fora (outro campo, importar dados), o campo mostra a nova.

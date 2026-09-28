@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { REGRA_PUCPR, VERSAO_ATUAL, type RegraAprovacao } from '../../src/logica/tipos'
+import { REGRA_PUCPR, VERSAO_ATUAL, type Materia, type RegraAprovacao } from '../../src/logica/tipos'
 import { validarDados } from '../../src/logica/validacao'
 import {
+  aplicarEdicao,
+  erroNotasNaEdicao,
+  materiaParaForm,
+  perdasDaEdicao,
   conferirAvaliacoes,
   conferirMateria,
   conferirPasso,
@@ -307,3 +311,120 @@ describe('textoRegra', () => {
     ])
   })
 })
+
+describe('editar uma matéria', () => {
+  const POO: Materia = {
+    id: 'poo',
+    nome: 'POO',
+    professor: 'Ana',
+    horarios: [{ dia: 2, inicio: '19:00' }],
+    cargaHoraria: 120,
+    ras: [
+      {
+        id: 'r1',
+        nome: 'RA1',
+        peso: 3,
+        recuperacaoNoSemestre: false,
+        notaRecuperacao: 6.5,
+        avaliacoes: [{ id: 'a1', nome: 'Prova 1', peso: 1, valorMaximo: 3, nota: 2.1, data: '2026-09-22' }],
+      },
+      {
+        id: 'r2',
+        nome: 'RA2',
+        peso: 7,
+        recuperacaoNoSemestre: true,
+        notaRecuperacao: null,
+        avaliacoes: [
+          { id: 'a2', nome: 'Projeto', peso: 2, valorMaximo: 10, nota: 8 },
+          { id: 'a3', nome: 'Seminário', peso: 1, valorMaximo: 10, nota: null },
+        ],
+      },
+    ],
+    pontosExtras: [{ id: 'x', pontos: 0.5, comentario: 'Lista' }],
+    faltas: [{ id: 'f', data: '2026-09-02', quantidade: 2 }],
+    regra: { mediaMinima: 6, frequenciaMinima: 0.75, arredondarUmaCasa: true },
+  }
+
+  it('sem mudar nada, salvar devolve a mesma matéria', () => {
+    const form = materiaParaForm(POO, REGRA_PUCPR)
+    expect(form).toMatchObject({ nome: 'POO', cargaHoraria: '120', usarRegraPadrao: false })
+    expect(form.regra).toMatchObject({ mediaMinima: '6', temRecuperacao: false, arredondarUmaCasa: true })
+    expect(form.ras[1].avaliacoes[0]).toMatchObject({ id: 'a2', valorMaximo: '10', peso: '2', data: '' })
+    // A chave (usada no id dos campos) é gerada, não é o id salvo.
+    expect(form.ras[1].avaliacoes[0].chave).not.toBe('a2')
+    expect(aplicarEdicao(POO, form)).toEqual(POO)
+  })
+
+  it('mantém as notas do que continua, e o novo começa sem nota', () => {
+    const form = materiaParaForm(POO, REGRA_PUCPR)
+    form.nome = 'POO (turma U)'
+    form.ras[1].avaliacoes[0].peso = '3'
+    form.ras[1].avaliacoes.push({ chave: 'nova', nome: 'Quiz', valorMaximo: '1', peso: '1', data: '' })
+    const editada = aplicarEdicao(POO, form)
+    expect(editada.nome).toBe('POO (turma U)')
+    expect(editada.ras[0]).toMatchObject({ notaRecuperacao: 6.5, avaliacoes: [{ nota: 2.1 }] })
+    expect(editada.ras[1].avaliacoes).toMatchObject([
+      { id: 'a2', peso: 3, nota: 8 },
+      { id: 'a3', nota: null },
+      { id: 'nova', nota: null },
+    ])
+    expect(editada.faltas).toBe(POO.faltas)
+    expect(editada.pontosExtras).toBe(POO.pontosExtras)
+  })
+
+  it('acha a nota certa quando RAs diferentes têm avaliações de mesmo id (JSON importado)', () => {
+    const repetidos: Materia = {
+      ...POO,
+      ras: [
+        { ...POO.ras[0], id: 'RA 1', avaliacoes: [{ ...POO.ras[0].avaliacoes[0], id: 'p1', nota: 2 }] },
+        { ...POO.ras[1], id: 'RA 2', avaliacoes: [{ ...POO.ras[1].avaliacoes[0], id: 'p1', nota: 9 }] },
+      ],
+    }
+    const form = materiaParaForm(repetidos, REGRA_PUCPR)
+    // Chaves diferentes, então os campos na tela não se confundem.
+    expect(form.ras[0].avaliacoes[0].chave).not.toBe(form.ras[1].avaliacoes[0].chave)
+    expect(aplicarEdicao(repetidos, form)).toEqual(repetidos)
+
+    // Tirar a do RA2 apaga só a nota 9, e não a 2 do RA1.
+    form.ras[1].avaliacoes = []
+    expect(perdasDaEdicao(repetidos, form)).toEqual(['Nota 9,0 de Projeto (RA2)'])
+    // O valor 3 cabe a nota 2 do RA1, mesmo com o outro "p1" tendo 9.
+    form.ras[0].avaliacoes[0].valorMaximo = '3'
+    expect(erroNotasNaEdicao(repetidos, form)).toBeNull()
+  })
+
+  it('guarda a recuperação lançada mesmo com uma regra própria sem recuperação', () => {
+    // A conta ignora a nota enquanto a regra não tem recuperação; voltando a ter, ela reaparece.
+    const form = materiaParaForm({ ...POO, regra: { ...POO.regra!, recuperacao: undefined } }, REGRA_PUCPR)
+    expect(form.regra.temRecuperacao).toBe(false)
+    expect(aplicarEdicao(POO, form).ras[0].notaRecuperacao).toBe(6.5)
+  })
+
+  it('voltar para a regra padrão tira o campo regra', () => {
+    const form = { ...materiaParaForm(POO, REGRA_PUCPR), usarRegraPadrao: true }
+    expect(aplicarEdicao(POO, form)).not.toHaveProperty('regra')
+  })
+
+  it('lista as notas que somem com a avaliação ou o RA removidos', () => {
+    const form = materiaParaForm(POO, REGRA_PUCPR)
+    expect(perdasDaEdicao(POO, form)).toEqual([])
+    // Tira o RA1 inteiro (nota e recuperação) e o Seminário, que não tem nota.
+    form.ras = [{ ...form.ras[1], avaliacoes: [form.ras[1].avaliacoes[0]] }]
+    expect(perdasDaEdicao(POO, form)).toEqual(['Nota 2,1 de Prova 1 (RA1)', 'Recuperação 6,5 de RA1'])
+  })
+
+  it('não deixa a avaliação valer menos que a nota que já tem', () => {
+    const form = materiaParaForm(POO, REGRA_PUCPR)
+    expect(erroNotasNaEdicao(POO, form)).toBeNull()
+    form.ras[1].avaliacoes[0].valorMaximo = '5'
+    expect(erroNotasNaEdicao(POO, form)).toEqual({
+      campo: `nm-av-${form.ras[1].avaliacoes[0].chave}-valor`,
+      mensagem: 'Esta avaliação já tem nota 8,0; ela não pode valer menos que isso.',
+    })
+    // Avaliação sem nota pode valer quanto quiser.
+    form.ras[1].avaliacoes[0].valorMaximo = '10'
+    form.ras[1].avaliacoes[1].valorMaximo = '1'
+    expect(erroNotasNaEdicao(POO, form)).toBeNull()
+  })
+})
+

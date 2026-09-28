@@ -54,6 +54,8 @@ export function reduzir(dados: Dados, acao: Acao): Dados {
       return { ...dados, materias: [...dados.materias, acao.materia] }
     case 'materia/editar':
       return naMateria(dados, acao.materiaId, (m) => aplicar(m, acao.campos))
+    case 'materia/substituir':
+      return naMateria(dados, acao.materia.id, () => acao.materia)
     case 'materia/remover': {
       const materias = tirar(dados.materias, acao.materiaId)
       if (materias === dados.materias) return dados

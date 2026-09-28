@@ -57,6 +57,18 @@ function dados(): Dados {
 }
 
 describe('reduzir', () => {
+  it('substitui a matéria de mesmo id e mantém os eventos dela', () => {
+    const inicio = dados()
+    const editada = { ...inicio.materias[1], nome: 'Filosofia II', cargaHoraria: 40 }
+    const d = reduzir(inicio, { tipo: 'materia/substituir', materia: editada })
+    expect(d.materias[1]).toBe(editada)
+    expect(d.materias[0]).toBe(inicio.materias[0])
+    expect(d.eventos).toBe(inicio.eventos)
+    // Id que não existe não muda nada (não vira uma matéria nova).
+    const outra = reduzir(inicio, { tipo: 'materia/substituir', materia: { ...editada, id: 'nada' } })
+    expect(outra).toBe(inicio)
+  })
+
   it('adiciona, edita e remove matéria (e os eventos dela)', () => {
     const inicio = dados()
     const nova = { ...inicio.materias[1], id: 'pscf', nome: 'PSCF' }

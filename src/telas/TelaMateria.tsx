@@ -1,3 +1,4 @@
+import { Pencil } from 'lucide-react'
 import { useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { BotaoRemover } from '../componentes/BotaoRemover'
@@ -55,7 +56,13 @@ export function TelaMateria({ id }: { id: string }) {
       <p className="materia__voltar">
         <a href={LISTA}>Todas as matérias</a>
       </p>
-      {detalhes.length > 0 && <p className="muted materia__detalhes">{detalhes.join(' · ')}</p>}
+      <div className="materia__topo">
+        {detalhes.length > 0 && <p className="muted materia__detalhes">{detalhes.join(' · ')}</p>}
+        <a className="botao botao--fantasma botao--pequeno" href={paraHash({ tela: 'editar-materia', id })}>
+          <Pencil className="icone" size={14} />
+          Editar matéria
+        </a>
+      </div>
 
       <div className="cartao materia__resumo">
         <div className="materia__selos">

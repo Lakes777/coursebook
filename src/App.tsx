@@ -5,6 +5,7 @@ import { ID_TITULO_TELA } from './componentes/CabecalhoTela'
 import { paraHash, type Rota } from './navegacao/rota'
 import { useRota } from './navegacao/useRota'
 import { TelaAgenda } from './telas/TelaAgenda'
+import { TelaEditarMateria } from './telas/TelaEditarMateria'
 import { TelaMateria } from './telas/TelaMateria'
 import { TelaMaterias } from './telas/TelaMaterias'
 import { TelaNovaMateria } from './telas/TelaNovaMateria'
@@ -26,6 +27,8 @@ function Tela({ rota }: { rota: Rota }) {
     case 'materia':
       // key: de uma matéria para outra, começa uma tela nova (sem rascunho da anterior).
       return <TelaMateria key={rota.id} id={rota.id} />
+    case 'editar-materia':
+      return <TelaEditarMateria key={rota.id} id={rota.id} />
     case 'nova-materia':
       return <TelaNovaMateria />
     case 'agenda':

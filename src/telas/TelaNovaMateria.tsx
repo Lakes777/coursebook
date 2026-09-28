@@ -5,7 +5,7 @@ import { CabecalhoTela } from '../componentes/CabecalhoTela'
 import { usePainel } from '../estado/contexto'
 import { formatarData } from '../logica/datas'
 import { formatarNota, lerNumero } from '../logica/numeros'
-import { VERSAO_ATUAL, type DiaSemana } from '../logica/tipos'
+import { VERSAO_ATUAL, type DiaSemana, type Materia } from '../logica/tipos'
 import { validarDados } from '../logica/validacao'
 import { paraHash } from '../navegacao/rota'
 import { plural } from '../tema/textos'
@@ -96,11 +96,60 @@ function Rotulado({ id, rotulo, dica, erro, children }: PropsRotulado) {
   )
 }
 
-const SAIR = paraHash({ tela: 'materias' })
-
 export function TelaNovaMateria() {
   const { dados, despachar } = usePainel()
-  const [inicial] = useState<Formulario>(() => formularioVazio(dados.regraPadrao))
+  const [inicial] = useState(() => formularioVazio(dados.regraPadrao))
+  return (
+    <FormularioMateria
+      titulo="Nova matéria"
+      introducao={
+        'Tenha o plano de ensino da matéria por perto: os dados abaixo estão nele. Nada é salvo até o último passo.'
+      }
+      inicial={inicial}
+      sair={paraHash({ tela: 'materias' })}
+      montar={(form) => montarMateria(form)}
+      salvar={(materia) => {
+        despachar({ tipo: 'materia/adicionar', materia })
+        abrirMateria(materia.id)
+      }}
+    />
+  )
+}
+
+/** Passo das avaliações: é nele que ficam os erros de `conferirExtra`. */
+const PASSO_AVALIACOES = 2
+
+interface PropsFormulario {
+  titulo: string
+  introducao: string
+  /** Como o formulário começa: vazio (nova matéria) ou com a matéria (editar). */
+  inicial: Formulario
+  /** Para onde o Cancelar leva. */
+  sair: string
+  /** A matéria a salvar, montada do formulário já conferido. */
+  montar: (form: Formulario) => Materia
+  salvar: (materia: Materia) => void
+  /** Conferência a mais, no passo das avaliações (editar: nota maior que o valor). */
+  conferirExtra?: (form: Formulario) => ErroCampo | null
+  /** Aviso no passo de revisar (editar: as notas que serão apagadas). */
+  avisoRevisar?: (form: Formulario) => ReactNode
+}
+
+/**
+ * O formulário passo a passo de uma matéria, usado para cadastrar e para editar.
+ * Quem usa decide o começo, como montar a matéria e o que fazer ao salvar.
+ */
+export function FormularioMateria({
+  titulo,
+  introducao,
+  inicial,
+  sair,
+  montar,
+  salvar,
+  conferirExtra,
+  avisoRevisar,
+}: PropsFormulario) {
+  const { dados } = usePainel()
   const [form, setForm] = useState<Formulario>(inicial)
   // Qualquer mudança cria um formulário novo; se ainda é o inicial, não há nada a perder.
   // Digitar e apagar conta como preenchido: perguntar à toa é melhor que apagar sem avisar.
@@ -168,11 +217,18 @@ export function TelaNovaMateria() {
       mostrarErro(problema, passo === ULTIMO ? (passoDoErro(form) ?? passo) : passo)
       return
     }
+    if (passo === PASSO_AVALIACOES || passo === ULTIMO) {
+      const extra = conferirExtra?.(form)
+      if (extra) {
+        mostrarErro(extra, PASSO_AVALIACOES)
+        return
+      }
+    }
     if (passo < ULTIMO) {
       irPara(passo + 1)
       return
     }
-    const materia = montarMateria(form)
+    const materia = montar(form)
     // Última garantia: a matéria precisa passar pela mesma conferência do carregamento,
     // senão o painel não abriria de novo depois de salvar.
     const conferida = validarDados({
@@ -185,8 +241,7 @@ export function TelaNovaMateria() {
       setStatus(`Não deu para salvar a matéria: ${conferida.erro}`)
       return
     }
-    despachar({ tipo: 'materia/adicionar', materia })
-    abrirMateria(materia.id)
+    salvar(materia)
   }
 
   // ---------- Mudanças no formulário ----------
@@ -699,6 +754,7 @@ export function TelaNovaMateria() {
     )
     return (
       <>
+        {avisoRevisar?.(form)}
         <section className="nm-revisao" aria-labelledby="nm-rev-materia">
           <div className="nm-revisao__topo">
             <h4 id="nm-rev-materia">Matéria</h4>
@@ -768,9 +824,9 @@ export function TelaNovaMateria() {
   const conteudo = [passoMateria, passoRAs, passoAvaliacoes, passoRegra, passoRevisar][passo]
 
   return (
-    <CabecalhoTela titulo="Nova matéria">
+    <CabecalhoTela titulo={titulo}>
       <p className="muted nm-intro">
-        Tenha o plano de ensino da matéria por perto: os dados abaixo estão nele. Nada é salvo até o último passo.
+        {introducao}
       </p>
       <ol className="nm-passos" aria-label="Passos">
         {PASSOS.map((nome, i) => (
@@ -823,7 +879,7 @@ export function TelaNovaMateria() {
               Cancelar
             </button>
           ) : (
-            <a href={SAIR} className="botao botao--fantasma nm-acoes__cancelar">
+            <a href={sair} className="botao botao--fantasma nm-acoes__cancelar">
               Cancelar
             </a>
           )}
@@ -842,7 +898,7 @@ export function TelaNovaMateria() {
               >
                 Continuar preenchendo
               </button>
-              <a href={SAIR} className="botao botao--perigo botao--pequeno">
+              <a href={sair} className="botao botao--perigo botao--pequeno">
                 Sair sem salvar
               </a>
             </div>

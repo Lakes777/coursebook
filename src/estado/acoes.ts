@@ -26,6 +26,8 @@ export type CamposEvento = Partial<Omit<Evento, 'id'>>
 export type Acao =
   | { tipo: 'materia/adicionar'; materia: Materia }
   | { tipo: 'materia/editar'; materiaId: string; campos: CamposMateria }
+  /** Troca a matéria de mesmo id pela `materia` (o formulário de editar monta ela inteira). */
+  | { tipo: 'materia/substituir'; materia: Materia }
   /** Remove também os eventos da matéria. */
   | { tipo: 'materia/remover'; materiaId: string }
   | { tipo: 'ra/adicionar'; materiaId: string; ra: ResultadoAprendizagem }

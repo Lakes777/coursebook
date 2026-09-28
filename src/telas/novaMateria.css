@@ -315,3 +315,14 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+
+/* ---------- Editar: notas que serão apagadas ---------- */
+.nm-perdas__titulo {
+  margin: 0 0 4px;
+  font-weight: 600;
+}
+
+.nm-perdas {
+  margin: 0;
+  padding-left: 1.2em;
+}
