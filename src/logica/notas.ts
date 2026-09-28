@@ -8,8 +8,12 @@ export const TAMANHO_MAXIMO_COMENTARIO = 200
 export type SituacaoNota =
   /** A matéria ainda não tem nenhum RA com peso. */
   | { tipo: 'sem-avaliacoes' }
-  /** Já passou, mesmo que tire 0 no que falta. */
-  | { tipo: 'aprovado'; media: number }
+  /**
+   * Já passou, mesmo que tire 0 no que falta. `media` é a média do que já saiu;
+   * `garantida` é a nota final contando 0 no que falta (a que ninguém tira dele);
+   * `fechada` diz se todas as notas saíram (aí as duas são iguais).
+   */
+  | { tipo: 'aprovado'; media: number; garantida: number; fechada: boolean }
   /** Ainda dá: precisa de `notaNecessaria` (de 0 a 10) em cada avaliação que falta. */
   | { tipo: 'possivel'; media: number | null; notaNecessaria: number }
   /**
@@ -225,7 +229,9 @@ export function situacaoNota(
 
   if (feitas.length === todas.length) {
     const final = paraExibir(garantida, regra)
-    if (alcanca(garantida, regra.mediaMinima, regra)) return { tipo: 'aprovado', media: final }
+    if (alcanca(garantida, regra.mediaMinima, regra)) {
+      return { tipo: 'aprovado', media: final, garantida: final, fechada: true }
+    }
     // Os RAs que ainda dá para recuperar: abaixo da média e sem recuperação feita.
     // Se todos os que estão abaixo já foram recuperados, não sobrou nada: reprovou.
     const paraRecuperar = ras.filter(
@@ -246,7 +252,8 @@ export function situacaoNota(
   }
 
   if (alcanca(garantida, regra.mediaMinima, regra)) {
-    return { tipo: 'aprovado', media: media ?? paraExibir(garantida, regra) }
+    const nota = paraExibir(garantida, regra)
+    return { tipo: 'aprovado', media: media ?? nota, garantida: nota, fechada: false }
   }
 
   /** Quanto precisa (de 0 a 10) em cada avaliação pendente para a nota final chegar em `minimo`. */

@@ -283,9 +283,12 @@ describe('situacaoNota', () => {
 
   it('já aprovado mesmo tirando 0 no que falta', () => {
     // 0,75 * 10 = 7,5 mesmo com 0 no último RA
+    // A média do que saiu é 10, mas o que ele garante é 7,5.
     expect(situacaoNota([ra(3, [av(1, 10)]), ra(1, [av(1, null)])], REGRA_PUCPR)).toEqual({
       tipo: 'aprovado',
       media: 10,
+      garantida: 7.5,
+      fechada: false,
     })
   })
 
@@ -301,7 +304,7 @@ describe('situacaoNota', () => {
 
   describe('com todas as notas lançadas', () => {
     it('aprovado com a média', () => {
-      expect(situacaoNota(umRA(7, 7), REGRA_PUCPR)).toEqual({ tipo: 'aprovado', media: 7 })
+      expect(situacaoNota(umRA(7, 7), REGRA_PUCPR)).toEqual({ tipo: 'aprovado', media: 7, garantida: 7, fechada: true })
     })
 
     it('6,95 não passa sem arredondamento...', () => {
@@ -312,7 +315,7 @@ describe('situacaoNota', () => {
     })
 
     it('...e passa com arredondamento ligado', () => {
-      expect(situacaoNota(umRA(6.95), ARREDONDA)).toEqual({ tipo: 'aprovado', media: 7 })
+      expect(situacaoNota(umRA(6.95), ARREDONDA)).toEqual({ tipo: 'aprovado', media: 7, garantida: 7, fechada: true })
     })
 
     it('na recuperação, lista só os RAs abaixo de 7,0', () => {
@@ -329,7 +332,7 @@ describe('situacaoNota', () => {
     it('a recuperação de um RA pode aprovar', () => {
       // RA2: maior entre 4 e a recuperação 8 (teto 7) = 7; final (9 + 7) / 2 = 8
       const ras = [ra(50, [av(1, 9)]), ra(50, [av(1, 4)], { notaRecuperacao: 8 })]
-      expect(situacaoNota(ras, REGRA_PUCPR)).toEqual({ tipo: 'aprovado', media: 8 })
+      expect(situacaoNota(ras, REGRA_PUCPR)).toEqual({ tipo: 'aprovado', media: 8, garantida: 8, fechada: true })
     })
 
     it('recuperação feita que não chega em 7,0 reprova (não fica em recuperação para sempre)', () => {
@@ -353,7 +356,7 @@ describe('situacaoNota', () => {
 
     it('recuperação menor que a nota do RA não derruba a nota final', () => {
       const ras = [ra(50, [av(1, 9)]), ra(50, [av(1, 6)], { notaRecuperacao: 3 })]
-      expect(situacaoNota(ras, REGRA_PUCPR)).toEqual({ tipo: 'aprovado', media: 7.5 })
+      expect(situacaoNota(ras, REGRA_PUCPR)).toEqual({ tipo: 'aprovado', media: 7.5, garantida: 7.5, fechada: true })
     })
 
     it('com arredondamento, RA com 6,95 conta como 7,0 e não precisa de recuperação', () => {
@@ -445,7 +448,7 @@ describe('pontos extras', () => {
 
   it('entram na média final', () => {
     // 6,6 + 0,4 = 7,0
-    expect(situacaoNota(umRA(6.6), REGRA_PUCPR, 0.4)).toEqual({ tipo: 'aprovado', media: 7 })
+    expect(situacaoNota(umRA(6.6), REGRA_PUCPR, 0.4)).toEqual({ tipo: 'aprovado', media: 7, garantida: 7, fechada: true })
   })
 
   it('tiram alguém do reprovado', () => {
@@ -478,11 +481,11 @@ describe('pontos extras', () => {
   })
 
   it('a média com extras não passa de 10', () => {
-    expect(situacaoNota(umRA(9.8), REGRA_PUCPR, 0.5)).toEqual({ tipo: 'aprovado', media: 10 })
+    expect(situacaoNota(umRA(9.8), REGRA_PUCPR, 0.5)).toEqual({ tipo: 'aprovado', media: 10, garantida: 10, fechada: true })
   })
 
   it('sozinhos podem garantir a aprovação antes de sair qualquer nota', () => {
-    expect(situacaoNota(umRA(null), REGRA_PUCPR, 7)).toEqual({ tipo: 'aprovado', media: 7 })
+    expect(situacaoNota(umRA(null), REGRA_PUCPR, 7)).toEqual({ tipo: 'aprovado', media: 7, garantida: 7, fechada: false })
   })
 
   it('com arredondamento, arredonda a média uma vez só, depois de somar os extras', () => {
