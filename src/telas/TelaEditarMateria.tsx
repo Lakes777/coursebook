@@ -5,7 +5,7 @@ import type { Materia } from '../logica/tipos'
 import { paraHash } from '../navegacao/rota'
 import { navegar } from '../navegacao/useRota'
 import { ICONE_AVISO } from '../tema/icones'
-import { FormularioMateria } from './TelaNovaMateria'
+import { FormularioMateria } from './FormularioMateria'
 import { aplicarEdicao, erroNotasNaEdicao, materiaParaForm, perdasDaEdicao } from './novaMateriaUtil'
 
 const Atencao = ICONE_AVISO.atencao
