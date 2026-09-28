@@ -103,7 +103,7 @@ export interface Materia {
   regra?: RegraAprovacao
 }
 
-export type TipoEvento = 'prova' | 'trabalho'
+export type TipoEvento = 'prova' | 'trabalho' | 'apresentacao'
 
 export interface Evento {
   id: string
