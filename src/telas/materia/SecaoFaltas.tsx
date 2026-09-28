@@ -6,7 +6,7 @@ import { Selo } from '../../componentes/Selo'
 import { useHoje } from '../../componentes/useHoje'
 import { usePainel } from '../../estado/contexto'
 import { formatarData, paraDataISO } from '../../logica/datas'
-import type { SituacaoFaltas } from '../../logica/faltas'
+import { erroFalta, type SituacaoFaltas } from '../../logica/faltas'
 import { aulasNoDia } from '../../logica/horarios'
 import { novoId } from '../../logica/ids'
 import { formatarPorcentagem } from '../../logica/numeros'
@@ -40,6 +40,8 @@ export function SecaoFaltas({ materia, situacao }: Props) {
   const hoje = useHoje()
 
   function adicionar(falta: Falta) {
+    // Última garantia: uma falta que o carregamento recusaria impediria o painel de abrir os dados.
+    if (erroFalta(falta) !== null) return
     despachar({ tipo: 'falta/adicionar', materiaId: materia.id, falta })
     const aulas = `${falta.quantidade} ${plural(falta.quantidade, 'aula', 'aulas')}`
     setAnuncio(`Falta lançada: ${aulas} em ${formatarData(falta.data)}.`)
@@ -73,18 +75,15 @@ export function SecaoFaltas({ materia, situacao }: Props) {
       <button
         type="button"
         className="botao"
-        onClick={() => {
-          // O dia é lido no clique: a aba pode ter ficado aberta de um dia para o outro.
-          const agora = new Date()
-          const quantidade = aulasDeHoje(agora) || 1
-          adicionar({ id: novoId(), data: paraDataISO(agora), quantidade })
-        }}
+        // O mesmo "hoje" do texto do botão: o que está escrito é o que é lançado.
+        onClick={() => adicionar({ id: novoId(), data: paraDataISO(hoje), quantidade: aulasHoje || 1 })}
+        aria-describedby={aulasHoje === 0 ? 'faltas-sem-aula' : undefined}
       >
         <UserX className="icone" size={16} />
         {aulasHoje > 0 ? `Faltei hoje (${aulasHoje} ${plural(aulasHoje, 'aula', 'aulas')})` : 'Faltei hoje (1 aula)'}
       </button>
       {aulasHoje === 0 && (
-        <p className="muted materia__nota-rodape">
+        <p id="faltas-sem-aula" className="muted materia__nota-rodape">
           {materia.horarios.length === 0
             ? 'Com os horários da matéria cadastrados, o botão lança as aulas do dia de uma vez.'
             : 'Hoje não tem aula desta matéria pelos horários; para outro dia ou mais aulas, use o formulário abaixo.'}
@@ -109,7 +108,8 @@ export function SecaoFaltas({ materia, situacao }: Props) {
           })}
         </ul>
       )}
-      <p role="status" className="invisivel">
+      {/* Visível: com várias aulas por clique, um toque duplo sem querer precisa ser notado (e removido). */}
+      <p role="status" className="muted materia__nota-rodape">
         {anuncio}
       </p>
     </section>

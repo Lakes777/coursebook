@@ -29,6 +29,8 @@ export function sugerirAulas(inicio: string, fim: string): number | null {
 /**
  * Diz o que está errado no fim e nas aulas de um horário, ou null. Os dois são
  * opcionais nos dados (horários salvos antes de existirem continuam valendo).
+ * Aula que passa da meia-noite (22:00 às 00:30) é recusada de propósito: não existe
+ * na PUC-PR, e aceitar complicaria a conta das aulas e o dia da falta.
  */
 export function erroHorario(horario: Pick<Horario, 'inicio' | 'fim' | 'aulas'>): string | null {
   const { inicio, fim, aulas } = horario
@@ -54,7 +56,10 @@ export function faixaHorario(h: Pick<Horario, 'inicio' | 'fim' | 'aulas'>): stri
 /**
  * Quantas aulas a matéria tem nesse dia da semana (somando se houver dois horários
  * no mesmo dia). Horário sem o número de aulas conta 1. Zero se não tem aula no dia.
+ * Nunca passa do máximo que uma falta aceita: 8 de manhã + 6 à noite gravaria uma
+ * falta de 14, que o carregamento recusaria (e aí o painel não abriria os dados).
  */
 export function aulasNoDia(horarios: Horario[], dia: DiaSemana): number {
-  return horarios.filter((h) => h.dia === dia).reduce((soma, h) => soma + (h.aulas ?? 1), 0)
+  const soma = horarios.filter((h) => h.dia === dia).reduce((total, h) => total + (h.aulas ?? 1), 0)
+  return Math.min(MAXIMO_AULAS_POR_DIA, soma)
 }

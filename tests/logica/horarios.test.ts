@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { dadosVazios } from '../../src/logica/armazenamento'
+import { erroFalta, MAXIMO_AULAS_POR_DIA } from '../../src/logica/faltas'
 import { aulasNoDia, erroHorario, faixaHorario, minutos, sugerirAulas } from '../../src/logica/horarios'
 import { validarDados } from '../../src/logica/validacao'
 
@@ -37,6 +38,15 @@ describe('horários', () => {
     expect(aulasNoDia(horarios, 2)).toBe(6)
     expect(aulasNoDia(horarios, 4)).toBe(1)
     expect(aulasNoDia(horarios, 5)).toBe(0)
+  })
+
+  it('não passa do máximo de aulas que uma falta aceita', () => {
+    const cheio = [
+      { dia: 2 as const, inicio: '07:00', fim: '13:00', aulas: 8 },
+      { dia: 2 as const, inicio: '18:00', fim: '23:00', aulas: 6 },
+    ]
+    expect(aulasNoDia(cheio, 2)).toBe(MAXIMO_AULAS_POR_DIA)
+    expect(erroFalta({ data: '2026-10-06', quantidade: aulasNoDia(cheio, 2) })).toBeNull()
   })
 
   it('escreve a faixa', () => {
