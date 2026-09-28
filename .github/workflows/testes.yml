@@ -1,0 +1,38 @@
+# Roda o lint, os testes e o build a cada push e pull request.
+name: Testes
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+
+    # O Vitest 5 pede o Node 22.12 ou mais novo
+    strategy:
+      matrix:
+        node-version: ["22", "24"]
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v7
+
+      - name: Instalar o Node ${{ matrix.node-version }}
+        uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Conferir o código (lint)
+        run: npm run lint
+
+      - name: Rodar os testes
+        run: npm test -- --run
+
+      - name: Conferir que o site compila
+        run: npm run build
