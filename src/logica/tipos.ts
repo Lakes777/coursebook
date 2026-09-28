@@ -82,7 +82,7 @@ export interface PontoExtra {
 export interface Falta {
   id: string
   data: DataISO
-  /** Quantas aulas foram perdidas no dia (aula dupla = 2). */
+  /** Quantas aulas de 45 min foram perdidas no dia (manhã com 3 aulas = 3). */
   quantidade: number
 }
 
@@ -91,8 +91,11 @@ export interface Materia {
   nome: string
   professor: string
   horarios: Horario[]
-  /** Total de aulas no semestre; é a base do limite de faltas. */
-  totalAulas: number
+  /**
+   * Carga horária do plano de ensino em horas-aula (aulas de 45 min). Cada aula
+   * perdida é uma falta, então este é o total de aulas e a base do limite de faltas.
+   */
+  cargaHoraria: number
   ras: ResultadoAprendizagem[]
   pontosExtras: PontoExtra[]
   faltas: Falta[]

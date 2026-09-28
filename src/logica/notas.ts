@@ -1,3 +1,4 @@
+import { limpar } from './numeros'
 import type { Avaliacao, PontoExtra, RegraAprovacao, ResultadoAprendizagem } from './tipos'
 
 /** As notas de RA, a nota final e a "nota necessária" ficam sempre de 0 a 10. */
@@ -27,14 +28,6 @@ export type SituacaoNota =
    */
   | { tipo: 'recuperacao'; media: number; teto: number; ras: string[] }
   | { tipo: 'reprovado'; media: number }
-
-/**
- * Tira o "lixo" do ponto flutuante antes de arredondar: no JavaScript,
- * (0.1 + 5.8) / 2 dá 2.9499999999999997, e sem isso 2,95 viraria 2,9.
- */
-function limpar(n: number): number {
-  return Number(n.toPrecision(12))
-}
 
 /** Arredonda para 1 casa, do jeito da escola: 2,95 -> 3,0 e 2,94 -> 2,9. */
 export function arredondar(n: number): number {
