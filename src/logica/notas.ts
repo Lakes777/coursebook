@@ -1,6 +1,7 @@
-import type { Avaliacao, RegraAprovacao } from './tipos'
+import type { Avaliacao, PontoExtra, RegraAprovacao } from './tipos'
 
 export const NOTA_MAXIMA = 10
+export const TAMANHO_MAXIMO_COMENTARIO = 200
 
 export type SituacaoNota =
   | { tipo: 'sem-avaliacoes' }
@@ -61,20 +62,59 @@ export function erroAvaliacao(avaliacao: Pick<Avaliacao, 'peso' | 'nota'>): stri
   return null
 }
 
-/** Média ponderada das avaliações que já têm nota (null se nenhuma tem). */
-export function mediaPonderada(avaliacoes: Avaliacao[]): number | null {
+/**
+ * Diz o que está errado num ponto extra, ou null se ele está certo.
+ * O limite do comentário vale para o texto sem espaços nas pontas: quem salva
+ * deve guardar `comentario.trim()`.
+ */
+export function erroPontoExtra(extra: Pick<PontoExtra, 'pontos' | 'comentario'>): string | null {
+  const { pontos, comentario } = extra
+  if (!Number.isFinite(pontos) || pontos <= 0 || pontos > NOTA_MAXIMA) {
+    return `Os pontos extras precisam ser maiores que 0 e no máximo ${NOTA_MAXIMA}.`
+  }
+  const texto = comentario.trim()
+  if (texto === '') return 'Escreva de onde vieram os pontos extras.'
+  if (texto.length > TAMANHO_MAXIMO_COMENTARIO) {
+    return `O comentário pode ter no máximo ${TAMANHO_MAXIMO_COMENTARIO} caracteres.`
+  }
+  return null
+}
+
+/** Soma dos pontos extras da matéria. */
+export function totalPontosExtras(extras: PontoExtra[]): number {
+  return limpar(extras.reduce((soma, e) => soma + e.pontos, 0))
+}
+
+/**
+ * Média ponderada das avaliações com nota, SEM arredondar (null se nenhuma tem).
+ * Contas que ainda vão somar algo (como os pontos extras) partem dela: arredondar
+ * duas vezes erra (6,66 -> 6,7, + 0,25 = 6,95 -> 7,0, quando o certo é 6,91 -> 6,9).
+ */
+function mediaExata(avaliacoes: Avaliacao[]): number | null {
   const comNota = avaliacoes.filter((a) => a.nota !== null)
   const somaPesos = comNota.reduce((soma, a) => soma + a.peso, 0)
   if (somaPesos <= 0) return null
   const pontos = comNota.reduce((soma, a) => soma + a.nota! * a.peso, 0)
-  return arredondar(pontos / somaPesos)
+  return pontos / somaPesos
+}
+
+/** Média ponderada das avaliações que já têm nota, com 1 casa (null se nenhuma tem). */
+export function mediaPonderada(avaliacoes: Avaliacao[]): number | null {
+  const media = mediaExata(avaliacoes)
+  return media === null ? null : arredondar(media)
 }
 
 /**
- * Situação da matéria pelas notas. Avaliações inválidas (veja `erroAvaliacao`)
- * devem ser barradas antes, no formulário e ao carregar os dados.
+ * Situação da matéria pelas notas. `extras` é a soma dos pontos extras, que entra
+ * na média final (com teto de 10); `media` já vem com eles somados.
+ * Avaliações inválidas (veja `erroAvaliacao`) devem ser barradas antes, no
+ * formulário e ao carregar os dados.
  */
-export function situacaoNota(avaliacoes: Avaliacao[], regra: RegraAprovacao): SituacaoNota {
+export function situacaoNota(
+  avaliacoes: Avaliacao[],
+  regra: RegraAprovacao,
+  extras = 0,
+): SituacaoNota {
   const somaPesos = avaliacoes.reduce((soma, a) => soma + a.peso, 0)
   if (avaliacoes.length === 0 || somaPesos <= 0) return { tipo: 'sem-avaliacoes' }
 
@@ -82,10 +122,12 @@ export function situacaoNota(avaliacoes: Avaliacao[], regra: RegraAprovacao): Si
   const pendentes = avaliacoes.filter((a) => a.nota === null && a.peso > 0)
   const pesoPendente = pendentes.reduce((soma, a) => soma + a.peso, 0)
   const pontos = avaliacoes.reduce((soma, a) => soma + (a.nota ?? 0) * a.peso, 0)
-  const media = mediaPonderada(avaliacoes)
+  const comExtras = (nota: number) => Math.min(NOTA_MAXIMA, limpar(nota + extras))
+  const exata = mediaExata(avaliacoes)
+  const media = exata === null ? null : arredondar(comExtras(exata))
 
   // Nota final contando 0 no que falta: se já alcança a média, está garantido.
-  const garantida = arredondar(pontos / somaPesos)
+  const garantida = arredondar(comExtras(pontos / somaPesos))
   const rec = regra.recuperacao
 
   if (pendentes.length === 0) {
@@ -96,11 +138,13 @@ export function situacaoNota(avaliacoes: Avaliacao[], regra: RegraAprovacao): Si
     return { tipo: 'reprovado', media: garantida }
   }
 
-  if (garantida >= regra.mediaMinima) return { tipo: 'aprovado', media: media! }
+  if (garantida >= regra.mediaMinima) return { tipo: 'aprovado', media: media ?? garantida }
 
   /** Quanto precisa em cada avaliação pendente para a média final chegar em `alvo`. */
   const precisaPara = (alvo: number) =>
-    arredondarParaCima((menorQueArredondaPara(alvo) * somaPesos - pontos) / pesoPendente)
+    arredondarParaCima(
+      ((menorQueArredondaPara(alvo) - extras) * somaPesos - pontos) / pesoPendente,
+    )
 
   const notaNecessaria = precisaPara(regra.mediaMinima)
   if (notaNecessaria <= NOTA_MAXIMA) return { tipo: 'possivel', media, notaNecessaria }

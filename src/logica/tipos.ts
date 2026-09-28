@@ -39,6 +39,17 @@ export interface Avaliacao {
   data?: DataISO
 }
 
+/**
+ * Pontos extras dados pelo professor fora das avaliações oficiais (ex.: 0,3 por
+ * uma lista de exercícios). Somam na média final, e o comentário diz de onde vieram.
+ */
+export interface PontoExtra {
+  id: string
+  pontos: number
+  comentario: string
+  data?: DataISO
+}
+
 export interface Falta {
   id: string
   data: DataISO
@@ -54,6 +65,7 @@ export interface Materia {
   /** Total de aulas no semestre; é a base do limite de faltas. */
   totalAulas: number
   avaliacoes: Avaliacao[]
+  pontosExtras: PontoExtra[]
   faltas: Falta[]
   /** Sem este campo, vale a regra padrão do painel. */
   regra?: RegraAprovacao
