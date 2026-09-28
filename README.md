@@ -8,6 +8,9 @@ seguindo a regra de aprovação da PUC-PR (configurável por matéria).
 
 Os dados ficam só no navegador (localStorage). Não tem servidor, login nem banco de dados.
 
+**No ar:** https://painel-estudos-cyan.vercel.app (o painel abre vazio; "Ver com dados de exemplo"
+mostra como ele fica em uso).
+
 ## Demonstração
 
 ![Lista de matérias com a situação de cada uma](docs/materias.png)
@@ -131,7 +134,7 @@ tests/           Espelha o src/ (logica, estado, telas, navegacao, tema)
 
 ## Próximos passos
 
-- [ ] Publicar o site na Vercel
+- [x] Publicar o site na Vercel
 - [ ] Grade da semana com os horários de todas as matérias
 - [ ] Desfazer a última ação (remover uma nota ou falta sem querer)
 - [ ] Avisar ao sair do formulário de matéria pelas abas ou pelo voltar do navegador
