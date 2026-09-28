@@ -99,6 +99,8 @@ export function carregar(armazenamento?: Armazenamento, agora = new Date()): Car
   const lido = lerDados(texto)
   if (lido.ok) return { dados: lido.valor, aviso: null, podeSalvar: true }
 
+  // O erro vai entre parênteses no meio da frase, então sem o ponto final dele.
+  const motivo = lido.erro.replace(/\.$/, '')
   // Nunca apaga o que não conseguiu ler: primeiro guarda uma cópia.
   const chave = PREFIXO_COPIA + agora.toISOString()
   try {
@@ -106,7 +108,7 @@ export function carregar(armazenamento?: Armazenamento, agora = new Date()): Car
   } catch {
     return {
       dados: dadosVazios(),
-      aviso: `Não deu para ler os dados salvos (${lido.erro}) nem guardar uma cópia deles. Para não apagá-los, nada será salvo.`,
+      aviso: `Não deu para ler os dados salvos (${motivo}) nem guardar uma cópia deles. Para não apagá-los, nada será salvo.`,
       podeSalvar: false,
     }
   }
@@ -115,7 +117,7 @@ export function carregar(armazenamento?: Armazenamento, agora = new Date()): Car
   salvar(dados, nav)
   return {
     dados,
-    aviso: `Não deu para ler os dados salvos (${lido.erro}). Uma cópia foi guardada no navegador com o nome "${chave}", e o painel começou vazio.`,
+    aviso: `Não deu para ler os dados salvos (${motivo}). Uma cópia foi guardada no navegador com o nome "${chave}", e o painel começou vazio.`,
     podeSalvar: true,
   }
 }

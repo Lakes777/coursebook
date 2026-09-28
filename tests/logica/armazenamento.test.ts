@@ -139,7 +139,7 @@ describe('carregar', () => {
     expect(nav.itens.get(copia)).toBe('{"versao": 1, "mat')
     expect(r.dados).toEqual(dadosVazios())
     expect(r.podeSalvar).toBe(true)
-    expect(r.aviso).toContain('O texto não é um JSON válido.')
+    expect(r.aviso).toMatch(/^Não deu para ler os dados salvos \(O texto não é um JSON válido\)\. Uma cópia/)
     expect(r.aviso).toContain(copia)
   })
 
@@ -157,7 +157,7 @@ describe('carregar', () => {
     const nav = navegador({ [CHAVE]: texto })
     const r = carregar(nav, AGORA)
     expect(nav.itens.get(`${PREFIXO_COPIA}2026-09-28T15:30:00.000Z`)).toBe(texto)
-    expect(r.aviso).toContain('Matéria 1: o nome não pode ficar vazio.')
+    expect(r.aviso).toContain('(Matéria 1: o nome não pode ficar vazio). Uma cópia')
   })
 
   it('também guarda cópia de dados de um painel mais novo', () => {
