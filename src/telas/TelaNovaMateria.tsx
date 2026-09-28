@@ -649,14 +649,15 @@ export function TelaNovaMateria() {
   function passoRevisar() {
     const carga = lerNumero(form.cargaHoraria) ?? 0
     const regra = form.usarRegraPadrao ? dados.regraPadrao : montarRegra(form.regra)
-    const alterar = (numero: number, nome: string) => (
+    // Onde há dois botões lado a lado, o texto diz qual é qual; nos outros, "Alterar" basta.
+    const alterar = (numero: number, nome: string, texto = 'Alterar') => (
       <button
         type="button"
         className="botao botao--fantasma botao--pequeno"
         onClick={() => irPara(numero)}
         aria-label={`Alterar ${nome}`}
       >
-        Alterar
+        {texto}
       </button>
     )
     return (
@@ -684,8 +685,8 @@ export function TelaNovaMateria() {
         <section className="nm-revisao" aria-labelledby="nm-rev-ras">
           <div className="nm-revisao__topo">
             <h4 id="nm-rev-ras">RAs e avaliações</h4>
-            {alterar(1, 'RAs')}
-            {alterar(2, 'avaliações')}
+            {alterar(1, 'RAs', 'Alterar RAs')}
+            {alterar(2, 'avaliações', 'Alterar avaliações')}
           </div>
           <ul className="nm-revisao__ras">
             {form.ras.map((ra) => (
