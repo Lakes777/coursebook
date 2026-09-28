@@ -1,11 +1,59 @@
-import { GraduationCap } from 'lucide-react'
-import { usePainel } from './estado/contexto'
-import { ICONE_AVISO } from './tema/icones'
+import { CalendarDays, GraduationCap, LibraryBig } from 'lucide-react'
+import { useEffect, useRef } from 'react'
+import { Avisos } from './componentes/Avisos'
+import { ID_TITULO_TELA } from './componentes/CabecalhoTela'
+import { paraHash, type Rota } from './navegacao/rota'
+import { useRota } from './navegacao/useRota'
+import { TelaAgenda } from './telas/TelaAgenda'
+import { TelaMateria } from './telas/TelaMateria'
+import { TelaMaterias } from './telas/TelaMaterias'
+import { TelaNovaMateria } from './telas/TelaNovaMateria'
 
-const { info: Info, atencao: Atencao, erro: Erro } = ICONE_AVISO
+const ABAS = [
+  { tela: 'materias', nome: 'Matérias', Icone: LibraryBig },
+  { tela: 'agenda', nome: 'Agenda', Icone: CalendarDays },
+] as const
+
+/** Qual aba fica marcada: a matéria aberta e a nova matéria ficam dentro de "Matérias". */
+function abaDe(rota: Rota): (typeof ABAS)[number]['tela'] {
+  return rota.tela === 'agenda' ? 'agenda' : 'materias'
+}
+
+function Tela({ rota }: { rota: Rota }) {
+  switch (rota.tela) {
+    case 'materias':
+      return <TelaMaterias />
+    case 'materia':
+      // key: de uma matéria para outra, começa uma tela nova (sem rascunho da anterior).
+      return <TelaMateria key={rota.id} id={rota.id} />
+    case 'nova-materia':
+      return <TelaNovaMateria />
+    case 'agenda':
+      return <TelaAgenda />
+  }
+}
+
+/**
+ * Quando a tela muda, o foco vai para o título dela: sem isso, o foco de quem usa
+ * teclado ou leitor de tela cai no começo da página e nada é anunciado. Na primeira
+ * carga não mexe, para não roubar o foco de quem acabou de abrir a página.
+ */
+function useFocoAoTrocarDeTela(rota: Rota) {
+  const chave = paraHash(rota)
+  const anterior = useRef(chave)
+  useEffect(() => {
+    // Comparar com a anterior (e não "é a primeira vez?") funciona no StrictMode,
+    // que roda o efeito duas vezes ao montar.
+    if (anterior.current === chave) return
+    anterior.current = chave
+    document.getElementById(ID_TITULO_TELA)?.focus()
+  }, [chave])
+}
 
 function App() {
-  const { dados, aviso, fecharAviso, erroAoSalvar, podeSalvar, mudouEmOutraAba } = usePainel()
+  const rota = useRota()
+  const aba = abaDe(rota)
+  useFocoAoTrocarDeTela(rota)
   return (
     <>
       <header className="topo">
@@ -14,48 +62,24 @@ function App() {
             <GraduationCap className="icone" size={26} />
             Painel de estudos
           </h1>
+          <nav aria-label="Seções" className="abas">
+            {ABAS.map(({ tela, nome, Icone }) => (
+              <a
+                key={tela}
+                href={`#/${tela}`}
+                className="abas__item"
+                aria-current={aba === tela ? 'page' : undefined}
+              >
+                <Icone className="icone" size={18} />
+                {nome}
+              </a>
+            ))}
+          </nav>
         </div>
       </header>
       <main className="container conteudo">
-        {aviso && (
-          <div role="alert" className="aviso aviso--atencao">
-            <Atencao className="icone" size={18} />
-            <p className="aviso__texto">{aviso}</p>
-            <button type="button" className="botao botao--fantasma botao--pequeno" onClick={fecharAviso}>
-              Entendi
-            </button>
-          </div>
-        )}
-        {/* Fica sempre visível: sem ela, quem fecha o aviso não sabe que nada está sendo salvo. */}
-        {mudouEmOutraAba ? (
-          <p role="status" className="aviso aviso--atencao">
-            <Info className="icone" size={18} />
-            <span className="aviso__texto">
-              O painel foi alterado em outra aba. Recarregue a página para ver os dados atuais; até lá, nada
-              feito aqui será salvo.
-            </span>
-          </p>
-        ) : (
-          !podeSalvar && (
-            <p role="status" className="aviso aviso--atencao">
-              <Info className="icone" size={18} />
-              <span className="aviso__texto">
-                Nada está sendo salvo neste navegador. Exporte seus dados em JSON antes de fechar a página.
-              </span>
-            </p>
-          )
-        )}
-        {erroAoSalvar && (
-          <p role="alert" className="aviso aviso--perigo">
-            <Erro className="icone" size={18} />
-            <span className="aviso__texto">{erroAoSalvar}</span>
-          </p>
-        )}
-        <p className="muted">
-          {dados.materias.length === 0
-            ? 'Matérias, notas, faltas e provas num lugar só.'
-            : `${dados.materias.length} matéria(s) cadastrada(s).`}
-        </p>
+        <Avisos />
+        <Tela rota={rota} />
       </main>
     </>
   )

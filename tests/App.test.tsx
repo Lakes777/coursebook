@@ -1,19 +1,83 @@
-import { render, screen } from '@testing-library/react'
-import { describe, expect, it } from 'vitest'
+import { act, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { afterEach, describe, expect, it } from 'vitest'
 import App from '../src/App'
 import { ProvedorPainel } from '../src/estado/ProvedorPainel'
 import { dadosVazios } from '../src/logica/armazenamento'
 
+function montar() {
+  render(
+    <ProvedorPainel inicial={{ dados: dadosVazios(), aviso: null, podeSalvar: false }}>
+      <App />
+    </ProvedorPainel>,
+  )
+}
+
+/** Troca o endereço como o navegador faz (o jsdom também dispara o hashchange). */
+function irPara(hash: string) {
+  act(() => {
+    window.location.hash = hash
+    window.dispatchEvent(new HashChangeEvent('hashchange'))
+  })
+}
+
+afterEach(() => {
+  window.location.hash = ''
+})
+
 describe('App', () => {
   it('mostra o título do painel', () => {
-    render(
-      <ProvedorPainel inicial={{ dados: dadosVazios(), aviso: null, podeSalvar: false }}>
-        <App />
-      </ProvedorPainel>,
-    )
-    expect(screen.getByRole('heading', { name: 'Painel de estudos' })).toBeInTheDocument()
+    montar()
+    const titulo = screen.getByRole('heading', { level: 1 })
+    expect(titulo).toHaveTextContent('Painel de estudos')
     // O ícone do capelo não entra no nome do título.
-    expect(screen.getByRole('heading').querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+    expect(titulo.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('começa na tela de matérias, com a aba marcada', () => {
+    montar()
+    expect(screen.getByRole('heading', { level: 2, name: 'Matérias' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Matérias' })).toHaveAttribute('aria-current', 'page')
+    expect(screen.getByRole('link', { name: 'Agenda' })).not.toHaveAttribute('aria-current')
+  })
+
+  it('troca de tela pelas abas', async () => {
+    montar()
+    await userEvent.click(screen.getByRole('link', { name: 'Agenda' }))
+    expect(screen.getByRole('heading', { level: 2, name: 'Agenda' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Agenda' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('segue o endereço (botão voltar, link colado)', () => {
+    montar()
+    irPara('#/nova-materia')
+    expect(screen.getByRole('heading', { level: 2, name: 'Nova matéria' })).toBeInTheDocument()
+    // A nova matéria fica dentro da aba "Matérias".
+    expect(screen.getByRole('link', { name: 'Matérias' })).toHaveAttribute('aria-current', 'page')
+    irPara('#/materias')
+    expect(screen.getByRole('heading', { level: 2, name: 'Matérias' })).toBeInTheDocument()
+  })
+
+  it('põe o foco no título da tela nova, mas não ao abrir a página', () => {
+    montar()
+    const titulo = screen.getByRole('heading', { level: 2, name: 'Matérias' })
+    expect(titulo).not.toHaveFocus()
+    irPara('#/agenda')
+    expect(screen.getByRole('heading', { level: 2, name: 'Agenda' })).toHaveFocus()
+  })
+
+  it('muda o título da aba do navegador', () => {
+    montar()
+    expect(document.title).toBe('Matérias · Painel de estudos')
+    irPara('#/agenda')
+    expect(document.title).toBe('Agenda · Painel de estudos')
+  })
+
+  it('avisa quando a matéria do endereço não existe', () => {
+    montar()
+    irPara('#/materia/nao-existe')
+    expect(screen.getByRole('heading', { level: 2, name: 'Matéria não encontrada' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Voltar para as matérias' })).toHaveAttribute('href', '#/materias')
   })
 
   it('roda no fuso de Brasília', () => {

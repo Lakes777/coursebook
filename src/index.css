@@ -64,6 +64,15 @@ body {
   outline-offset: 2px;
 }
 
+a {
+  color: var(--destaque);
+}
+
+/* O título recebe o foco pelo código ao trocar de tela; o contorno aí só confundiria. */
+.titulo-tela:focus {
+  outline: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -90,9 +99,43 @@ body {
 
 .topo__conteudo {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 12px;
-  padding-block: 18px;
+  justify-content: space-between;
+  gap: 12px 24px;
+  padding-block: 14px;
+}
+
+/* ---------- Abas ---------- */
+.abas {
+  display: flex;
+  gap: 4px;
+}
+
+.abas__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border-radius: var(--radius-pequeno);
+  color: var(--text-muted);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.abas__item:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.abas__item[aria-current='page'] {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: inset 0 -2px 0 var(--marca);
+}
+
+.abas__item[aria-current='page'] .icone {
+  color: var(--destaque);
 }
 
 .topo__titulo {
@@ -183,7 +226,13 @@ body {
   color: var(--ok);
 }
 
+/* Prazo chegando: texto claro com borda e ícone bordô, para não parecer o vermelho de "perigo". */
 .selo--destaque {
+  color: var(--text);
+  border-color: var(--marca);
+}
+
+.selo--destaque .icone {
   color: var(--destaque);
 }
 
