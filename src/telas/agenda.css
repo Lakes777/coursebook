@@ -22,10 +22,6 @@
   font-size: 1.05rem;
 }
 
-.agenda__subtitulo:focus {
-  outline: none;
-}
-
 .agenda__lista + .agenda__subtitulo,
 .agenda__listas > p + .agenda__subtitulo {
   margin-top: 28px;

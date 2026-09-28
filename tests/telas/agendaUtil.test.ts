@@ -1,17 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { TipoEvento } from '../../src/logica/tipos'
-import { erroDoFormulario, textoSelo } from '../../src/telas/agendaUtil'
-
-describe('textoSelo', () => {
-  it('dá um texto para cada destaque, menos o futuro', () => {
-    expect(textoSelo({ destaque: 'atrasado', dias: -2 })).toBe('Atrasado')
-    expect(textoSelo({ destaque: 'hoje', dias: 0 })).toBe('Hoje')
-    expect(textoSelo({ destaque: 'proximo', dias: 1 })).toBe('Amanhã')
-    expect(textoSelo({ destaque: 'proximo', dias: 5 })).toBe('Em 5 dias')
-    expect(textoSelo({ destaque: 'concluido', dias: 3 })).toBe('Concluído')
-    expect(textoSelo({ destaque: 'futuro', dias: 30 })).toBeNull()
-  })
-})
+import { erroDoFormulario } from '../../src/telas/agendaUtil'
 
 describe('erroDoFormulario', () => {
   it('devolve null quando está tudo certo', () => {

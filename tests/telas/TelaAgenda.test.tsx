@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
@@ -102,7 +102,9 @@ describe('TelaAgenda', () => {
   it('mostra tipo, data, prazo e o nome da matéria', () => {
     montar()
     const prova = item('Prova do RA2')
-    expect(prova).toHaveTextContent('Prova')
+    // Só o trecho do tipo: o título "Prova do RA2" já tem a palavra "Prova".
+    expect(prova.querySelector('.item-agenda__tipo')).toHaveTextContent('Prova')
+    expect(item('Relatório').querySelector('.item-agenda__tipo')).toHaveTextContent('Trabalho')
     expect(prova).toHaveTextContent('04/10/2026 · em 3 dias')
     expect(within(prova).getByText('Algoritmos')).toBeInTheDocument()
     expect(item('Relatório')).toHaveTextContent('28/09/2026 · há 3 dias')
@@ -150,6 +152,44 @@ describe('TelaAgenda', () => {
     expect(screen.getByRole('heading', { level: 3, name: 'A fazer' })).toHaveFocus()
   })
 
+  it('remover um concluído deixa o foco em "Concluídos", se ainda houver algum', async () => {
+    const outroFeito: Evento = { id: 'feito2', titulo: 'Resumo', tipo: 'trabalho', data: '2026-09-05', concluido: true }
+    montar([...EVENTOS, outroFeito])
+    await userEvent.click(screen.getByRole('button', { name: 'Remover Prova do RA1' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar remoção de Prova do RA1' }))
+    expect(screen.getByRole('heading', { level: 3, name: 'Concluídos' })).toHaveFocus()
+    // Sem mais concluídos, a parte some e o foco vai para "A fazer".
+    await userEvent.click(screen.getByRole('button', { name: 'Remover Resumo' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar remoção de Resumo' }))
+    expect(screen.queryByRole('heading', { name: 'Concluídos' })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 3, name: 'A fazer' })).toHaveFocus()
+  })
+
+  it('remover o último evento leva o foco para o título da tela', async () => {
+    montar([EVENTOS[0]])
+    await userEvent.click(screen.getByRole('button', { name: 'Remover Seminário final' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Confirmar remoção de Seminário final' }))
+    expect(screen.getByText(/Nada na agenda ainda/)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'Agenda' })).toHaveFocus()
+  })
+
+  it('com tudo feito, "A fazer" diz isso', () => {
+    montar([EVENTOS[5]])
+    expect(screen.getByText('Tudo feito por enquanto.')).toBeInTheDocument()
+    expect(titulos('Concluídos')).toEqual(['Prova do RA1'])
+  })
+
+  it('relê o dia quando a aba volta a ficar visível', () => {
+    montar()
+    expect(within(item('Quiz')).getByText('Amanhã')).toBeInTheDocument()
+    // A aba ficou esquecida aberta até o dia seguinte.
+    vi.setSystemTime(new Date(2026, 9, 2, 8))
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'))
+    })
+    expect(within(item('Quiz')).getByText('Hoje')).toBeInTheDocument()
+  })
+
   it('não adiciona sem título e mostra o erro ligado ao campo', async () => {
     const nav = montar()
     const titulo = screen.getByLabelText('Título')
@@ -193,7 +233,10 @@ describe('TelaAgenda', () => {
     expect(within(novo).getByText('Em 5 dias')).toBeInTheDocument()
     expect(titulo).toHaveValue('')
     expect(titulo).toHaveFocus()
-    expect(screen.getByRole('status')).toHaveTextContent('Apresentação do projeto foi adicionado à agenda.')
+    expect(screen.getByRole('status')).toHaveTextContent('Adicionado à agenda: Apresentação do projeto.')
+    // Ao digitar o próximo, o aviso antigo sai (e um título igual volta a ser anunciado).
+    await userEvent.type(titulo, 'P')
+    expect(screen.getByRole('status')).toBeEmptyDOMElement()
 
     const salvo = JSON.parse([...nav.itens.values()][0]).eventos.at(-1)
     expect(salvo).toMatchObject({

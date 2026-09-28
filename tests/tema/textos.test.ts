@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { REGRA_PUCPR, type Materia } from '../../src/logica/tipos'
-import { plural, resumoMateria, textoFaltas, textoNota } from '../../src/tema/textos'
+import { plural, resumoMateria, textoFaltas, textoNota, textoSelo } from '../../src/tema/textos'
 
 function materia(parcial: Partial<Materia> = {}): Materia {
   return {
@@ -85,5 +85,16 @@ describe('plural', () => {
   it('só 1 é singular', () => {
     expect(plural(0, 'falta', 'faltas')).toBe('faltas')
     expect(plural(1, 'falta', 'faltas')).toBe('falta')
+  })
+})
+
+describe('textoSelo', () => {
+  it('dá um texto para cada destaque, menos o futuro', () => {
+    expect(textoSelo({ destaque: 'atrasado', dias: -2 })).toBe('Atrasado')
+    expect(textoSelo({ destaque: 'hoje', dias: 0 })).toBe('Hoje')
+    expect(textoSelo({ destaque: 'proximo', dias: 1 })).toBe('Amanhã')
+    expect(textoSelo({ destaque: 'proximo', dias: 5 })).toBe('Em 5 dias')
+    expect(textoSelo({ destaque: 'concluido', dias: 3 })).toBe('Concluído')
+    expect(textoSelo({ destaque: 'futuro', dias: 30 })).toBeNull()
   })
 })

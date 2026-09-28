@@ -1,3 +1,4 @@
+import type { EventoNaAgenda } from '../logica/eventos'
 import type { SituacaoFaltas } from '../logica/faltas'
 import { situacaoFaltas } from '../logica/faltas'
 import type { SituacaoNota } from '../logica/notas'
@@ -59,4 +60,23 @@ export function textoFaltas(situacao: SituacaoFaltas): string {
 
 export function plural(n: number, um: string, varios: string): string {
   return n === 1 ? um : varios
+}
+
+/**
+ * Texto do selo de cada item. O que está longe (futuro) não ganha selo: a data e o
+ * "em 20 dias" ao lado já dizem tudo, e um selo em cada linha tiraria a força dos outros.
+ */
+export function textoSelo(item: Pick<EventoNaAgenda, 'destaque' | 'dias'>): string | null {
+  switch (item.destaque) {
+    case 'atrasado':
+      return 'Atrasado'
+    case 'hoje':
+      return 'Hoje'
+    case 'proximo':
+      return item.dias === 1 ? 'Amanhã' : `Em ${item.dias} dias`
+    case 'concluido':
+      return 'Concluído'
+    case 'futuro':
+      return null
+  }
 }

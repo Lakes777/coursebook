@@ -8,8 +8,9 @@ import { agenda, NOMES_TIPO, textoPrazo, TIPOS_EVENTO, type EventoNaAgenda } fro
 import { novoId } from '../logica/ids'
 import type { Evento, TipoEvento } from '../logica/tipos'
 import { ICONE_TIPO_EVENTO } from '../tema/icones'
+import { textoSelo } from '../tema/textos'
 import { tomPrazo } from '../tema/tons'
-import { erroDoFormulario, textoSelo, type CampoEvento } from './agendaUtil'
+import { erroDoFormulario, type CampoEvento } from './agendaUtil'
 import './agenda.css'
 
 const ID_A_FAZER = 'agenda-a-fazer'
@@ -17,9 +18,17 @@ const ID_CONCLUIDOS = 'agenda-concluidos'
 
 export function TelaAgenda() {
   const { dados, despachar } = usePainel()
-  // "Hoje" é lido uma vez ao abrir a tela: ler a hora a cada desenho faria a mesma
-  // tela mudar sozinha. Quem deixa a aba aberta de um dia para o outro vê o novo dia ao trocar de tela.
-  const [hoje] = useState(() => new Date())
+  // "Hoje" é lido ao abrir a tela, e de novo quando a aba volta a ficar visível:
+  // ler a hora a cada desenho faria a tela mudar sozinha, e só ao abrir deixaria a
+  // aba esquecida de um dia para o outro mostrando "Amanhã" para a prova de hoje.
+  const [hoje, setHoje] = useState(() => new Date())
+  useEffect(() => {
+    const aoVoltar = () => {
+      if (document.visibilityState === 'visible') setHoje(new Date())
+    }
+    document.addEventListener('visibilitychange', aoVoltar)
+    return () => document.removeEventListener('visibilitychange', aoVoltar)
+  }, [])
   const itens = agenda(dados.eventos, hoje)
   const pendentes = itens.filter((e) => !e.concluido)
   const concluidos = itens.filter((e) => e.concluido)
@@ -28,6 +37,7 @@ export function TelaAgenda() {
   // Guardar o id aqui deixa o item novo pegar o foco, em vez de o foco cair no começo da página.
   const focoPendente = useRef<string | null>(null)
   const tituloAFazer = useRef<HTMLHeadingElement>(null)
+  const tituloConcluidos = useRef<HTMLHeadingElement>(null)
 
   /** O item recém-montado pergunta se é ele que deve pegar o foco (e só um pega). */
   function tomarFoco(id: string) {
@@ -42,9 +52,12 @@ export function TelaAgenda() {
   }
 
   function remover(evento: EventoNaAgenda) {
-    // flushSync: o item some já, e o foco vai para um lugar que continua na tela.
+    // flushSync: o item some já, e o foco vai para um lugar que continua na tela,
+    // o mais perto possível de onde estava: o título da parte do item, se ela
+    // ainda existe; senão "A fazer"; senão (agenda vazia) o título da tela.
     flushSync(() => despachar({ tipo: 'evento/remover', eventoId: evento.id }))
-    ;(tituloAFazer.current ?? document.getElementById(ID_TITULO_TELA))?.focus()
+    const daParte = evento.concluido ? tituloConcluidos.current : tituloAFazer.current
+    ;(daParte ?? tituloAFazer.current ?? document.getElementById(ID_TITULO_TELA))?.focus()
   }
 
   const lista = (eventos: EventoNaAgenda[], idTitulo: string) => (
@@ -83,7 +96,7 @@ export function TelaAgenda() {
               )}
               {concluidos.length > 0 && (
                 <>
-                  <h3 id={ID_CONCLUIDOS} className="agenda__subtitulo">
+                  <h3 id={ID_CONCLUIDOS} ref={tituloConcluidos} tabIndex={-1} className="agenda__subtitulo">
                     Concluídos
                   </h3>
                   {lista(concluidos, ID_CONCLUIDOS)}
@@ -228,7 +241,7 @@ function FormNovoEvento() {
     despachar({ tipo: 'evento/adicionar', evento })
     setTitulo('')
     setErro(null)
-    setAdicionado(`${evento.titulo} foi adicionado à agenda.`)
+    setAdicionado(`Adicionado à agenda: ${evento.titulo}.`)
     campoTitulo.current?.focus()
   }
 
@@ -261,6 +274,9 @@ function FormNovoEvento() {
           onChange={(e) => {
             setTitulo(e.target.value)
             limparErro('titulo')
+            // O aviso falava do evento anterior; limpar faz o próximo ser anunciado,
+            // mesmo que tenha o mesmo título.
+            setAdicionado('')
           }}
           {...invalido('titulo')}
         />

@@ -1,24 +1,5 @@
-import { erroEvento, type EventoNaAgenda } from '../logica/eventos'
+import { erroEvento } from '../logica/eventos'
 import type { Evento } from '../logica/tipos'
-
-/**
- * Texto do selo de cada item. O que está longe (futuro) não ganha selo: a data e o
- * "em 20 dias" ao lado já dizem tudo, e um selo em cada linha tiraria a força dos outros.
- */
-export function textoSelo(item: Pick<EventoNaAgenda, 'destaque' | 'dias'>): string | null {
-  switch (item.destaque) {
-    case 'atrasado':
-      return 'Atrasado'
-    case 'hoje':
-      return 'Hoje'
-    case 'proximo':
-      return item.dias === 1 ? 'Amanhã' : `Em ${item.dias} dias`
-    case 'concluido':
-      return 'Concluído'
-    case 'futuro':
-      return null
-  }
-}
 
 export type CampoEvento = 'titulo' | 'tipo' | 'data'
 
