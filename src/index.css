@@ -321,3 +321,10 @@ a {
   border-color: var(--perigo);
   color: var(--perigo);
 }
+
+/* Os botões "Confirmar" e "Cancelar" do remover em 2 passos. */
+.confirmar-remocao {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

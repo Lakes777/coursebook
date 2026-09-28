@@ -126,12 +126,6 @@
   accent-color: var(--marca);
 }
 
-.item-agenda__confirmar {
-  display: inline-flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
 /* ---------- Formulário ---------- */
 .agenda-form {
   display: grid;

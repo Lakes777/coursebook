@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
+import { BotaoRemover } from '../componentes/BotaoRemover'
 import { CabecalhoTela, ID_TITULO_TELA } from '../componentes/CabecalhoTela'
 import { Selo } from '../componentes/Selo'
 import { usePainel } from '../estado/contexto'
@@ -120,10 +121,7 @@ interface PropsItem {
 }
 
 function ItemAgenda({ evento, materia, tomarFoco, aoMarcar, aoRemover }: PropsItem) {
-  const [confirmando, setConfirmando] = useState(false)
   const caixa = useRef<HTMLInputElement>(null)
-  const botaoRemover = useRef<HTMLButtonElement>(null)
-  const botaoCancelar = useRef<HTMLButtonElement>(null)
   const Icone = ICONE_TIPO_EVENTO[evento.tipo]
   const selo = textoSelo(evento)
 
@@ -132,17 +130,6 @@ function ItemAgenda({ evento, materia, tomarFoco, aoMarcar, aoRemover }: PropsIt
     // Só ao montar: é quando o item chega na outra lista.
     // oxlint-disable-next-line react/exhaustive-deps
   }, [])
-
-  // Os botões trocam de lugar; sem mover o foco, ele se perderia com o botão que sumiu.
-  function pedirConfirmacao() {
-    flushSync(() => setConfirmando(true))
-    botaoCancelar.current?.focus()
-  }
-
-  function cancelar() {
-    flushSync(() => setConfirmando(false))
-    botaoRemover.current?.focus()
-  }
 
   return (
     <li className={`cartao item-agenda item-agenda--${evento.destaque}`}>
@@ -169,37 +156,7 @@ function ItemAgenda({ evento, materia, tomarFoco, aoMarcar, aoRemover }: PropsIt
           />
           Feito
         </label>
-        {confirmando ? (
-          <span className="item-agenda__confirmar">
-            <button
-              type="button"
-              className="botao botao--perigo botao--pequeno"
-              onClick={aoRemover}
-              aria-label={`Confirmar remoção de ${evento.titulo}`}
-            >
-              Confirmar
-            </button>
-            <button
-              ref={botaoCancelar}
-              type="button"
-              className="botao botao--fantasma botao--pequeno"
-              onClick={cancelar}
-              aria-label={`Cancelar remoção de ${evento.titulo}`}
-            >
-              Cancelar
-            </button>
-          </span>
-        ) : (
-          <button
-            ref={botaoRemover}
-            type="button"
-            className="botao botao--fantasma botao--pequeno"
-            onClick={pedirConfirmacao}
-            aria-label={`Remover ${evento.titulo}`}
-          >
-            Remover
-          </button>
-        )}
+        <BotaoRemover nome={evento.titulo} aoConfirmar={aoRemover} />
       </div>
     </li>
   )
