@@ -1,0 +1,271 @@
+/* ---------- Tela de uma matéria ---------- */
+
+.materia__voltar {
+  margin: -8px 0 4px;
+  font-size: 0.9rem;
+}
+
+.materia__detalhes {
+  margin: 0 0 16px;
+  overflow-wrap: anywhere;
+}
+
+.materia__resumo {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.materia__selos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.materia__texto {
+  margin: 0;
+}
+
+/* No celular, uma coluna; na tela larga, as notas à esquerda e o resto ao lado. */
+.materia {
+  display: grid;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .materia {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+}
+
+.materia__principal,
+.materia__lateral {
+  display: grid;
+  gap: 16px;
+  min-width: 0;
+}
+
+.materia__secao {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  min-width: 0;
+}
+
+/* Os cartões dos RAs ocupam a largura toda da coluna. */
+.materia__principal .materia__secao {
+  justify-items: stretch;
+}
+
+.materia__subtitulo {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.materia__nota-rodape {
+  margin: -6px 0 0;
+  font-size: 0.85rem;
+}
+
+.materia__regra {
+  margin: 0;
+  padding-left: 1.2em;
+  font-size: 0.9rem;
+}
+
+.materia__perigo {
+  border-color: color-mix(in srgb, var(--perigo) 35%, var(--border));
+}
+
+/* ---------- RAs e avaliações ---------- */
+.lista-ras {
+  display: grid;
+  gap: 12px;
+}
+
+.ra {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+  padding: 16px;
+}
+
+.ra__cabecalho {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.ra__nome {
+  margin: 0;
+  font-size: 1rem;
+  overflow-wrap: anywhere;
+}
+
+.ra__peso {
+  font-size: 0.85rem;
+}
+
+.ra__nota,
+.ra__vazio {
+  margin: 0;
+}
+
+.avaliacoes {
+  display: grid;
+  width: 100%;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.avaliacao {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px 16px;
+  padding-block: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.avaliacao__info {
+  flex: 1 1 160px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.avaliacao__info p {
+  margin: 0;
+}
+
+.avaliacao__nome {
+  font-weight: 600;
+}
+
+.avaliacao__detalhes {
+  font-size: 0.85rem;
+}
+
+.ra__recuperacao {
+  width: 100%;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* ---------- Campo de nota ---------- */
+.campo-nota {
+  display: grid;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.campo-nota__rotulo {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.campo-nota__linha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.campo-nota__entrada {
+  width: 6.5em;
+  padding-block: 6px;
+  font-family: var(--mono);
+  text-align: right;
+}
+
+.campo-nota__maximo {
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.campo-nota__dica {
+  margin: 0;
+  max-width: 28ch;
+  font-size: 0.85rem;
+}
+
+.erro-campo {
+  margin: 0;
+  color: var(--perigo);
+  font-size: 0.85rem;
+}
+
+/* ---------- Listas curtas (faltas, pontos extras) ---------- */
+.lista-simples {
+  display: grid;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lista-simples__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px 12px;
+  padding-block: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 0.9rem;
+}
+
+.lista-simples__texto {
+  flex: 1 1 160px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Formulários de uma linha (falta, ponto extra) ---------- */
+.form-linha {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+  width: 100%;
+}
+
+.form-linha__campo {
+  display: grid;
+  gap: 4px;
+  flex: 1 1 140px;
+  min-width: 0;
+}
+
+.form-linha__campo--curto {
+  flex: 0 1 90px;
+}
+
+.form-linha__campo--largo {
+  flex-basis: 100%;
+}
+
+.form-linha__campo label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.form-linha__campo .campo {
+  width: 100%;
+}
+
+.form-linha__contador {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.form-linha__contador--passou {
+  color: var(--perigo);
+}
+
+.form-linha__erro {
+  flex-basis: 100%;
+}
