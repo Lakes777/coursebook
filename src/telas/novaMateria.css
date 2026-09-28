@@ -303,3 +303,15 @@
   margin: 0;
   font-size: 0.9rem;
 }
+
+/* ---------- Confirmação ao cancelar ---------- */
+.nm-sair {
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.nm-sair__botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

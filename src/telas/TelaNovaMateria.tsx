@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, Check, Plus, Trash2 } from 'lucide-react'
-import { useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
 import { CabecalhoTela } from '../componentes/CabecalhoTela'
 import { usePainel } from '../estado/contexto'
@@ -96,13 +96,50 @@ function Rotulado({ id, rotulo, dica, erro, children }: PropsRotulado) {
   )
 }
 
+const SAIR = paraHash({ tela: 'materias' })
+
 export function TelaNovaMateria() {
   const { dados, despachar } = usePainel()
-  const [form, setForm] = useState<Formulario>(() => formularioVazio(dados.regraPadrao))
+  const [inicial] = useState<Formulario>(() => formularioVazio(dados.regraPadrao))
+  const [form, setForm] = useState<Formulario>(inicial)
+  // Qualquer mudança cria um formulário novo; se ainda é o inicial, não há nada a perder.
+  // Digitar e apagar conta como preenchido: perguntar à toa é melhor que apagar sem avisar.
+  const preenchido = form !== inicial
+  const [confirmandoSaida, setConfirmandoSaida] = useState(false)
+  const botaoCancelar = useRef<HTMLButtonElement>(null)
+  const botaoFicar = useRef<HTMLButtonElement>(null)
   const [passo, setPasso] = useState(0)
   const [erro, setErro] = useState<ErroCampo | null>(null)
   const [status, setStatus] = useState('')
   const tituloPasso = useRef<HTMLHeadingElement>(null)
+
+  // Fechar ou recarregar a aba com o formulário preenchido: o navegador pergunta antes
+  // (a mensagem é a padrão dele; os navegadores não deixam mudar o texto).
+  useEffect(() => {
+    if (!preenchido) return
+    const avisar = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = '' // Chrome antes da versão 119 só pergunta com isto.
+    }
+    window.addEventListener('beforeunload', avisar)
+    return () => window.removeEventListener('beforeunload', avisar)
+  }, [preenchido])
+
+  function pedirConfirmacaoDeSaida() {
+    // Com o aviso aberto, o Cancelar fecha ele de novo (é o que o aria-expanded promete).
+    if (confirmandoSaida) {
+      setConfirmandoSaida(false)
+      return
+    }
+    flushSync(() => setConfirmandoSaida(true))
+    // O foco vai para a opção que não apaga nada.
+    botaoFicar.current?.focus()
+  }
+
+  function continuarPreenchendo() {
+    flushSync(() => setConfirmandoSaida(false))
+    botaoCancelar.current?.focus()
+  }
 
   /** Troca de passo e põe o foco no título dele, que diz em que passo está. */
   function irPara(novo: number) {
@@ -774,10 +811,43 @@ export function TelaNovaMateria() {
               </>
             )}
           </button>
-          <a href={paraHash({ tela: 'materias' })} className="botao botao--fantasma nm-acoes__cancelar">
-            Cancelar
-          </a>
+          {preenchido ? (
+            <button
+              ref={botaoCancelar}
+              type="button"
+              className="botao botao--fantasma nm-acoes__cancelar"
+              onClick={pedirConfirmacaoDeSaida}
+              aria-expanded={confirmandoSaida}
+              aria-controls="nm-sair"
+            >
+              Cancelar
+            </button>
+          ) : (
+            <a href={SAIR} className="botao botao--fantasma nm-acoes__cancelar">
+              Cancelar
+            </a>
+          )}
         </div>
+        {confirmandoSaida && (
+          <div id="nm-sair" className="aviso aviso--atencao nm-sair" role="group" aria-labelledby="nm-sair-texto">
+            <p id="nm-sair-texto" className="aviso__texto">
+              <strong>Sair sem salvar?</strong> Tudo o que você preencheu nesta matéria será apagado.
+            </p>
+            <div className="nm-sair__botoes">
+              <button
+                ref={botaoFicar}
+                type="button"
+                className="botao botao--fantasma botao--pequeno"
+                onClick={continuarPreenchendo}
+              >
+                Continuar preenchendo
+              </button>
+              <a href={SAIR} className="botao botao--perigo botao--pequeno">
+                Sair sem salvar
+              </a>
+            </div>
+          </div>
+        )}
         {/* Fica sempre na página: o leitor de tela só anuncia mudanças numa região que já existia. */}
         <p role="status" className="nm-status muted">
           {status}

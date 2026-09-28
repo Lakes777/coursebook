@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
@@ -323,5 +323,54 @@ describe('TelaNovaMateria', () => {
     for (let i = 0; i < 4; i++) await continuar()
     await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
     expect(materiaSalva(nav).nome).toBe('POO 2')
+  })
+
+  describe('Cancelar', () => {
+    it('sai direto quando nada foi preenchido', () => {
+      montar()
+      expect(screen.getByRole('link', { name: 'Cancelar' })).toHaveAttribute('href', '#/materias')
+    })
+
+    it('pergunta antes de apagar o que foi preenchido', async () => {
+      montar()
+      await digitar(screen.getByLabelText('Nome da matéria'), 'Cálculo')
+      await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+
+      expect(screen.getByText(/será apagado/)).toBeInTheDocument()
+      // O foco vai para a opção que não apaga nada.
+      expect(screen.getByRole('button', { name: 'Continuar preenchendo' })).toHaveFocus()
+      expect(screen.getByRole('link', { name: 'Sair sem salvar' })).toHaveAttribute('href', '#/materias')
+
+      await userEvent.click(screen.getByRole('button', { name: 'Continuar preenchendo' }))
+      expect(screen.queryByText(/será apagado/)).not.toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Cancelar' })).toHaveFocus()
+      expect(screen.getByLabelText('Nome da matéria')).toHaveValue('Cálculo')
+    })
+
+    it('avisa ao fechar a aba só quando há algo preenchido', async () => {
+      montar()
+      const fechar = () => {
+        const evento = new Event('beforeunload', { cancelable: true })
+        window.dispatchEvent(evento)
+        return evento.defaultPrevented
+      }
+      expect(fechar()).toBe(false)
+      await digitar(screen.getByLabelText('Nome da matéria'), 'Cálculo')
+      expect(fechar()).toBe(true)
+      // Saindo da tela, o aviso não pode ficar preso na página.
+      cleanup()
+      expect(fechar()).toBe(false)
+    })
+
+    it('o Cancelar abre e fecha o aviso', async () => {
+      montar()
+      await digitar(screen.getByLabelText('Nome da matéria'), 'Cálculo')
+      const cancelar = screen.getByRole('button', { name: 'Cancelar' })
+      await userEvent.click(cancelar)
+      expect(cancelar).toHaveAttribute('aria-expanded', 'true')
+      await userEvent.click(cancelar)
+      expect(cancelar).toHaveAttribute('aria-expanded', 'false')
+      expect(screen.queryByText(/será apagado/)).not.toBeInTheDocument()
+    })
   })
 })
