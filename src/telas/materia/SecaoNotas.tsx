@@ -2,7 +2,7 @@ import { useId, useState } from 'react'
 import { Selo } from '../../componentes/Selo'
 import { usePainel } from '../../estado/contexto'
 import { formatarData } from '../../logica/datas'
-import { NOTA_MAXIMA, notaRA, type SituacaoNota } from '../../logica/notas'
+import { extrasPorRA, NOTA_MAXIMA, notaRA, pontosDoRA, type SituacaoNota } from '../../logica/notas'
 import { formatarNota, formatarPorcentagem } from '../../logica/numeros'
 import type { Avaliacao, Materia, RegraAprovacao, ResultadoAprendizagem } from '../../logica/tipos'
 import { dicaAvaliacao, fracaoDoRA } from '../materiaUtil'
@@ -18,6 +18,7 @@ export function SecaoNotas({ materia, regra, situacao }: Props) {
   const { despachar } = usePainel()
   // Diz o que acabou de ser salvo: sem isto, quem usa leitor de tela sai do campo sem saber.
   const [salvo, setSalvo] = useState('')
+  const extras = extrasPorRA(materia.ras, materia.pontosExtras)
 
   function salvarNota(ra: ResultadoAprendizagem, avaliacao: Avaliacao, nota: number | null) {
     despachar({
@@ -55,6 +56,8 @@ export function SecaoNotas({ materia, regra, situacao }: Props) {
               fracao={fracaoDoRA(ra, materia.ras)}
               regra={regra}
               situacao={situacao}
+              extra={extras[ra.id] ?? 0}
+              pontosExtras={pontosDoRA(ra.id, materia.pontosExtras)}
               aoSalvarNota={(avaliacao, nota) => salvarNota(ra, avaliacao, nota)}
               aoSalvarRecuperacao={(nota) => salvarRecuperacao(ra, nota)}
             />
@@ -73,12 +76,15 @@ interface PropsRA {
   fracao: number
   regra: RegraAprovacao
   situacao: SituacaoNota
+  /** Os pontos extras do RA já de 0 a 10 (para a conta) e como foram dados (para mostrar). */
+  extra: number
+  pontosExtras: number
   aoSalvarNota: (avaliacao: Avaliacao, nota: number | null) => void
   aoSalvarRecuperacao: (nota: number | null) => void
 }
 
-function CartaoRA({ ra, fracao, regra, situacao, aoSalvarNota, aoSalvarRecuperacao }: PropsRA) {
-  const nota = notaRA(ra, regra)
+function CartaoRA({ ra, fracao, regra, situacao, extra, pontosExtras, aoSalvarNota, aoSalvarRecuperacao }: PropsRA) {
+  const nota = notaRA(ra, regra, extra)
   const rec = regra.recuperacao
   const precisaRecuperar = situacao.tipo === 'recuperacao' && situacao.ras.includes(ra.id)
   // Com a recuperação lançada, o RA está fechado: as avaliações sem nota contam 0 e não há o que pedir.
@@ -104,6 +110,15 @@ function CartaoRA({ ra, fracao, regra, situacao, aoSalvarNota, aoSalvarRecuperac
         Nota do RA: <strong>{nota === null ? 'sem notas ainda' : formatarNota(nota)}</strong>
         {nota !== null && <span className="muted"> (de 10)</span>}
       </p>
+      {pontosExtras > 0 && (
+        <p className="muted ra__extras">
+          {fracao === 0
+            ? `Tem +${formatarNota(pontosExtras)} de pontos extras, mas este RA não conta na nota final.`
+            : nota === null
+              ? `Tem +${formatarNota(pontosExtras)} de pontos extras, que já contam na nota final.`
+              : `Inclui +${formatarNota(pontosExtras)} de pontos extras.`}
+        </p>
+      )}
       {precisaRecuperar && <Selo tom="atencao">Precisa de recuperação</Selo>}
 
       {ra.avaliacoes.length === 0 ? (

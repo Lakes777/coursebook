@@ -398,7 +398,7 @@ describe('editar uma matéria', () => {
       { id: 'nova', nota: null },
     ])
     expect(editada.faltas).toBe(POO.faltas)
-    expect(editada.pontosExtras).toBe(POO.pontosExtras)
+    expect(editada.pontosExtras).toEqual(POO.pontosExtras)
   })
 
   it('acha a nota certa quando RAs diferentes têm avaliações de mesmo id (JSON importado)', () => {
@@ -427,6 +427,31 @@ describe('editar uma matéria', () => {
     const form = materiaParaForm({ ...POO, regra: { ...POO.regra!, recuperacao: undefined } }, REGRA_PUCPR)
     expect(form.regra.temRecuperacao).toBe(false)
     expect(aplicarEdicao(POO, form).ras[0].notaRecuperacao).toBe(6.5)
+  })
+
+  it('horário salvo antes de existir o fim: o formulário pede para completar', () => {
+    const antiga: Materia = { ...POO, horarios: [{ dia: 2, inicio: '19:00' }] }
+    const form = materiaParaForm(antiga, REGRA_PUCPR)
+    expect(form.horarios[0]).toMatchObject({ inicio: '19:00', fim: '', aulas: '', aulasManual: false })
+    expect(conferirMateria(form)).toMatchObject({ campo: idHorario(form.horarios[0].chave, 'fim') })
+    // Completar o fim sugere as aulas, e aí dá para salvar.
+    form.horarios[0] = mudarHorarioForm(form.horarios[0], { fim: '22:30' })
+    expect(form.horarios[0].aulas).toBe('4')
+    expect(conferirMateria(form)).toBeNull()
+  })
+
+  it('remover um RA leva os pontos extras dele, e a revisão avisa', () => {
+    const comExtras: Materia = {
+      ...POO,
+      pontosExtras: [
+        { id: 'x1', pontos: 0.5, comentario: 'Lista', raId: 'r1' },
+        { id: 'x2', pontos: 0.2, comentario: 'Monitoria' },
+      ],
+    }
+    const form = materiaParaForm(comExtras, REGRA_PUCPR)
+    form.ras = [form.ras[1]]
+    expect(perdasDaEdicao(comExtras, form)).toContain('Ponto extra +0,5 de RA1 (Lista)')
+    expect(aplicarEdicao(comExtras, form).pontosExtras).toEqual([{ id: 'x2', pontos: 0.2, comentario: 'Monitoria' }])
   })
 
   it('voltar para a regra padrão tira o campo regra', () => {

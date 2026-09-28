@@ -279,3 +279,14 @@
 .form-linha__erro {
   flex-basis: 100%;
 }
+
+/* "No RA2, que vale 3,0": embaixo dos pontos, ocupando a linha toda. */
+.form-linha__escala {
+  flex-basis: 100%;
+  margin-top: -6px;
+}
+
+.ra__extras {
+  margin: -4px 0 0;
+  font-size: 0.85rem;
+}

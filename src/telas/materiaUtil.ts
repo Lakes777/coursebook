@@ -85,9 +85,16 @@ export function erroDaFalta(falta: Pick<Falta, 'data' | 'quantidade'>): ErroCamp
 /** O erro do ponto extra e o campo dele. */
 export function erroDoPontoExtra(
   extra: Pick<PontoExtra, 'pontos' | 'comentario'>,
+  /** Quanto vale o RA que recebe os pontos (10 para a nota final): mais que isso não faz sentido. */
+  escala = 10,
 ): ErroCampo<CampoPontoExtra> | null {
   const mensagem = erroPontoExtra(extra)
-  if (mensagem === null) return null
+  if (mensagem === null) {
+    if (extra.pontos > escala) {
+      return { campo: 'pontos', mensagem: `Aqui os pontos extras vão até ${formatarNota(escala)}, que é quanto o RA vale.` }
+    }
+    return null
+  }
   const campo: CampoPontoExtra =
     erroPontoExtra({ pontos: extra.pontos, comentario: 'x' }) !== null ? 'pontos' : 'comentario'
   return { campo, mensagem }

@@ -188,7 +188,12 @@ function lerRA(valor: unknown, onde: string, id: ReturnType<typeof criarIds>): R
   return ra
 }
 
-function lerPontoExtra(valor: unknown, onde: string, id: ReturnType<typeof criarIds>): PontoExtra {
+function lerPontoExtra(
+  valor: unknown,
+  onde: string,
+  id: ReturnType<typeof criarIds>,
+  ras: Set<string>,
+): PontoExtra {
   const p = objeto(valor, onde)
   const extra: PontoExtra = {
     id: id(p.id, onde),
@@ -196,6 +201,12 @@ function lerPontoExtra(valor: unknown, onde: string, id: ReturnType<typeof criar
     comentario: texto(p.comentario, `${onde} > comentario`),
   }
   conferir(onde, erroPontoExtra(extra))
+  // Sem RA (ausente, null ou ""): vai para a nota final.
+  const raId = texto(p.raId, `${onde} > raId`, '')
+  if (raId !== '') {
+    if (!ras.has(raId)) falhar(onde, `não existe RA com o id "${raId}" nesta matéria.`)
+    extra.raId = raId
+  }
   const data = dataOpcional(p.data, `${onde} > data`)
   if (data) extra.data = data
   return extra
@@ -222,6 +233,8 @@ function lerMateria(valor: unknown, onde: string, id: ReturnType<typeof criarIds
   const idRA = criarIds()
   const idExtra = criarIds()
   const idFalta = criarIds()
+  const ras = lista(m.ras, `${aqui} > ras`).map((r, i) => lerRA(r, `${aqui} > RA ${i + 1}`, idRA))
+  const idsRA = new Set(ras.map((ra) => ra.id))
   const materia: Materia = {
     id: id(m.id, aqui),
     nome: n,
@@ -230,9 +243,9 @@ function lerMateria(valor: unknown, onde: string, id: ReturnType<typeof criarIds
       lerHorario(h, `${aqui} > Horário ${i + 1}`),
     ),
     cargaHoraria,
-    ras: lista(m.ras, `${aqui} > ras`).map((r, i) => lerRA(r, `${aqui} > RA ${i + 1}`, idRA)),
+    ras,
     pontosExtras: lista(m.pontosExtras, `${aqui} > pontosExtras`).map((p, i) =>
-      lerPontoExtra(p, `${aqui} > Ponto extra ${i + 1}`, idExtra),
+      lerPontoExtra(p, `${aqui} > Ponto extra ${i + 1}`, idExtra, idsRA),
     ),
     faltas: lista(m.faltas, `${aqui} > faltas`).map((f, i) => lerFalta(f, `${aqui} > Falta ${i + 1}`, idFalta)),
   }

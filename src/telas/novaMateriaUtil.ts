@@ -436,6 +436,7 @@ export function materiaParaForm(materia: Materia, regraPadrao: RegraAprovacao): 
 export function aplicarEdicao(original: Materia, form: Formulario): Materia {
   const nova = montarMateria(form, original.id)
   const rasAntes = new Map(original.ras.map((ra) => [ra.id, ra]))
+  const idsQueFicam = new Set(nova.ras.map((ra) => ra.id))
   return {
     ...nova,
     ras: nova.ras.map((ra) => {
@@ -448,7 +449,8 @@ export function aplicarEdicao(original: Materia, form: Formulario): Materia {
       }
     }),
     faltas: original.faltas,
-    pontosExtras: original.pontosExtras,
+    // Os extras de um RA removido saem junto com ele (perdasDaEdicao avisa).
+    pontosExtras: original.pontosExtras.filter((e) => e.raId === undefined || idsQueFicam.has(e.raId)),
   }
 }
 
@@ -466,6 +468,11 @@ export function perdasDaEdicao(original: Materia, form: Formulario): string[] {
     }
     if (ra.notaRecuperacao !== null && !fica) {
       perdas.push(`Recuperação ${formatarNota(ra.notaRecuperacao)} de ${ra.nome}`)
+    }
+    if (!fica) {
+      for (const extra of original.pontosExtras.filter((e) => e.raId === ra.id)) {
+        perdas.push(`Ponto extra +${formatarNota(extra.pontos)} de ${ra.nome} (${extra.comentario})`)
+      }
     }
   }
   return perdas

@@ -5,6 +5,9 @@ import {
   erroAvaliacao,
   erroPontoExtra,
   erroRA,
+  escalaRA,
+  extrasDaNotaFinal,
+  extrasPorRA,
   naEscala,
   notaDe0a10,
   notaRA,
@@ -524,3 +527,95 @@ describe('pontos extras', () => {
     })
   })
 })
+
+describe('pontos extras por RA', () => {
+  const extra = (pontos: number, raId?: string): PontoExtra => ({
+    id: proximoId('x'),
+    pontos,
+    comentario: 'Lista',
+    ...(raId ? { raId } : {}),
+  })
+
+  it('a escala do RA: valor da avaliação única, soma de pontos, ou 10', () => {
+    expect(escalaRA(ra(1, [av(1, null, 3)]))).toBe(3)
+    // Pontos que se somam: prova de 3,0 peso 3 + projeto de 7,0 peso 7.
+    expect(escalaRA(ra(1, [av(3, null, 3), av(7, null, 7)]))).toBe(10)
+    expect(escalaRA(ra(1, [av(1, null, 2), av(1, null, 1)]))).toBe(10)
+    // Peso igual ao valor em todas: pontos que se somam, mesmo com valores iguais (5 + 5 = 10).
+    expect(escalaRA(ra(1, [av(5, null, 5), av(5, null, 5)]))).toBe(10)
+    expect(escalaRA(ra(1, [av(2, null, 2), av(1, null, 1)]))).toBe(3)
+    // Duas provas de 10 com pesos diferentes: média, de 0 a 10.
+    expect(escalaRA(ra(1, [av(1, null), av(2, null)]))).toBe(10)
+    expect(escalaRA(ra(1, []))).toBe(10)
+  })
+
+  it('converte os pontos para a nota de 0 a 10 de cada RA', () => {
+    const ra1 = ra(1, [av(1, null, 3)])
+    const ra2 = ra(1, [av(1, null)])
+    const extras = [extra(0.3, ra1.id), extra(0.3, ra1.id), extra(0.5, ra2.id), extra(1), extra(0.2, 'sumiu')]
+    expect(extrasPorRA([ra1, ra2], extras)).toEqual({ [ra1.id]: 2, [ra2.id]: 0.5 })
+    expect(totalPontosExtras(extrasDaNotaFinal(extras))).toBe(1)
+  })
+
+  it('somam na nota do RA, com teto de 10', () => {
+    const r = ra(1, [av(1, 9)])
+    expect(notaRA(r, REGRA_PUCPR, 0.5)).toBe(9.5)
+    expect(notaRA(r, REGRA_PUCPR, 3)).toBe(10)
+    // O extra de um RA cheio não passa para os outros RAs.
+    const cheio = ra(1, [av(1, 10)])
+    const outro = ra(1, [av(1, 3)])
+    // (10 + 3) / 2 = 6,5; sem o teto, seriam (12 + 3) / 2 = 7,5 e passaria.
+    expect(situacaoNota([cheio, outro], REGRA_PUCPR, 0, { [cheio.id]: 2 })).toMatchObject({
+      tipo: 'recuperacao',
+      media: 6.5,
+    })
+  })
+
+  it('entram antes da recuperação: podem tirar o RA dela', () => {
+    const r1 = ra(1, [av(1, 6)])
+    const r2 = ra(1, [av(1, 8)])
+    // RA1 6,0 + 1,0 de extra = 7,0: não precisa mais de recuperação, e a média é 7,5.
+    expect(situacaoNota([r1, r2], REGRA_PUCPR, 0, { [r1.id]: 1 })).toMatchObject({ tipo: 'aprovado', media: 7.5 })
+    // Sem o extra, o RA1 vai para a recuperação.
+    expect(situacaoNota([r1, r2], REGRA_PUCPR)).toMatchObject({ tipo: 'aprovado', media: 7 })
+    const r3 = ra(1, [av(1, 5)])
+    // RA3 5,0 + 0,5 = 5,5: a média fica 6,75 e o RA3 continua abaixo de 7,0.
+    expect(situacaoNota([r3, r2], REGRA_PUCPR, 0, { [r3.id]: 0.5 })).toMatchObject({
+      tipo: 'recuperacao',
+      ras: [r3.id],
+    })
+    expect(situacaoNota([r3, r2], REGRA_PUCPR, 0, { [r3.id]: 2 })).toMatchObject({ tipo: 'aprovado', media: 7.5 })
+  })
+
+  it('o extra de um RA ainda sem nota já conta, mas não entra na média de agora', () => {
+    const feito = ra(1, [av(1, 6)])
+    const pendente = ra(1, [av(1, null)])
+    const situacao = situacaoNota([feito, pendente], REGRA_PUCPR, 0, { [pendente.id]: 2 })
+    // (7 − 0,5·6 − 0,5·2) / 0,5 = 6,0; a média de agora continua 6,0 (só o RA com nota).
+    expect(situacao).toEqual({ tipo: 'possivel', media: 6, notaNecessaria: 6 })
+  })
+
+  it('na média de agora, o extra entra na proporção do que já saiu do RA', () => {
+    // Um RA só, metade feita (6,0) e +2,0 de extra: o cartão do RA mostra 8,0, e a média de agora também.
+    const r = ra(1, [av(1, 6), av(1, null)])
+    expect(notaRA(r, REGRA_PUCPR, 2)).toBe(8)
+    expect(situacaoNota([r], REGRA_PUCPR, 0, { [r.id]: 2 })).toMatchObject({ tipo: 'possivel', media: 8 })
+  })
+
+  it('a nota necessária considera o teto de 10 do RA que tem extra', () => {
+    // RA1: 10 numa avaliação, outra pendente e +4 de extra; RA2 pendente; mesmo peso.
+    const r1 = ra(1, [av(1, 10), av(1, null)])
+    const r2 = ra(1, [av(1, null)])
+    const situacao = situacaoNota([r1, r2], REGRA_PUCPR, 0, { [r1.id]: 4 })
+    // Com x nas pendentes: RA1 = min(10, (10 + x)/2 + 4) = 10 já com x = 2; RA2 = x.
+    // Média (10 + x)/2 >= 7 pede x = 4,0 (a conta direta diria 3,4, e aí ele cairia na recuperação).
+    expect(situacao).toMatchObject({ tipo: 'possivel', notaNecessaria: 4 })
+  })
+
+  it('RA recuperado soma o extra antes de comparar com a recuperação', () => {
+    const r1 = ra(1, [av(1, 4)], { notaRecuperacao: 6 })
+    expect(notaRA(r1, REGRA_PUCPR, 3)).toBe(7)
+    expect(notaRA(r1, REGRA_PUCPR, 1)).toBe(6)
+  })
+})
+

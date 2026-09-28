@@ -2,7 +2,7 @@ import type { EventoNaAgenda } from '../logica/eventos'
 import type { SituacaoFaltas } from '../logica/faltas'
 import { situacaoFaltas } from '../logica/faltas'
 import type { SituacaoNota } from '../logica/notas'
-import { situacaoNota, totalPontosExtras } from '../logica/notas'
+import { extrasDaNotaFinal, extrasPorRA, situacaoNota, totalPontosExtras } from '../logica/notas'
 import { formatarNota } from '../logica/numeros'
 import type { Materia, RegraAprovacao } from '../logica/tipos'
 
@@ -19,7 +19,12 @@ export function resumoMateria(materia: Materia, regraPadrao: RegraAprovacao): Re
   const regra = materia.regra ?? regraPadrao
   return {
     regra,
-    nota: situacaoNota(materia.ras, regra, totalPontosExtras(materia.pontosExtras)),
+    nota: situacaoNota(
+      materia.ras,
+      regra,
+      totalPontosExtras(extrasDaNotaFinal(materia.pontosExtras)),
+      extrasPorRA(materia.ras, materia.pontosExtras),
+    ),
     faltas: situacaoFaltas(materia.faltas, materia.cargaHoraria, regra.frequenciaMinima),
   }
 }

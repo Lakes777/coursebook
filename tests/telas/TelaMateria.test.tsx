@@ -221,10 +221,12 @@ describe('TelaMateria', () => {
     expect(screen.getByRole('heading', { name: 'Faltas' })).toHaveFocus()
   })
 
-  it('adiciona pontos extras com comentário e eles entram na conta', async () => {
+  it('pontos extras na nota final: pedem comentário e entram na conta', async () => {
     const user = userEvent.setup()
     const nav = montar()
     const extras = screen.getByRole('region', { name: 'Pontos extras' })
+    await user.selectOptions(within(extras).getByRole('combobox', { name: 'Vale para' }), 'Nota final')
+    expect(within(extras).getByText('Na nota final, de 0 a 10,0.')).toBeInTheDocument()
 
     // Sem comentário não vai.
     await user.type(within(extras).getByRole('textbox', { name: 'Pontos' }), '0,7')
@@ -235,10 +237,58 @@ describe('TelaMateria', () => {
 
     await user.type(comentario, '  Lista 3  ')
     await user.click(within(extras).getByRole('button', { name: 'Adicionar' }))
-    expect(salvos(nav).materias[0].pontosExtras).toMatchObject([{ pontos: 0.7, comentario: 'Lista 3' }])
-    expect(within(extras).getByText('Total de 0,7, somado na nota final (até 10).')).toBeInTheDocument()
+    const [salvo] = salvos(nav).materias[0].pontosExtras
+    expect(salvo).toMatchObject({ pontos: 0.7, comentario: 'Lista 3' })
+    expect(salvo).not.toHaveProperty('raId')
+    expect(within(extras).getByText('+0,7 na nota final')).toBeInTheDocument()
     // Com 0,7 a mais, precisa de (7 − 0,7 − 2,1) / 0,7 = 6,0 no que falta.
     expect(screen.getAllByText('Precisa de 6,0 (de 10) no que falta')[0]).toBeInTheDocument()
+  })
+
+  it('pontos extras num RA ficam na escala dele e aumentam a nota do RA', async () => {
+    const user = userEvent.setup()
+    const nav = montar()
+    const extras = screen.getByRole('region', { name: 'Pontos extras' })
+    // O RA vem escolhido primeiro; o RA1 da POO vale 3,0.
+    expect(within(extras).getByRole('combobox', { name: 'Vale para' })).toHaveValue('r1')
+    expect(within(extras).getByText('No RA1, que vale 3,0.')).toBeInTheDocument()
+
+    await user.type(within(extras).getByRole('textbox', { name: 'Pontos' }), '0,6')
+    await user.type(within(extras).getByRole('textbox', { name: 'De onde vieram' }), 'Monitoria')
+    await user.click(within(extras).getByRole('button', { name: 'Adicionar' }))
+
+    expect(salvos(nav).materias[0].pontosExtras).toMatchObject([{ pontos: 0.6, raId: 'r1' }])
+    // +0,6 de 3,0 é +2,0 de 10: o RA1 vai de 7,0 para 9,0.
+    expect(within(cartaoRA('RA1')).getByText('9,0')).toBeInTheDocument()
+    expect(within(cartaoRA('RA1')).getByText('Inclui +0,6 de pontos extras.')).toBeInTheDocument()
+    // 0,3 · 9,0 = 2,7; faltam 70%: (7 − 2,7) / 0,7 = 6,14 -> 6,2.
+    expect(screen.getAllByText('Precisa de 6,2 (de 10) no que falta')[0]).toBeInTheDocument()
+  })
+
+  it('extra num RA sem nota já conta na nota final', async () => {
+    const user = userEvent.setup()
+    montar()
+    const extras = screen.getByRole('region', { name: 'Pontos extras' })
+    await user.selectOptions(within(extras).getByRole('combobox', { name: 'Vale para' }), 'RA2')
+    await user.type(within(extras).getByRole('textbox', { name: 'Pontos' }), '0,3')
+    await user.type(within(extras).getByRole('textbox', { name: 'De onde vieram' }), 'Lista')
+    await user.click(within(extras).getByRole('button', { name: 'Adicionar' }))
+    expect(within(cartaoRA('RA2')).getByText(/Tem \+0,3 de pontos extras, que já contam/)).toBeInTheDocument()
+    // +0,3 de 3,0 = +1,0 no RA2 (30% da nota): (7 − 2,1 − 0,3) / 0,7 = 6,57 -> 6,6.
+    expect(screen.getAllByText('Precisa de 6,6 (de 10) no que falta')[0]).toBeInTheDocument()
+  })
+
+  it('não aceita mais pontos extras do que o RA vale', async () => {
+    const user = userEvent.setup()
+    const nav = montar()
+    const extras = screen.getByRole('region', { name: 'Pontos extras' })
+    const pontos = within(extras).getByRole('textbox', { name: 'Pontos' })
+    await user.type(pontos, '3,5')
+    await user.type(within(extras).getByRole('textbox', { name: 'De onde vieram' }), 'Bônus')
+    await user.click(within(extras).getByRole('button', { name: 'Adicionar' }))
+    expect(pontos).toHaveAttribute('aria-invalid', 'true')
+    expect(pontos).toHaveAccessibleDescription(/vão até 3,0/)
+    expect(nav.itens.has(CHAVE)).toBe(false)
   })
 
   it('volta para a regra padrão quando a matéria tem regra própria', async () => {

@@ -115,9 +115,55 @@ export function erroPontoExtra(extra: Pick<PontoExtra, 'pontos' | 'comentario'>)
   return null
 }
 
-/** Soma dos pontos extras da matéria. */
+/** Soma dos pontos extras (use com os da nota final: os de RA estão em escalas diferentes). */
 export function totalPontosExtras(extras: PontoExtra[]): number {
   return limpar(extras.reduce((soma, e) => soma + e.pontos, 0))
+}
+
+/** Os pontos extras que vão direto para a nota final (os sem RA). */
+export function extrasDaNotaFinal(extras: PontoExtra[]): PontoExtra[] {
+  return extras.filter((e) => e.raId === undefined)
+}
+
+/**
+ * Quanto o RA "vale", para ler os pontos extras dados a ele: +0,3 num RA que vale
+ * 3,0 é 1,0 na nota de 0 a 10 dele. Na ordem:
+ * - uma avaliação só: o valor dela;
+ * - cada peso igual ao valor (prova de 5,0 peso 5 + trabalho de 5,0 peso 5, o jeito de
+ *   escrever pontos que se somam): a soma, 10;
+ * - todas valendo o mesmo (duas provas de 10, pesos quaisquer): esse valor;
+ * - pesos proporcionais aos valores (prova de 3,0 peso 1 + projeto de 6,0 peso 2): a soma;
+ * - nos outros casos, 10.
+ */
+export function escalaRA(ra: Pick<ResultadoAprendizagem, 'avaliacoes'>): number {
+  const contam = ra.avaliacoes.filter((a) => a.peso > 0)
+  if (contam.length === 0) return NOTA_MAXIMA
+  if (contam.length === 1) return contam[0].valorMaximo
+  const soma = limpar(contam.reduce((total, a) => total + a.valorMaximo, 0))
+  if (contam.every((a) => a.peso === a.valorMaximo)) return soma
+  const primeira = contam[0]
+  if (contam.every((a) => a.valorMaximo === primeira.valorMaximo)) return primeira.valorMaximo
+  const razao = limpar(primeira.peso / primeira.valorMaximo)
+  if (contam.every((a) => limpar(a.peso / a.valorMaximo) === razao)) return soma
+  return NOTA_MAXIMA
+}
+
+/** Os pontos extras dados a um RA, como foram lançados (na escala dele). */
+export function pontosDoRA(raId: string, extras: PontoExtra[]): number {
+  return limpar(extras.filter((e) => e.raId === raId).reduce((soma, e) => soma + e.pontos, 0))
+}
+
+/**
+ * Os pontos extras de cada RA, já na nota de 0 a 10 dele (id do RA -> pontos).
+ * Extra de um RA que não existe mais é ignorado.
+ */
+export function extrasPorRA(ras: ResultadoAprendizagem[], extras: PontoExtra[]): Record<string, number> {
+  const porRA: Record<string, number> = {}
+  for (const ra of ras) {
+    const pontos = pontosDoRA(ra.id, extras)
+    if (pontos > 0) porRA[ra.id] = limpar((pontos / escalaRA(ra)) * NOTA_MAXIMA)
+  }
+  return porRA
 }
 
 /** Nota de 0 a 10 de uma avaliação: 2,4 de 3,0 vira 8,0. */
@@ -164,9 +210,15 @@ function comRecuperacao(
  * nota, e com a recuperação aplicada. Null se nenhuma nota saiu. Um RA recuperado
  * está fechado: avaliação dele que ficou sem nota conta 0, igual na nota final.
  */
-export function notaRA(ra: ResultadoAprendizagem, regra: RegraAprovacao): number | null {
-  const nota = comRecuperacao(mediaDoRA(ra, foiRecuperado(ra, regra)), ra, regra)
+export function notaRA(ra: ResultadoAprendizagem, regra: RegraAprovacao, extra = 0): number | null {
+  const media = mediaDoRA(ra, foiRecuperado(ra, regra))
+  const nota = comRecuperacao(media === null ? null : comExtra(media, extra), ra, regra)
   return nota === null ? null : paraExibir(nota, regra)
+}
+
+/** A nota do RA com os pontos extras dele (já de 0 a 10), com teto de 10. */
+function comExtra(media: number, extra: number): number {
+  return Math.min(NOTA_MAXIMA, media + extra)
 }
 
 /**
@@ -179,17 +231,33 @@ interface Fatia {
   nota: number | null
 }
 
-function fatias(ras: ResultadoAprendizagem[], regra: RegraAprovacao): Fatia[] {
+interface Fatias {
+  fatias: Fatia[]
+  /**
+   * Pontos da nota final que vêm dos extras dos RAs ainda abertos. O teto de 10 do RA
+   * é aplicado contando 0 no que falta, então nunca conta extra a mais.
+   */
+  bonus: number
+  /** A parte do `bonus` dos RAs que já têm alguma nota (entra na média "de agora"). */
+  bonusFeito: number
+}
+
+function fatias(ras: ResultadoAprendizagem[], regra: RegraAprovacao, extras: Record<string, number>): Fatias {
   const comPeso = ras.filter((ra) => ra.peso > 0)
   const somaRAs = comPeso.reduce((soma, ra) => soma + ra.peso, 0)
   const resultado: Fatia[] = []
+  let bonus = 0
+  let bonusFeito = 0
   for (const ra of comPeso) {
     const fracao = ra.peso / somaRAs
+    const extra = extras[ra.id] ?? 0
     const avaliacoes = ra.avaliacoes.filter((a) => a.peso > 0)
     if (foiRecuperado(ra, regra)) {
-      // RA recuperado está fechado: a nota dele é uma só.
-      resultado.push({ peso: fracao, nota: comRecuperacao(mediaDoRA(ra, true), ra, regra) })
-    } else if (avaliacoes.length === 0) {
+      // RA recuperado está fechado: a nota dele é uma só (com os extras, antes da recuperação).
+      resultado.push({ peso: fracao, nota: comRecuperacao(comExtra(mediaDoRA(ra, true) ?? 0, extra), ra, regra) })
+      continue
+    }
+    if (avaliacoes.length === 0) {
       // RA sem avaliações cadastradas ainda: conta como uma avaliação pendente.
       resultado.push({ peso: fracao, nota: null })
     } else {
@@ -198,31 +266,82 @@ function fatias(ras: ResultadoAprendizagem[], regra: RegraAprovacao): Fatia[] {
         resultado.push({ peso: (fracao * a.peso) / somaAvaliacoes, nota: notaDe0a10(a) })
       }
     }
+    if (extra > 0) {
+      bonus += fracao * Math.min(extra, NOTA_MAXIMA - (mediaDoRA(ra, true) ?? 0))
+      // Na média de agora, o extra entra na mesma proporção das notas que já saíram:
+      // com metade do RA feita, entra metade do extra (senão o RA pela metade valeria demais).
+      const mediaFeita = mediaDoRA(ra, false)
+      if (mediaFeita !== null) {
+        const somaAvaliacoes = avaliacoes.reduce((soma, a) => soma + a.peso, 0)
+        const pesoFeito = avaliacoes.filter((a) => a.nota !== null).reduce((soma, a) => soma + a.peso, 0)
+        bonusFeito += fracao * (pesoFeito / somaAvaliacoes) * Math.min(extra, NOTA_MAXIMA - mediaFeita)
+      }
+    }
   }
-  return resultado
+  return { fatias: resultado, bonus, bonusFeito }
 }
 
 /**
- * Situação da matéria pelas notas. `extras` é a soma dos pontos extras, que entra
- * na nota final (com teto de 10). Avaliações e RAs inválidos (veja `erroAvaliacao`
- * e `erroRA`) devem ser barrados antes, no formulário e ao carregar os dados.
+ * A nota final se todas as avaliações pendentes tirassem `x` (de 0 a 10), com os
+ * extras de cada RA e o teto de 10 de cada um. Serve para achar a nota necessária
+ * quando há extras em RA: aí a conta direta erra, porque o RA que bate no 10 perde o
+ * que passar dele.
+ */
+function finalSeTirar(
+  x: number,
+  ras: ResultadoAprendizagem[],
+  regra: RegraAprovacao,
+  extras: number,
+  extrasRA: Record<string, number>,
+): number {
+  const comPeso = ras.filter((ra) => ra.peso > 0)
+  const somaRAs = comPeso.reduce((soma, ra) => soma + ra.peso, 0)
+  let total = 0
+  for (const ra of comPeso) {
+    const extra = extrasRA[ra.id] ?? 0
+    let nota: number
+    if (foiRecuperado(ra, regra)) {
+      nota = comRecuperacao(comExtra(mediaDoRA(ra, true) ?? 0, extra), ra, regra) ?? 0
+    } else {
+      const avaliacoes = ra.avaliacoes.filter((a) => a.peso > 0)
+      const somaPesos = avaliacoes.reduce((soma, a) => soma + a.peso, 0)
+      const media =
+        avaliacoes.length === 0
+          ? x
+          : avaliacoes.reduce((soma, a) => soma + (notaDe0a10(a) ?? x) * a.peso, 0) / somaPesos
+      nota = comExtra(media, extra)
+    }
+    total += (ra.peso / somaRAs) * nota
+  }
+  return Math.min(NOTA_MAXIMA, total + extras)
+}
+
+/**
+ * Situação da matéria pelas notas. `extras` é a soma dos pontos extras da nota final
+ * (com teto de 10); `extrasRA` são os extras de cada RA, já de 0 a 10 (veja
+ * `extrasPorRA`). Avaliações e RAs inválidos (veja `erroAvaliacao` e `erroRA`) devem
+ * ser barrados antes, no formulário e ao carregar os dados.
  */
 export function situacaoNota(
   ras: ResultadoAprendizagem[],
   regra: RegraAprovacao,
   extras = 0,
+  extrasRA: Record<string, number> = {},
 ): SituacaoNota {
-  const todas = fatias(ras, regra)
+  const { fatias: todas, bonus, bonusFeito } = fatias(ras, regra, extrasRA)
   if (todas.length === 0) return { tipo: 'sem-avaliacoes' }
 
   const comExtras = (nota: number) => Math.min(NOTA_MAXIMA, nota + extras)
   const feitas = todas.filter((f) => f.nota !== null)
-  const pontos = feitas.reduce((soma, f) => soma + f.peso * f.nota!, 0)
+  const pontosFeitos = feitas.reduce((soma, f) => soma + f.peso * f.nota!, 0)
+  // Os extras dos RAs contam como pontos que já estão garantidos.
+  const pontos = pontosFeitos + bonus
   const pesoFeito = feitas.reduce((soma, f) => soma + f.peso, 0)
   const pesoPendente = 1 - pesoFeito
 
-  // Média do que já saiu (a nota "de agora"), só para mostrar.
-  const media = pesoFeito > 0 ? paraExibir(comExtras(pontos / pesoFeito), regra) : null
+  // Média do que já saiu (a nota "de agora"), só para mostrar. Só entram os extras dos
+  // RAs que já têm nota: o extra de um RA sem nota nenhuma inflaria a média dos outros.
+  const media = pesoFeito > 0 ? paraExibir(comExtras((pontosFeitos + bonusFeito) / pesoFeito), regra) : null
   // Nota final contando 0 no que falta: se já alcança a média, está garantido.
   const garantida = comExtras(pontos)
   const rec = regra.recuperacao
@@ -238,7 +357,7 @@ export function situacaoNota(
       (ra) =>
         ra.peso > 0 &&
         !foiRecuperado(ra, regra) &&
-        !alcanca(mediaDoRA(ra, true) ?? 0, regra.mediaMinima, regra),
+        !alcanca(comExtra(mediaDoRA(ra, true) ?? 0, extrasRA[ra.id] ?? 0), regra.mediaMinima, regra),
     )
     if (rec && alcanca(garantida, rec.notaMinima, regra) && paraRecuperar.length > 0) {
       return {
@@ -257,8 +376,20 @@ export function situacaoNota(
   }
 
   /** Quanto precisa (de 0 a 10) em cada avaliação pendente para a nota final chegar em `minimo`. */
-  const precisaPara = (minimo: number) =>
-    arredondarParaCima((meta(minimo, regra) - extras - pontos) / pesoPendente)
+  const direta = (minimo: number) => arredondarParaCima((meta(minimo, regra) - extras - pontos) / pesoPendente)
+  const temExtraEmRA = Object.values(extrasRA).some((e) => e > 0)
+  const precisaPara = (minimo: number) => {
+    // Sem extras em RA, a conta direta é exata (cada ponto nas pendentes chega inteiro na nota final).
+    if (!temExtraEmRA) return direta(minimo)
+    // Com eles, testa de 0,1 em 0,1: a nota final só cresce com a nota das pendentes,
+    // então a primeira que alcança é a menor que basta (e já sai com 1 casa, para cima).
+    for (let decimos = 0; decimos <= NOTA_MAXIMA * 10; decimos++) {
+      const x = decimos / 10
+      if (alcanca(finalSeTirar(x, ras, regra, extras, extrasRA), minimo, regra)) return x
+    }
+    // Nem com 10 em tudo: qualquer valor acima de 10 serve para dizer "impossível".
+    return Math.max(direta(minimo), NOTA_MAXIMA + 0.1)
+  }
 
   const notaNecessaria = precisaPara(regra.mediaMinima)
   if (notaNecessaria <= NOTA_MAXIMA) return { tipo: 'possivel', media, notaNecessaria }

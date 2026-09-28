@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { REGRA_PUCPR, type Dados } from '../../src/logica/tipos'
+import { dadosVazios } from '../../src/logica/armazenamento'
 import { validarDados } from '../../src/logica/validacao'
 
 /** Dados completos e corretos, com uma matéria de cada coisa. */
@@ -313,5 +314,21 @@ describe('validarDados', () => {
     const r = validarDados(dados)
     if (!r.ok) throw new Error(r.erro)
     expect(r.valor.eventos[0]).not.toHaveProperty('materiaId')
+  })
+})
+
+describe('pontos extras por RA', () => {
+  it('o carregamento confere o RA do ponto extra', () => {
+    const materia = (raId?: string) => ({
+      ...dadosVazios(),
+      materias: [
+        { nome: 'POO', ras: [{ id: 'r1', nome: 'RA1', peso: 1 }], pontosExtras: [{ pontos: 0.3, comentario: 'Lista', raId }] },
+      ],
+    })
+    const noRA = validarDados(materia('r1'))
+    expect(noRA.ok && noRA.valor.materias[0].pontosExtras[0].raId).toBe('r1')
+    const semRA = validarDados(materia())
+    expect(semRA.ok && semRA.valor.materias[0].pontosExtras[0]).not.toHaveProperty('raId')
+    expect(validarDados(materia('r9'))).toMatchObject({ ok: false, erro: expect.stringContaining('"r9"') })
   })
 })

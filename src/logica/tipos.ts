@@ -80,6 +80,11 @@ export interface ResultadoAprendizagem {
  */
 export interface PontoExtra {
   id: string
+  /**
+   * O RA que ganha os pontos, na escala dele (+0,3 num RA que vale 3,0). Sem este
+   * campo, os pontos vão para a nota final (de 0 a 10). Opcional porque veio depois.
+   */
+  raId?: string
   pontos: number
   comentario: string
   data?: DataISO

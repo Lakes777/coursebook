@@ -19,7 +19,7 @@ export function dadosDeExemplo(hoje: Date = new Date()): Dados {
     regraPadrao: structuredClone(REGRA_PUCPR),
     materias: [
       {
-        // Já fechada e aprovada, com ponto extra.
+        // Já fechada e aprovada, com ponto extra no RA2.
         id: 'exemplo-estruturas',
         nome: 'Estruturas de Dados',
         professor: 'Prof.ª Helena Duarte',
@@ -49,7 +49,9 @@ export function dadosDeExemplo(hoje: Date = new Date()): Dados {
             ],
           },
         ],
-        pontosExtras: [{ id: 'monitoria', pontos: 0.3, comentario: 'Monitoria no laboratório', data: d(-20) }],
+        pontosExtras: [
+          { id: 'monitoria', raId: 'ra2', pontos: 0.3, comentario: 'Monitoria no laboratório', data: d(-20) },
+        ],
         faltas: [
           { id: 'f1', data: d(-30), quantidade: 2 },
           { id: 'f2', data: d(-12), quantidade: 2 },
