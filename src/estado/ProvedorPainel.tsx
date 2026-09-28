@@ -38,7 +38,6 @@ export function ProvedorPainel({ inicial, armazenamento, children }: Props) {
     ultimoSalvo.current = dados
     // Efeito certo para isto: sincroniza com o localStorage (sistema externo) e só
     // guarda o resultado; quando continua null, o React nem redesenha.
-    // oxlint-disable-next-line react/set-state-in-effect
     setErroAoSalvar(salvar(dados, armazenamento))
   }, [dados, podeSalvar, armazenamento])
 
