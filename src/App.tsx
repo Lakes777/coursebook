@@ -1,6 +1,7 @@
 import { CalendarDays, DatabaseBackup, GraduationCap, LibraryBig } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { Avisos } from './componentes/Avisos'
+import { AvisoDesfazer } from './componentes/AvisoDesfazer'
 import { ID_TITULO_TELA } from './componentes/CabecalhoTela'
 import { paraHash, type Rota } from './navegacao/rota'
 import { useRota } from './navegacao/useRota'
@@ -88,6 +89,7 @@ function App() {
         <Avisos />
         <Tela rota={rota} />
       </main>
+      <AvisoDesfazer />
     </>
   )
 }

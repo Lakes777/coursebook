@@ -122,6 +122,24 @@ export function carregar(armazenamento?: Armazenamento, agora = new Date()): Car
   }
 }
 
+/**
+ * Relê os dados que outra aba acabou de salvar. Ao contrário de carregar(), nunca
+ * grava: o que não der para ler (ex.: salvo por uma versão mais nova do site, aberta
+ * na outra aba) volta como null, e quem chamou decide o que fazer.
+ * Sem nada salvo (a outra aba limpou os dados do site), é um painel vazio, como seria ao recarregar.
+ */
+export function releer(armazenamento?: Armazenamento): Dados | null {
+  let texto: string | null
+  try {
+    texto = (armazenamento ?? localStorage).getItem(CHAVE)
+  } catch {
+    return null
+  }
+  if (texto === null) return dadosVazios()
+  const lido = lerDados(texto)
+  return lido.ok ? lido.valor : null
+}
+
 /** Salva os dados. Devolve null se deu certo, ou a mensagem de erro. */
 export function salvar(dados: Dados, armazenamento?: Armazenamento): string | null {
   try {

@@ -116,8 +116,45 @@ describe('ProvedorPainel', () => {
     expect(result.current.erroAoSalvar).toBeNull()
   })
 
-  it('para de salvar quando outra aba grava, para não apagar o que ela fez', () => {
+  it('troca os dados quando outra aba salva, sem regravar (senão as abas ficariam se respondendo)', () => {
     const { result, nav } = montar()
+    nav.itens.set(CHAVE, JSON.stringify({ ...dadosVazios(), materias: [FILOSOFIA] }))
+    outraAbaSalvou()
+    expect(result.current.dados.materias).toEqual([FILOSOFIA])
+    expect(result.current.mudouEmOutraAba).toBe(false)
+    expect(result.current.podeSalvar).toBe(true)
+    expect(nav.gravacoes).toBe(0)
+    // Depois disso, continua salvando normalmente o que é feito aqui.
+    act(() => result.current.despachar({ tipo: 'materia/remover', materiaId: 'filo' }))
+    expect(nav.gravacoes).toBe(1)
+    expect(JSON.parse(nav.itens.get(CHAVE)!).materias).toEqual([])
+  })
+
+  it('no StrictMode também não regrava o que veio da outra aba', () => {
+    const { result, nav } = montar({}, navegador(), true)
+    nav.itens.set(CHAVE, JSON.stringify({ ...dadosVazios(), materias: [FILOSOFIA] }))
+    outraAbaSalvou()
+    expect(result.current.dados.materias).toEqual([FILOSOFIA])
+    expect(nav.gravacoes).toBe(0)
+  })
+
+  it('a outra aba limpou tudo (key null): fica vazio, como ao recarregar', () => {
+    const { result, nav } = montar({ dados: { ...dadosVazios(), materias: [FILOSOFIA] } })
+    outraAbaSalvou(null)
+    expect(result.current.dados).toEqual(dadosVazios())
+    expect(nav.gravacoes).toBe(0)
+  })
+
+  it('ignora outras chaves', () => {
+    const { result, nav } = montar()
+    nav.itens.set(CHAVE, JSON.stringify({ ...dadosVazios(), materias: [FILOSOFIA] }))
+    outraAbaSalvou('outra-coisa')
+    expect(result.current.dados.materias).toEqual([])
+  })
+
+  it('para de salvar quando a outra aba grava algo que esta não lê (ex.: versão mais nova)', () => {
+    const { result, nav } = montar()
+    nav.itens.set(CHAVE, JSON.stringify({ ...dadosVazios(), versao: 99 }))
     outraAbaSalvou()
     expect(result.current.mudouEmOutraAba).toBe(true)
     expect(result.current.podeSalvar).toBe(false)
@@ -125,12 +162,14 @@ describe('ProvedorPainel', () => {
     expect(nav.gravacoes).toBe(0)
   })
 
-  it('também para quando outra aba limpa tudo (key null), mas ignora outras chaves', () => {
-    const { result } = montar()
-    outraAbaSalvou('outra-coisa')
-    expect(result.current.mudouEmOutraAba).toBe(false)
-    outraAbaSalvou(null)
-    expect(result.current.mudouEmOutraAba).toBe(true)
+  it('desfazer volta os dados e grava a volta', () => {
+    const { result, nav } = montar({ dados: { ...dadosVazios(), materias: [FILOSOFIA] } })
+    act(() => result.current.despachar({ tipo: 'materia/remover', materiaId: 'filo' }))
+    expect(result.current.desfazer?.texto).toBe('Matéria "Filosofia" removida.')
+    act(() => result.current.aoDesfazer())
+    expect(result.current.dados.materias).toEqual([FILOSOFIA])
+    expect(result.current.desfazer).toBeNull()
+    expect(JSON.parse(nav.itens.get(CHAVE)!).materias).toEqual([FILOSOFIA])
   })
 
   it('usePainel fora do provedor explica o erro', () => {
@@ -144,19 +183,21 @@ describe('App com o provedor', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Não deu para ler os dados salvos.')
     await userEvent.click(screen.getByRole('button', { name: 'Entendi' }))
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
-    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.queryByText(/Nada está sendo salvo|alterado em outra aba/)).not.toBeInTheDocument()
   })
 
   it('continua dizendo que nada é salvo depois que o aviso é fechado', async () => {
     renderApp({ aviso: 'O navegador não deixou ler os dados salvos.', podeSalvar: false })
     await userEvent.click(screen.getByRole('button', { name: 'Entendi' }))
-    expect(screen.getByRole('status')).toHaveTextContent('Nada está sendo salvo neste navegador.')
+    expect(screen.getByText(/Nada está sendo salvo neste navegador\./).closest('[role=status]')).toBeInTheDocument()
   })
 
-  it('pede para recarregar quando outra aba salvou', () => {
-    renderApp({})
+  it('pede para recarregar quando outra aba salvou algo que esta não lê', () => {
+    const nav = navegador()
+    renderApp({}, nav)
+    nav.itens.set(CHAVE, '{"versao": 99}')
     outraAbaSalvou()
-    expect(screen.getByRole('status')).toHaveTextContent('alterado em outra aba')
+    expect(screen.getByText(/alterado em outra aba/).closest('[role=status]')).toBeInTheDocument()
   })
 
   it('mostra o erro ao salvar', () => {

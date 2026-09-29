@@ -163,7 +163,8 @@ a {
 }
 
 .conteudo {
-  padding-block: 24px 48px;
+  /* Espaço embaixo para o aviso de desfazer não tampar o fim da página. */
+  padding-block: 24px 96px;
 }
 
 .muted {
@@ -210,6 +211,42 @@ a {
 
 .aviso--perigo .icone {
   color: var(--perigo);
+}
+
+/* Desfazer: fixo no pé da página, por cima do conteúdo. */
+.desfazer {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  z-index: 10;
+  transform: translateX(-50%);
+  width: min(560px, calc(100% - 32px));
+  /* A região vazia não pode tampar cliques no que está atrás. */
+  pointer-events: none;
+}
+
+.desfazer__caixa {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px 10px 16px;
+  background: var(--surface-hover);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--destaque);
+  border-radius: var(--radius-pequeno);
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.5);
+  pointer-events: auto;
+}
+
+.desfazer__texto {
+  flex: 1;
+  margin: 0;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.desfazer__fechar {
+  padding: 6px;
 }
 
 /* ---------- Cartões ---------- */

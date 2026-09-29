@@ -22,8 +22,8 @@ export function Avisos() {
         <p role="status" className="aviso aviso--atencao">
           <Info className="icone" size={18} />
           <span className="aviso__texto">
-            O painel foi alterado em outra aba. Recarregue a página para ver os dados atuais; até lá, nada feito
-            aqui será salvo.
+            O painel foi alterado em outra aba com dados que esta não consegue ler (talvez a outra esteja com uma
+            versão mais nova do site). Recarregue a página; até lá, nada feito aqui será salvo.
           </span>
         </p>
       ) : (
