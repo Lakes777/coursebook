@@ -4,5 +4,19 @@
     { "path": "./tsconfig.app.json" },
     { "path": "./tsconfig.node.json" },
     { "path": "./tsconfig.servidor.json" }
-  ]
+  ],
+  // Não valem para o `tsc -b` (cada referência tem as suas): são para o `vercel build`,
+  // que confere os arquivos de api/ com este tsconfig. Sem elas, ele usa o padrão
+  // (sem strict e sem os tipos do Node) e aponta erros que não existem. O "module" tem
+  // que ser "nodenext": sem ele, a Vercel desliga o strict; com "esnext", ela gera ESM, e
+  // os imports sem extensão quebram. Com "nodenext" e sem "type": "module", sai CommonJS.
+  "compilerOptions": {
+    "target": "es2023",
+    "lib": ["ES2023"],
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "types": ["node"],
+    "strict": true,
+    "skipLibCheck": true
+  }
 }
