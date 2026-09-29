@@ -663,6 +663,34 @@ describe('horários ocupados', () => {
     })
   })
 
+  it('horário igual ao que já estava salvo pode continuar chocando; mudou, volta a conferir', () => {
+    // A matéria já tinha terça, 6ª e 7ª aula (em cima da POO): ao editar, salva do mesmo jeito.
+    const form = formCom([2, 5, 6])
+    expect(conferirMateria(form, ocupados, form.horarios)).toBeNull()
+    // Mudou para a 5ª à 7ª: é um horário novo, e choca.
+    const mudado = { ...form, horarios: [escolherAulas(form.horarios[0], 4, 6)] }
+    expect(conferirMateria(mudado, ocupados, form.horarios)?.mensagem).toMatch(/^Choca com POO/)
+    expect(passoDoErro(mudado, ocupados, form.horarios)).toBe(0)
+    // Mesmo já salvo, dois horários da própria matéria não podem chocar.
+    const dobrado = formCom([2, 5, 6], [2, 6, 6])
+    expect(conferirMateria(dobrado, ocupados, dobrado.horarios)?.mensagem).toMatch(/^Choca com o horário 1/)
+  })
+
+  it('horário salvo sem fim: preencher o fim que as aulas já davam continua sendo o mesmo horário', () => {
+    // Terça, da 4ª à 6ª aula (09:40 às 11:55), sem fim: em cima da POO.
+    const antiga = materia('velha', 'Velha', [{ dia: 2, inicio: '09:40', aulas: 3 }])
+    const inicial = materiaParaForm(antiga, REGRA_PUCPR)
+    expect(inicial.horarios[0].fim).toBe('')
+    const comFim = { ...inicial, horarios: [mudarHorarioForm(inicial.horarios[0], { fim: '11:55' })] }
+    expect(conferirMateria(comFim, ocupados, inicial.horarios)).toBeNull()
+    // Mudar só o número de aulas também não muda o intervalo.
+    const outrasAulas = { ...comFim, horarios: [mudarHorarioForm(comFim.horarios[0], { aulas: '2' })] }
+    expect(conferirMateria(outrasAulas, ocupados, inicial.horarios)).toBeNull()
+    // Um fim diferente é outro horário: volta a conferir.
+    const maior = { ...inicial, horarios: [mudarHorarioForm(inicial.horarios[0], { fim: '12:40' })] }
+    expect(conferirMateria(maior, ocupados, inicial.horarios)?.mensagem).toMatch(/^Choca com POO/)
+  })
+
   it('vale também para horas digitadas', () => {
     const h = mudarHorarioForm({ ...novoHorario(), modo: 'horas', dia: 3 }, { inicio: '09:00', fim: '10:00' })
     const form = { ...formularioVazio(REGRA_PUCPR), nome: 'Nova', cargaHoraria: '80', horarios: [h] }

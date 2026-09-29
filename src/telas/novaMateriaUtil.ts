@@ -1,4 +1,4 @@
-import { AULAS_PUC, aulasDaTabela, aulasDoHorario, horariosSeChocam } from '../logica/aulasPUC'
+import { AULAS_PUC, aulasDaTabela, aulasDoHorario, horariosSeChocam, intervaloHorario } from '../logica/aulasPUC'
 import { dataValida } from '../logica/datas'
 import { erroCargaHoraria, MAXIMO_AULAS_POR_DIA } from '../logica/faltas'
 import { erroHorario, faixaHorario, HORA, sugerirAulas } from '../logica/horarios'
@@ -267,10 +267,25 @@ function horarioDoForm(h: HorarioForm): Horario {
 }
 
 /**
+ * Mesmo dia e mesmo intervalo de verdade. Não compara campo a campo: um horário
+ * salvo sem fim ganha o fim no formulário (que o exige), e o número de aulas não
+ * muda o intervalo quando há fim.
+ */
+function mesmoHorario(a: Horario, b: Horario): boolean {
+  const x = intervaloHorario(a)
+  const y = intervaloHorario(b)
+  return a.dia === b.dia && x !== null && y !== null && x[0] === y[0] && x[1] === y[1]
+}
+
+/**
  * "Choca com POO (terça-feira, 09:40 às 12:40)." para o primeiro horário do
  * formulário que cai em cima de outro (de outra matéria ou desta mesma), ou null.
+ * Um horário igual a um de `jaSalvos` (o que a matéria já tinha ao abrir o
+ * formulário) pode chocar com outra matéria: aula quinzenal, dependência em outra
+ * turma. Assim um choque que já estava nos dados não impede de mudar só o nome.
  */
-function erroChoque(horarios: HorarioForm[], ocupados: HorarioOcupado[]): ErroCampo | null {
+function erroChoque(horarios: HorarioForm[], ocupados: HorarioOcupado[], jaSalvos: HorarioForm[]): ErroCampo | null {
+  const salvos = jaSalvos.map(horarioDoForm)
   for (const [i, h] of horarios.entries()) {
     const este = horarioDoForm(h)
     const campo = idHorario(h.chave, 'inicio')
@@ -278,6 +293,7 @@ function erroChoque(horarios: HorarioForm[], ocupados: HorarioOcupado[]): ErroCa
     if (outro !== -1) {
       return { campo, mensagem: `Choca com o horário ${outro + 1} desta matéria. Escolha outro horário.` }
     }
+    if (salvos.some((s) => mesmoHorario(s, este))) continue
     const ocupado = ocupados.find((o) => horariosSeChocam(este, o.horario))
     if (ocupado) {
       const { dia, inicio, fim } = ocupado.horario
@@ -310,7 +326,11 @@ export function aulasOcupadasNoDia(
   return resultado
 }
 
-export function conferirMateria(form: Formulario, ocupados: HorarioOcupado[] = []): ErroCampo | null {
+export function conferirMateria(
+  form: Formulario,
+  ocupados: HorarioOcupado[] = [],
+  jaSalvos: HorarioForm[] = [],
+): ErroCampo | null {
   const nome = erroNome(form.nome, ID_NOME, 'Dê um nome à matéria (ex.: "Programação Orientada a Objetos").')
   if (nome) return nome
   if (form.professor.trim().length > TAMANHO_MAXIMO_NOME) {
@@ -356,7 +376,7 @@ export function conferirMateria(form: Formulario, ocupados: HorarioOcupado[] = [
     if (erroAulas) return { campo: idHorario(h.chave, 'aulas'), mensagem: erroAulas }
   }
   // Só depois de cada horário estar certo sozinho: aí dá para comparar os intervalos.
-  return erroChoque(form.horarios, ocupados)
+  return erroChoque(form.horarios, ocupados, jaSalvos)
 }
 
 export function conferirRAs(form: Formulario): ErroCampo | null {
@@ -443,11 +463,19 @@ export function erroRegra(r: RegraForm, ids: IdsRegra = IDS_REGRA_MATERIA): Erro
   return null
 }
 
-/** Conferência de cada passo, na ordem de PASSOS (o último, revisar, confere tudo). */
-export function conferirPasso(passo: number, form: Formulario, ocupados: HorarioOcupado[] = []): ErroCampo | null {
+/**
+ * Conferência de cada passo, na ordem de PASSOS (o último, revisar, confere tudo).
+ * `ocupados` e `jaSalvos` vão para a conferência do choque de horários.
+ */
+export function conferirPasso(
+  passo: number,
+  form: Formulario,
+  ocupados: HorarioOcupado[] = [],
+  jaSalvos: HorarioForm[] = [],
+): ErroCampo | null {
   switch (passo) {
     case 0:
-      return conferirMateria(form, ocupados)
+      return conferirMateria(form, ocupados, jaSalvos)
     case 1:
       return conferirRAs(form)
     case 2:
@@ -455,14 +483,18 @@ export function conferirPasso(passo: number, form: Formulario, ocupados: Horario
     case 3:
       return conferirRegra(form)
     default:
-      return conferirMateria(form, ocupados) ?? conferirRAs(form) ?? conferirAvaliacoes(form) ?? conferirRegra(form)
+      return conferirMateria(form, ocupados, jaSalvos) ?? conferirRAs(form) ?? conferirAvaliacoes(form) ?? conferirRegra(form)
   }
 }
 
 /** Em que passo está o campo do erro (para o revisar levar até ele). */
-export function passoDoErro(form: Formulario, ocupados: HorarioOcupado[] = []): number | null {
+export function passoDoErro(
+  form: Formulario,
+  ocupados: HorarioOcupado[] = [],
+  jaSalvos: HorarioForm[] = [],
+): number | null {
   for (let passo = 0; passo < 4; passo++) {
-    if (conferirPasso(passo, form, ocupados)) return passo
+    if (conferirPasso(passo, form, ocupados, jaSalvos)) return passo
   }
   return null
 }

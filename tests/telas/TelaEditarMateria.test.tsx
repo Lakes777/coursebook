@@ -151,19 +151,33 @@ describe('TelaEditarMateria', () => {
     expect((JSON.parse(nav.itens.get(CHAVE)!) as Dados).materias[0].horarios).toEqual(comHorario.horarios)
   })
 
-  it('choque que já estava nos dados: avisa ao continuar, sem travar, e some ao trocar a aula', async () => {
-    montar([POO_TERCA, FILO_5A])
+  it('choque que já estava nos dados: salva quem só muda o nome, sem mexer no horário', async () => {
+    const nav = montar([POO_TERCA, FILO_5A])
     const horario = grupo('Horário 1')
     // A última aula salva continua visível, mesmo desativada (a 5ª, da Filosofia, fica no caminho).
     const ultima = within(horario).getByLabelText('Até a aula')
     expect(ultima).toHaveDisplayValue('7ª aula (até 12:40)')
     expect(within(ultima).getByRole('option', { name: '7ª aula (até 12:40)' })).toBeDisabled()
+    // Mudar só o nome: o horário é o mesmo de antes, então passa.
+    await userEvent.clear(screen.getByLabelText('Nome da matéria'))
+    await userEvent.type(screen.getByLabelText('Nome da matéria'), 'POO 2')
+    await continuar()
+    expect(tituloPasso()).toHaveTextContent('Passo 2 de 5')
+    for (let i = 0; i < 3; i++) await continuar()
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
+    expect(salva(nav)).toMatchObject({ nome: 'POO 2', horarios: POO_TERCA.horarios })
+  })
+
+  it('choque que já estava nos dados: trocar para outra aula em cima da Filosofia avisa, sem travar', async () => {
+    montar([POO_TERCA, FILO_5A])
+    const horario = grupo('Horário 1')
+    await userEvent.selectOptions(within(horario).getByLabelText('Da aula'), '3ª aula (08:35)')
     await continuar()
     const primeira = within(horario).getByLabelText('Da aula')
     expect(primeira).toHaveAccessibleDescription(/Choca com Filosofia \(terça-feira, 10:25 às 11:10\)/)
     expect(primeira).toHaveFocus()
     expect(tituloPasso()).toHaveTextContent('Passo 1 de 5')
-    await userEvent.selectOptions(ultima, '4ª aula (até 10:25)')
+    await userEvent.selectOptions(within(horario).getByLabelText('Até a aula'), '4ª aula (até 10:25)')
     await continuar()
     expect(tituloPasso()).toHaveTextContent('Passo 2 de 5')
   })
@@ -201,8 +215,25 @@ describe('TelaEditarMateria', () => {
       expect(salva(nav).ras[0].avaliacoes[0].nota).toBe(10)
     })
 
-    it('outra matéria passou a ocupar o horário: salvar no revisar volta ao passo 1 com o erro', async () => {
+    it('outra matéria passou a ocupar o horário salvo, sem mexer nele: salva mesmo assim', async () => {
+      // Decisão: o horário é o mesmo de quando o formulário abriu, então vale a mesma regra do
+      // choque que já estava nos dados. Na prática só acontece com importação na outra aba,
+      // já que o formulário de lá barraria o choque.
       const nav = montar([POO_TERCA])
+      await userEvent.clear(screen.getByLabelText('Nome da matéria'))
+      await userEvent.type(screen.getByLabelText('Nome da matéria'), 'POO 2')
+      for (let i = 0; i < 4; i++) await continuar()
+      outraAbaSalvou(nav, { ...dadosVazios(), materias: [POO_TERCA, FILO_5A] })
+      await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
+      const dados = JSON.parse(nav.itens.get(CHAVE)!) as Dados
+      expect(dados.materias.map((m) => m.nome)).toEqual(['POO 2', 'Filosofia'])
+      expect(dados.materias[0].horarios).toEqual(POO_TERCA.horarios)
+    })
+
+    it('outra matéria passou a ocupar o horário novo: salvar no revisar volta ao passo 1 com o erro', async () => {
+      const nav = montar([POO_TERCA])
+      // Muda o horário (4ª à 6ª): deixa de ser o que estava salvo.
+      await userEvent.selectOptions(within(grupo('Horário 1')).getByLabelText('Até a aula'), '6ª aula (até 11:55)')
       for (let i = 0; i < 4; i++) await continuar()
       expect(tituloPasso()).toHaveTextContent('Passo 5 de 5')
       outraAbaSalvou(nav, { ...dadosVazios(), materias: [POO_TERCA, FILO_5A] })

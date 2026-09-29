@@ -171,9 +171,10 @@ export function FormularioMateria({
 
   function enviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const problema = conferirPasso(passo, form, ocupados)
+    // Os horários de quando o formulário abriu podem continuar chocando (ver erroChoque).
+    const problema = conferirPasso(passo, form, ocupados, inicial.horarios)
     if (problema) {
-      mostrarErro(problema, passo === ULTIMO ? (passoDoErro(form, ocupados) ?? passo) : passo)
+      mostrarErro(problema, passo === ULTIMO ? (passoDoErro(form, ocupados, inicial.horarios) ?? passo) : passo)
       return
     }
     if (passo === PASSO_AVALIACOES || passo === ULTIMO) {

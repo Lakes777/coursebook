@@ -55,7 +55,8 @@ carregar no painel vazio com "Ver com dados de exemplo".
   que também serve para editar uma matéria sem perder as notas lançadas. O horário é escolhido
   pelas aulas da tabela da PUC-PR ("da 2ª até a 5ª aula"); para outro horário, dá para digitar as horas.
   Duas matérias (ou dois horários da mesma) não ocupam o mesmo horário: as aulas já ocupadas
-  aparecem desativadas, com o nome da matéria.
+  aparecem desativadas, com o nome da matéria. Um choque que já estava salvo (aula quinzenal,
+  dependência em outra turma) não impede de editar o resto da matéria.
 - **Cadastro com IA:** o botão "Copiar instruções para uma IA" copia um texto pronto. Colado
   num chat (ChatGPT, Claude...) junto com o PDF do plano de ensino, ele faz a IA devolver o JSON
   da matéria para importar.
