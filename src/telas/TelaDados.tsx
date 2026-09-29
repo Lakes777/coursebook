@@ -18,6 +18,8 @@ import {
   vazio,
 } from '../logica/transferencia'
 import type { Resultado } from '../logica/validacao'
+import { useNuvem } from '../nuvem/contexto'
+import { SecaoNuvem } from '../nuvem/SecaoNuvem'
 import { plural } from '../tema/textos'
 import { CamposRegra } from './CamposRegra'
 import {
@@ -33,15 +35,20 @@ import {
 import './dados.css'
 
 export function TelaDados() {
+  const comConta = useNuvem()?.conta != null
   return (
     <CabecalhoTela titulo="Dados">
       <p className="muted dados__intro">
-        Os dados ficam só neste navegador. Baixe um backup de vez em quando e antes de trocar de computador ou
-        limpar o navegador.
+        {comConta
+          ? 'Os dados ficam neste navegador e na sua conta na nuvem. Um backup de vez em quando ainda é uma boa ideia.'
+          : 'Os dados ficam só neste navegador. Baixe um backup de vez em quando e antes de trocar de ' +
+            'computador ou limpar o navegador.'}
       </p>
       <div className="dados">
         {/* Uma coluna com as partes curtas, para não sobrar buraco ao lado do "Importar", que é alto. */}
         <div className="dados__coluna">
+          {/* Primeiro: é onde o aviso de conflito do topo leva. Fora do <ProvedorNuvem>, não aparece. */}
+          <SecaoNuvem />
           <SecaoExportar />
           <SecaoRecomecar />
           <SecaoRegra />

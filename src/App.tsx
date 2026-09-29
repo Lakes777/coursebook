@@ -5,6 +5,7 @@ import { AvisoDesfazer } from './componentes/AvisoDesfazer'
 import { ID_TITULO_TELA } from './componentes/CabecalhoTela'
 import { paraHash, type Rota } from './navegacao/rota'
 import { useRota } from './navegacao/useRota'
+import { SituacaoNuvem } from './nuvem/SituacaoNuvem'
 import { TelaAgenda } from './telas/TelaAgenda'
 import { TelaDados } from './telas/TelaDados'
 import { TelaEditarMateria } from './telas/TelaEditarMateria'
@@ -70,10 +71,13 @@ function App() {
     <>
       <header className="topo">
         <div className="container topo__conteudo">
-          <h1 className="topo__titulo">
-            <GraduationCap className="icone" size={26} />
-            Painel de estudos
-          </h1>
+          <div className="topo__marca">
+            <h1 className="topo__titulo">
+              <GraduationCap className="icone" size={26} />
+              Painel de estudos
+            </h1>
+            <SituacaoNuvem />
+          </div>
           <nav aria-label="Seções" className="abas">
             {ABAS.map(({ tela, nome, Icone }) => (
               <a
