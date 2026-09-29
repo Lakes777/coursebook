@@ -232,7 +232,13 @@ describe('SecaoNuvem', () => {
     nuvem.logado = false
     const { user } = montar({ nuvem, dados: comMaterias('POO', 'BD'), conta: conta({ pendente: true }) })
     await waitFor(() => expect(naSecao().getByText(/Sua sessão terminou/)).toBeInTheDocument())
-    expect(naSecao().getByLabelText('E-mail')).toHaveValue('andre@exemplo.com')
+    const email = naSecao().getByLabelText('E-mail')
+    expect(email).toHaveValue('andre@exemplo.com')
+    // Só leitura: o pendente desta conta não pode ir parar em outra.
+    expect(email).toHaveAttribute('readonly')
+    expect(email).toHaveAccessibleDescription('Para entrar com outra conta, use "Sair" primeiro.')
+    await user.type(email, 'x')
+    expect(email).toHaveValue('andre@exemplo.com')
     await user.type(naSecao().getByLabelText('Senha'), 'senha-certa')
     await user.click(naSecao().getByRole('button', { name: 'Entrar' }))
     await waitFor(() => expect(nuvem.dados).toEqual(comMaterias('POO', 'BD')))

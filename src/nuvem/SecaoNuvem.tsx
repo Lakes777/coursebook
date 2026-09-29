@@ -67,7 +67,7 @@ function SemConta({ nuvem, concluir }: { nuvem: Nuvem; concluir: Concluir }) {
         key={cadastro ? 'cadastro' : 'entrar'}
         nuvem={nuvem}
         cadastro={cadastro}
-        emailInicial=""
+        email=""
         aoEntrar={(email) =>
           concluir(cadastro ? `Conta criada. Você entrou como ${email}.` : `Você entrou como ${email}.`)
         }
@@ -85,11 +85,17 @@ function SemConta({ nuvem, concluir }: { nuvem: Nuvem; concluir: Concluir }) {
 interface PropsFormulario {
   nuvem: Nuvem
   cadastro: boolean
-  emailInicial: string
+  /** O e-mail já preenchido. */
+  email: string
+  /**
+   * "Entre de novo" com a sessão acabada: o e-mail não muda, para os dados e o pendente
+   * desta conta não irem para outra. Quem quer outra conta sai primeiro.
+   */
+  emailFixo?: boolean
   aoEntrar: (email: string) => void
 }
 
-function FormularioConta({ nuvem, cadastro, emailInicial, aoEntrar }: PropsFormulario) {
+function FormularioConta({ nuvem, cadastro, email: emailInicial, emailFixo, aoEntrar }: PropsFormulario) {
   const [form, setForm] = useState<FormConta>({ email: emailInicial, senha: '', convite: '' })
   const [erro, setErro] = useState<ErroCampo | null>(null)
   const [erroGeral, setErroGeral] = useState<string | null>(null)
@@ -147,7 +153,12 @@ function FormularioConta({ nuvem, cadastro, emailInicial, aoEntrar }: PropsFormu
   const nome = cadastro ? 'Criar conta' : 'Entrar'
   return (
     <form className="nuvem__form" onSubmit={enviar} noValidate aria-label={nome} aria-busy={enviando || undefined}>
-      <Rotulado id={IDS.email} rotulo="E-mail" erro={erro}>
+      <Rotulado
+        id={IDS.email}
+        rotulo="E-mail"
+        dica={emailFixo ? 'Para entrar com outra conta, use "Sair" primeiro.' : undefined}
+        erro={erro}
+      >
         {(props) => (
           <input
             {...props}
@@ -155,6 +166,7 @@ function FormularioConta({ nuvem, cadastro, emailInicial, aoEntrar }: PropsFormu
             type="email"
             autoComplete="username"
             maxLength={LIMITES.emailMaximo}
+            readOnly={emailFixo}
             value={form.email}
             onChange={(e) => mudar('email', e.target.value)}
           />
@@ -296,7 +308,8 @@ function ComConta({ nuvem, conta, concluir }: { nuvem: Nuvem; conta: ContaGuarda
         <FormularioConta
           nuvem={nuvem}
           cadastro={false}
-          emailInicial={conta.email}
+          email={conta.email}
+          emailFixo
           aoEntrar={(email) => concluir(`Você entrou de novo como ${email}.`)}
         />
       )}
