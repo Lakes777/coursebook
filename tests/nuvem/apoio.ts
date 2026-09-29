@@ -139,17 +139,21 @@ export class NuvemFalsa implements ClienteNuvem {
   }
 
   baixar() {
-    return this.responder('baixar', () => ({ ok: true, valor: { dados: this.dados, revisao: this.revisao } }))
+    // Cópias, como numa API de verdade: nenhum teste pode depender de a nuvem e o painel dividirem o objeto.
+    return this.responder('baixar', () => ({
+      ok: true,
+      valor: { dados: structuredClone(this.dados), revisao: this.revisao },
+    }))
   }
 
   salvar(pedido: PedidoSalvar) {
     return this.responder('salvar', () => {
-      this.salvos.push(pedido)
+      this.salvos.push(structuredClone(pedido))
       if (pedido.revisao !== this.revisao) {
         const erro: RespostaConflito = {
           codigo: 'conflito',
           erro: 'Outro aparelho salvou antes.',
-          dados: this.dados,
+          dados: structuredClone(this.dados),
           revisao: this.revisao,
         }
         return { ok: false, status: 409, erro }
