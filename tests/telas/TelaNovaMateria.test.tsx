@@ -1,4 +1,4 @@
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import App from '../../src/App'
@@ -419,19 +419,41 @@ describe('TelaNovaMateria', () => {
       expect(screen.getByRole('heading', { level: 2, name: 'Agenda' })).toBeInTheDocument()
     })
 
-    it('o voltar do navegador também pergunta, e o endereço volta para o formulário', async () => {
-      montarApp()
+    /** Matérias -> Nova matéria de verdade no histórico do jsdom, com o formulário preenchido. */
+    async function abrirPelaLista() {
+      window.location.hash = '#/materias'
+      render(
+        <ProvedorPainel inicial={{ dados: dadosVazios(), aviso: null, podeSalvar: true }} armazenamento={navegador()}>
+          <App />
+        </ProvedorPainel>,
+      )
+      window.location.hash = '#/nova-materia'
+      await waitFor(() => expect(screen.getByLabelText('Nome da matéria')).toBeInTheDocument())
       await digitar(screen.getByLabelText('Nome da matéria'), 'Cálculo')
-      // O voltar muda o hash sozinho; o painel só fica sabendo pelo evento.
-      act(() => {
-        history.replaceState(null, '', '#/materias')
-        window.dispatchEvent(new HashChangeEvent('hashchange'))
-      })
-      expect(window.location.hash).toBe('#/nova-materia')
-      expect(screen.getByText(/será apagado/)).toBeInTheDocument()
+    }
+
+    it('o voltar do navegador também pergunta, e o endereço volta para o formulário', async () => {
+      await abrirPelaLista()
+      const entradas = history.length
+      act(() => history.back())
+      await waitFor(() => expect(screen.getByText(/será apagado/)).toBeInTheDocument())
+      await waitFor(() => expect(window.location.hash).toBe('#/nova-materia'))
+      // Nenhuma entrada do histórico foi reescrita nem criada.
+      expect(history.length).toBe(entradas)
 
       await userEvent.click(screen.getByRole('button', { name: 'Continuar preenchendo' }))
       expect(screen.getByLabelText('Nome da matéria')).toHaveValue('Cálculo')
+    })
+
+    it('depois do voltar, "Sair sem salvar" volta de verdade (sem entrada nova no histórico)', async () => {
+      await abrirPelaLista()
+      const entradas = history.length
+      act(() => history.back())
+      await waitFor(() => expect(window.location.hash).toBe('#/nova-materia'))
+      await userEvent.click(screen.getByRole('button', { name: 'Sair sem salvar' }))
+      await waitFor(() => expect(window.location.hash).toBe('#/materias'))
+      await waitFor(() => expect(screen.queryByLabelText('Nome da matéria')).not.toBeInTheDocument())
+      expect(history.length).toBe(entradas)
     })
 
     it('depois de salvar, vai para a matéria sem perguntar', async () => {

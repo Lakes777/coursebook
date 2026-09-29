@@ -172,6 +172,15 @@ describe('ProvedorPainel', () => {
     expect(JSON.parse(nav.itens.get(CHAVE)!).materias).toEqual([FILOSOFIA])
   })
 
+  it('depois de a outra aba salvar, não dá para desfazer (voltaria o que ela fez)', () => {
+    const { result, nav } = montar({ dados: { ...dadosVazios(), materias: [FILOSOFIA] } })
+    act(() => result.current.despachar({ tipo: 'materia/remover', materiaId: 'filo' }))
+    expect(result.current.desfazer).not.toBeNull()
+    nav.itens.set(CHAVE, JSON.stringify({ ...dadosVazios(), eventos: [] }))
+    outraAbaSalvou()
+    expect(result.current.desfazer).toBeNull()
+  })
+
   it('usePainel fora do provedor explica o erro', () => {
     expect(() => renderHook(() => usePainel())).toThrow(/dentro do <ProvedorPainel>/)
   })

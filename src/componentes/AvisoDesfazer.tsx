@@ -41,6 +41,7 @@ export function AvisoDesfazer() {
     const focoNoAviso = caixa.current?.contains(document.activeElement)
     aoDesfazer()
     setDesfeito(true)
+    // O aviso some sem "mouseleave": sem isto, o próximo ficaria parado para sempre.
     setParado(false)
     if (focoNoAviso) document.getElementById(ID_TITULO_TELA)?.focus()
   }
@@ -51,24 +52,30 @@ export function AvisoDesfazer() {
     document.getElementById(ID_TITULO_TELA)?.focus()
   }
 
+  const voltarRef = useRef(voltar)
+  useEffect(() => {
+    voltarRef.current = voltar
+  })
+
   useEffect(() => {
     if (!desfazer) return
     const aoTeclar = (e: KeyboardEvent) => {
       const atalho = (e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key.toLowerCase() === 'z'
       if (!atalho || ehCampoDeTexto(e.target)) return
       e.preventDefault()
-      aoDesfazer()
-      setDesfeito(true)
+      voltarRef.current()
     }
     window.addEventListener('keydown', aoTeclar)
     return () => window.removeEventListener('keydown', aoTeclar)
-  }, [desfazer, aoDesfazer])
+  }, [desfazer])
 
-  // A região existe sempre: o leitor de tela só anuncia mudanças numa região que já estava na página.
+  // O texto fica num <p role="status"> que existe sempre (o leitor de tela só anuncia
+  // mudanças numa região que já estava na página), e os botões ficam fora dele: senão
+  // o anúncio seria "Falta removida. Desfazer Fechar aviso".
+  const texto = desfazer ? desfazer.texto : desfeito ? 'Desfeito.' : ''
   return (
     <div
       ref={caixa}
-      role="status"
       className="desfazer"
       onMouseEnter={() => setParado(true)}
       onMouseLeave={() => setParado(false)}
@@ -77,29 +84,27 @@ export function AvisoDesfazer() {
         if (!e.currentTarget.contains(e.relatedTarget)) setParado(false)
       }}
     >
-      {desfazer ? (
-        <div className="desfazer__caixa">
-          <p className="desfazer__texto">{desfazer.texto}</p>
-          <button type="button" className="botao botao--pequeno" onClick={voltar}>
-            <Undo2 className="icone" size={16} aria-hidden="true" />
-            Desfazer
-          </button>
-          <button
-            type="button"
-            className="botao botao--fantasma botao--pequeno desfazer__fechar"
-            onClick={fechar}
-            aria-label="Fechar aviso"
-          >
-            <X className="icone" size={16} aria-hidden="true" />
-          </button>
-        </div>
-      ) : (
-        desfeito && (
-          <div className="desfazer__caixa">
-            <p className="desfazer__texto">Desfeito.</p>
-          </div>
-        )
-      )}
+      <div className={texto ? 'desfazer__caixa' : undefined}>
+        <p role="status" className={texto ? 'desfazer__texto' : 'invisivel'}>
+          {texto}
+        </p>
+        {desfazer && (
+          <>
+            <button type="button" className="botao botao--pequeno" onClick={voltar}>
+              <Undo2 className="icone" size={16} aria-hidden="true" />
+              Desfazer
+            </button>
+            <button
+              type="button"
+              className="botao botao--fantasma botao--pequeno desfazer__fechar"
+              onClick={fechar}
+              aria-label="Fechar aviso"
+            >
+              <X className="icone" size={16} aria-hidden="true" />
+            </button>
+          </>
+        )}
+      </div>
     </div>
   )
 }

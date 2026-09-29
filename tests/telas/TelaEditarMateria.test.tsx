@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
@@ -122,5 +122,45 @@ describe('TelaEditarMateria', () => {
     expect(screen.getByText('Nota 9,0 de Lista (RA1)')).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Salvar matéria' }))
     expect(salva(nav).ras[0].avaliacoes).toMatchObject([{ id: 'a1', nota: 8 }])
+  })
+
+  describe('outra aba mexe na matéria com o formulário aberto', () => {
+    function outraAbaSalvou(nav: ReturnType<typeof navegador>, dados: Dados) {
+      nav.itens.set(CHAVE, JSON.stringify(dados))
+      act(() => void window.dispatchEvent(new StorageEvent('storage', { key: CHAVE })))
+    }
+
+    it('removida: o formulário continua, avisa, e salvar coloca a matéria de volta', async () => {
+      const nav = montar()
+      await userEvent.clear(screen.getByLabelText('Nome da matéria'))
+      await userEvent.type(screen.getByLabelText('Nome da matéria'), 'POO 2')
+      outraAbaSalvou(nav, dadosVazios())
+
+      expect(screen.getByRole('alert')).toHaveTextContent('removida em outra aba')
+      expect(screen.getByLabelText('Nome da matéria')).toHaveValue('POO 2')
+      for (let i = 0; i < 4; i++) await continuar()
+      await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
+      expect(salva(nav).nome).toBe('POO 2')
+      expect(salva(nav).faltas).toEqual(POO.faltas)
+    })
+
+    it('alterada: avisa, e salvar mantém as notas de agora', async () => {
+      const nav = montar()
+      const comNota: Materia = {
+        ...POO,
+        ras: [{ ...POO.ras[0], avaliacoes: [{ ...POO.ras[0].avaliacoes[0], nota: 10 }, POO.ras[0].avaliacoes[1]] }],
+      }
+      outraAbaSalvou(nav, { ...dadosVazios(), materias: [comNota] })
+      expect(screen.getByRole('alert')).toHaveTextContent('alterada em outra aba')
+      for (let i = 0; i < 4; i++) await continuar()
+      await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
+      expect(salva(nav).ras[0].avaliacoes[0].nota).toBe(10)
+    })
+
+    it('a outra aba salvou sem mexer nesta matéria: nenhum aviso', () => {
+      const nav = montar()
+      outraAbaSalvou(nav, { ...dadosVazios(), materias: [POO], eventos: [] })
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    })
   })
 })

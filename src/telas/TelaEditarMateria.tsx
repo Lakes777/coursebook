@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { CabecalhoTela } from '../componentes/CabecalhoTela'
 import { usePainel } from '../estado/contexto'
+import { iguais } from '../logica/iguais'
 import type { Materia } from '../logica/tipos'
 import { paraHash } from '../navegacao/rota'
 import { navegar } from '../navegacao/useRota'
@@ -12,8 +13,11 @@ const Atencao = ICONE_AVISO.atencao
 
 export function TelaEditarMateria({ id }: { id: string }) {
   const { dados } = usePainel()
-  const materia = dados.materias.find((m) => m.id === id)
-  if (!materia) {
+  const atual = dados.materias.find((m) => m.id === id)
+  // A matéria de quando a tela abriu: se outra aba removê-la com o formulário aberto,
+  // o que foi digitado aqui não some junto.
+  const [aberta] = useState(atual)
+  if (!aberta) {
     return (
       <CabecalhoTela titulo="Matéria não encontrada">
         <p className="muted">
@@ -22,21 +26,41 @@ export function TelaEditarMateria({ id }: { id: string }) {
       </CabecalhoTela>
     )
   }
-  return <EditarMateria materia={materia} />
+  return <EditarMateria aberta={aberta} atual={atual} />
+}
+
+/** O aviso de quando a matéria mudou ou sumiu em outra aba depois que o formulário abriu. */
+function avisoOutraAba(aberta: Materia, atual: Materia | undefined): string | null {
+  if (!atual) return 'Esta matéria foi removida em outra aba. Salvar aqui vai colocá-la de volta no painel.'
+  // Comparar o conteúdo: a sincronização entre abas troca todos os objetos, mesmo os que não mudaram.
+  if (!iguais(atual, aberta)) {
+    return 'Esta matéria foi alterada em outra aba. Salvar aqui mantém as notas, faltas e pontos extras de agora, mas o nome, os horários, os RAs e a regra passam a ser os deste formulário.'
+  }
+  return null
 }
 
 /** Separado para o formulário começar uma vez só, com a matéria de quando a tela abriu. */
-function EditarMateria({ materia }: { materia: Materia }) {
+function EditarMateria({ aberta, atual }: { aberta: Materia; atual: Materia | undefined }) {
   const { dados, despachar } = usePainel()
-  const [inicial] = useState(() => materiaParaForm(materia, dados.regraPadrao))
+  const [inicial] = useState(() => materiaParaForm(aberta, dados.regraPadrao))
+  const materia = atual ?? aberta
   const voltar = paraHash({ tela: 'materia', id: materia.id })
+  const outraAba = avisoOutraAba(aberta, atual)
 
   return (
     <FormularioMateria
-      titulo={`Editar ${materia.nome}`}
+      titulo={`Editar ${aberta.nome}`}
       introducao="As notas, as faltas e os pontos extras continuam como estão. Nada muda até o último passo."
+      aviso={
+        outraAba && (
+          <p role="alert" className="aviso aviso--atencao">
+            <Atencao className="icone" size={18} />
+            <span className="aviso__texto">{outraAba}</span>
+          </p>
+        )
+      }
       inicial={inicial}
-      sair={voltar}
+      sair={atual ? voltar : paraHash({ tela: 'materias' })}
       montar={(form) => aplicarEdicao(materia, form)}
       conferirExtra={(form) => erroNotasNaEdicao(materia, form)}
       avisoRevisar={(form) => {
@@ -58,7 +82,8 @@ function EditarMateria({ materia }: { materia: Materia }) {
         )
       }}
       salvar={(editada) => {
-        despachar({ tipo: 'materia/substituir', materia: editada })
+        // Removida em outra aba: substituir não acharia a matéria e não faria nada.
+        despachar(atual ? { tipo: 'materia/substituir', materia: editada } : { tipo: 'materia/adicionar', materia: editada })
         navegar({ tela: 'materia', id: editada.id })
       }}
     />

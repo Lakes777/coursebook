@@ -52,6 +52,8 @@ const PASSO_AVALIACOES = 2
 interface PropsFormulario {
   titulo: string
   introducao: string
+  /** Aviso logo abaixo da introdução, em todos os passos (editar: mudou em outra aba). */
+  aviso?: ReactNode
   /** Como o formulário começa: vazio (nova matéria) ou com a matéria (editar). */
   inicial: Formulario
   /** Para onde o Cancelar leva. */
@@ -72,6 +74,7 @@ interface PropsFormulario {
 export function FormularioMateria({
   titulo,
   introducao,
+  aviso,
   inicial,
   sair,
   montar,
@@ -723,6 +726,7 @@ export function FormularioMateria({
       <p className="muted nm-intro">
         {introducao}
       </p>
+      {aviso}
       <ol className="nm-passos" aria-label="Passos">
         {PASSOS.map((nome, i) => (
           <li
