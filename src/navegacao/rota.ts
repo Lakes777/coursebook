@@ -1,4 +1,4 @@
-// As telas ficam no "#" do endereço (#/materias, #/materia/<id>, #/materia/<id>/editar, #/agenda). Assim
+// As telas ficam no "#" do endereço (#/materias, #/materia/<id>, #/materia/<id>/editar, #/semana, #/agenda). Assim
 // o botão "voltar" do navegador funciona e o GitHub Pages não precisa saber das
 // rotas (tudo depois do # nem chega ao servidor).
 
@@ -7,6 +7,7 @@ export type Rota =
   | { tela: 'materia'; id: string }
   | { tela: 'editar-materia'; id: string }
   | { tela: 'nova-materia' }
+  | { tela: 'semana' }
   | { tela: 'agenda' }
   | { tela: 'dados' }
 
@@ -17,6 +18,7 @@ export function lerRota(hash: string): Rota {
   const partes = hash.replace(/^#\/?/, '').split('/').filter(Boolean)
   const [tela, id, acao] = partes
   if (partes.length === 1 && tela === 'materias') return { tela: 'materias' }
+  if (partes.length === 1 && tela === 'semana') return { tela: 'semana' }
   if (partes.length === 1 && tela === 'agenda') return { tela: 'agenda' }
   if (partes.length === 1 && tela === 'dados') return { tela: 'dados' }
   if (partes.length === 1 && tela === 'nova-materia') return { tela: 'nova-materia' }
