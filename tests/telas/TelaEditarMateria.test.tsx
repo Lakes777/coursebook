@@ -39,11 +39,11 @@ const POO: Materia = {
   faltas: [{ id: 'f', data: '2026-09-02', quantidade: 2 }],
 }
 
-function montar() {
+function montar(materias: Materia[] = [POO]) {
   const nav = navegador()
   render(
     <ProvedorPainel
-      inicial={{ dados: { ...dadosVazios(), materias: [POO] }, aviso: null, podeSalvar: true }}
+      inicial={{ dados: { ...dadosVazios(), materias }, aviso: null, podeSalvar: true }}
       armazenamento={nav}
     >
       <TelaEditarMateria id="poo" />
@@ -55,6 +55,16 @@ function montar() {
 const salva = (nav: ReturnType<typeof navegador>): Materia => (JSON.parse(nav.itens.get(CHAVE)!) as Dados).materias[0]
 const continuar = () => userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
 const grupo = (nome: string) => screen.getByRole('group', { name: nome })
+const tituloPasso = () => screen.getByRole('heading', { level: 3 })
+
+/** POO na terça, da 4ª à 7ª aula, e Filosofia (outra matéria) só na 5ª. */
+const POO_TERCA: Materia = { ...POO, horarios: [{ dia: 2, inicio: '09:40', fim: '12:40', aulas: 4 }] }
+const FILO_5A: Materia = {
+  ...POO,
+  id: 'filo',
+  nome: 'Filosofia',
+  horarios: [{ dia: 2, inicio: '10:25', fim: '11:10', aulas: 1 }],
+}
 
 beforeEach(() => {
   window.location.hash = '#/materia/poo/editar'
@@ -124,6 +134,40 @@ describe('TelaEditarMateria', () => {
     expect(salva(nav).ras[0].avaliacoes).toMatchObject([{ id: 'a1', nota: 8 }])
   })
 
+  it('os horários da própria matéria não contam como ocupados; os das outras, sim', async () => {
+    const comHorario: Materia = { ...POO, horarios: [{ dia: 2, inicio: '09:40', fim: '12:40', aulas: 4 }] }
+    const filo: Materia = {
+      ...POO,
+      id: 'filo',
+      nome: 'Filosofia',
+      horarios: [{ dia: 2, inicio: '07:50', fim: '08:35', aulas: 1 }],
+    }
+    const nav = montar([comHorario, filo])
+    const horario = screen.getByRole('group', { name: 'Horário 1' })
+    expect(within(horario).getByLabelText('Da aula')).toHaveDisplayValue('4ª aula (09:40)')
+    expect(within(horario).getByRole('option', { name: '2ª aula (07:50) · Filosofia' })).toBeDisabled()
+    for (let i = 0; i < 4; i++) await continuar()
+    await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
+    expect((JSON.parse(nav.itens.get(CHAVE)!) as Dados).materias[0].horarios).toEqual(comHorario.horarios)
+  })
+
+  it('choque que já estava nos dados: avisa ao continuar, sem travar, e some ao trocar a aula', async () => {
+    montar([POO_TERCA, FILO_5A])
+    const horario = grupo('Horário 1')
+    // A última aula salva continua visível, mesmo desativada (a 5ª, da Filosofia, fica no caminho).
+    const ultima = within(horario).getByLabelText('Até a aula')
+    expect(ultima).toHaveDisplayValue('7ª aula (até 12:40)')
+    expect(within(ultima).getByRole('option', { name: '7ª aula (até 12:40)' })).toBeDisabled()
+    await continuar()
+    const primeira = within(horario).getByLabelText('Da aula')
+    expect(primeira).toHaveAccessibleDescription(/Choca com Filosofia \(terça-feira, 10:25 às 11:10\)/)
+    expect(primeira).toHaveFocus()
+    expect(tituloPasso()).toHaveTextContent('Passo 1 de 5')
+    await userEvent.selectOptions(ultima, '4ª aula (até 10:25)')
+    await continuar()
+    expect(tituloPasso()).toHaveTextContent('Passo 2 de 5')
+  })
+
   describe('outra aba mexe na matéria com o formulário aberto', () => {
     function outraAbaSalvou(nav: ReturnType<typeof navegador>, dados: Dados) {
       nav.itens.set(CHAVE, JSON.stringify(dados))
@@ -155,6 +199,19 @@ describe('TelaEditarMateria', () => {
       for (let i = 0; i < 4; i++) await continuar()
       await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
       expect(salva(nav).ras[0].avaliacoes[0].nota).toBe(10)
+    })
+
+    it('outra matéria passou a ocupar o horário: salvar no revisar volta ao passo 1 com o erro', async () => {
+      const nav = montar([POO_TERCA])
+      for (let i = 0; i < 4; i++) await continuar()
+      expect(tituloPasso()).toHaveTextContent('Passo 5 de 5')
+      outraAbaSalvou(nav, { ...dadosVazios(), materias: [POO_TERCA, FILO_5A] })
+      await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
+      expect(tituloPasso()).toHaveTextContent('Passo 1 de 5')
+      const primeira = within(grupo('Horário 1')).getByLabelText('Da aula')
+      expect(primeira).toHaveAccessibleDescription(/Choca com Filosofia/)
+      expect(primeira).toHaveFocus()
+      expect(salva(nav).horarios).toEqual(POO_TERCA.horarios)
     })
 
     it('a outra aba salvou sem mexer nesta matéria: nenhum aviso', () => {

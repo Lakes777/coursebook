@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, Check, Plus, Trash2 } from 'lucide-react'
-import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
 import { CabecalhoTela } from '../componentes/CabecalhoTela'
 import { usePainel } from '../estado/contexto'
@@ -14,7 +14,9 @@ import { sairPara, useBloquearSaida } from '../navegacao/useRota'
 import { plural } from '../tema/textos'
 import { CamposRegra } from './CamposRegra'
 import {
+  aulasOcupadasNoDia,
   conferirPasso,
+  horariosOcupados,
   DIAS_SEMANA,
   ID_CARGA,
   ID_NOME,
@@ -71,6 +73,8 @@ interface PropsFormulario {
   conferirExtra?: (form: Formulario) => ErroCampo | null
   /** Aviso no passo de revisar (editar: as notas que serão apagadas). */
   avisoRevisar?: (form: Formulario) => ReactNode
+  /** Editar: a matéria que está sendo editada, cujos horários não contam como ocupados. */
+  ignorarMateriaId?: string
 }
 
 /**
@@ -87,8 +91,11 @@ export function FormularioMateria({
   salvar,
   conferirExtra,
   avisoRevisar,
+  ignorarMateriaId,
 }: PropsFormulario) {
   const { dados } = usePainel()
+  // Os horários das outras matérias: o formulário não deixa marcar aula em cima deles.
+  const ocupados = useMemo(() => horariosOcupados(dados.materias, ignorarMateriaId), [dados.materias, ignorarMateriaId])
   const [form, setForm] = useState<Formulario>(inicial)
   // Qualquer mudança cria um formulário novo; se ainda é o inicial, não há nada a perder.
   // Digitar e apagar conta como preenchido: perguntar à toa é melhor que apagar sem avisar.
@@ -164,9 +171,9 @@ export function FormularioMateria({
 
   function enviar(e: FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    const problema = conferirPasso(passo, form)
+    const problema = conferirPasso(passo, form, ocupados)
     if (problema) {
-      mostrarErro(problema, passo === ULTIMO ? (passoDoErro(form) ?? passo) : passo)
+      mostrarErro(problema, passo === ULTIMO ? (passoDoErro(form, ocupados) ?? passo) : passo)
       return
     }
     if (passo === PASSO_AVALIACOES || passo === ULTIMO) {
@@ -240,6 +247,11 @@ export function FormularioMateria({
   /** "Da aula" e "Até a aula": usam os ids de início e fim, onde a conferência põe os erros. */
   function camposAulas(h: HorarioForm) {
     const { primeira, ultima } = aulasEscolhidas(h)
+    // Aula ocupada aparece desativada, com o nome de quem ocupa ("4ª aula (09:40) · POO").
+    const ocupadas = aulasOcupadasNoDia(h.dia, ocupados, form.horarios, h.chave)
+    const quem = (i: number) => (ocupadas.has(i) ? ` · ${ocupadas.get(i)}` : '')
+    // "Até a aula" não pode passar por cima de uma aula ocupada entre a primeira e ela.
+    const primeiraOcupadaDepois = [...ocupadas.keys()].filter((i) => i > primeira).sort((a, b) => a - b)[0] ?? Infinity
     return (
       <>
         <Rotulado id={idHorario(h.chave, 'inicio')} rotulo="Da aula" erro={erro}>
@@ -254,8 +266,8 @@ export function FormularioMateria({
             >
               <option value={-1}>Escolha</option>
               {AULAS_PUC.map((a, i) => (
-                <option key={a.numero} value={i}>
-                  {a.numero}ª aula ({a.inicio})
+                <option key={a.numero} value={i} disabled={ocupadas.has(i)}>
+                  {a.numero}ª aula ({a.inicio}){quem(i)}
                 </option>
               ))}
             </select>
@@ -276,8 +288,8 @@ export function FormularioMateria({
                   escolhida fica sempre na lista, para o seletor mostrar o que está salvo. */}
               {AULAS_PUC.map((a, i) =>
                 i !== ultima && (i < primeira || i >= primeira + MAXIMO_AULAS_POR_DIA) ? null : (
-                  <option key={a.numero} value={i}>
-                    {a.numero}ª aula (até {a.fim})
+                  <option key={a.numero} value={i} disabled={primeira !== -1 && i >= primeiraOcupadaDepois}>
+                    {a.numero}ª aula (até {a.fim}){quem(i)}
                   </option>
                 ),
               )}

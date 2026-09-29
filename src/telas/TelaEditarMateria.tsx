@@ -60,6 +60,7 @@ function EditarMateria({ aberta, atual }: { aberta: Materia; atual: Materia | un
         )
       }
       inicial={inicial}
+      ignorarMateriaId={aberta.id}
       sair={atual ? voltar : paraHash({ tela: 'materias' })}
       montar={(form) => aplicarEdicao(materia, form)}
       conferirExtra={(form) => erroNotasNaEdicao(materia, form)}

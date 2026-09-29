@@ -17,9 +17,9 @@ function navegador() {
   }
 }
 
-function montar(regraPadrao?: RegraAprovacao) {
+function montar(regraPadrao?: RegraAprovacao, materias: Materia[] = []) {
   const nav = navegador()
-  const dados = dadosVazios()
+  const dados = { ...dadosVazios(), materias }
   render(
     <ProvedorPainel
       inicial={{ dados: regraPadrao ? { ...dados, regraPadrao } : dados, aviso: null, podeSalvar: true }}
@@ -185,6 +185,59 @@ describe('TelaNovaMateria', () => {
   })
 
   describe('horário pelas aulas da PUC-PR', () => {
+    it('aulas já ocupadas por outra matéria aparecem desativadas, com o nome dela', async () => {
+      const outra: Materia = {
+        id: 'poo',
+        nome: 'POO',
+        professor: '',
+        cargaHoraria: 120,
+        ras: [],
+        pontosExtras: [],
+        faltas: [],
+        horarios: [{ dia: 2, inicio: '09:40', fim: '12:40', aulas: 4 }],
+      }
+      montar(undefined, [outra])
+      await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+      const horario = grupo('Horário 1')
+      await userEvent.selectOptions(within(horario).getByLabelText('Dia'), 'Terça-feira')
+      const primeira = within(horario).getByLabelText('Da aula')
+      expect(within(primeira).getByRole('option', { name: '4ª aula (09:40) · POO' })).toBeDisabled()
+      expect(within(primeira).getByRole('option', { name: '2ª aula (07:50)' })).toBeEnabled()
+      // Da 2ª aula dá para ir até a 3ª, mas não passar por cima da POO.
+      await userEvent.selectOptions(primeira, '2ª aula (07:50)')
+      const ultima = within(horario).getByLabelText('Até a aula')
+      expect(within(ultima).getByRole('option', { name: '3ª aula (até 09:20)' })).toBeEnabled()
+      expect(within(ultima).getByRole('option', { name: '8ª aula (até 13:25)' })).toBeDisabled()
+      // Em outro dia, nada ocupado.
+      await userEvent.selectOptions(within(horario).getByLabelText('Dia'), 'Quarta-feira')
+      expect(within(horario).getByRole('option', { name: '4ª aula (09:40)' })).toBeEnabled()
+    })
+
+    it('horas digitadas em cima de outra matéria não deixam continuar', async () => {
+      const outra: Materia = {
+        id: 'poo',
+        nome: 'POO',
+        professor: '',
+        cargaHoraria: 120,
+        ras: [],
+        pontosExtras: [],
+        faltas: [],
+        horarios: [{ dia: 1, inicio: '09:40', fim: '12:40', aulas: 4 }],
+      }
+      montar(undefined, [outra])
+      await preencherMateria()
+      await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+      const horario = grupo('Horário 1')
+      await userEvent.click(within(horario).getByRole('button', { name: 'Informar o horário 1 em horas' }))
+      fireEvent.change(within(horario).getByLabelText('Começa às'), { target: { value: '11:00' } })
+      fireEvent.change(within(horario).getByLabelText('Termina às'), { target: { value: '12:00' } })
+      await continuar()
+      const inicio = within(horario).getByLabelText('Começa às')
+      expect(inicio).toHaveAccessibleDescription(/Choca com POO \(segunda-feira, 09:40 às 12:40\)/)
+      expect(inicio).toHaveFocus()
+      expect(tituloPasso()).toHaveTextContent('Passo 1 de 5')
+    })
+
     it('escolher a primeira puxa a última junto, e a última só oferece aulas depois da primeira', async () => {
       montar()
       await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))

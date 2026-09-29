@@ -1,4 +1,4 @@
-import { minutos } from './horarios'
+import { MINUTOS_POR_AULA, minutos } from './horarios'
 import type { Horario } from './tipos'
 
 /** Uma aula da tabela de horários da PUC-PR ("2ª aula, 07:50 às 08:35"). */
@@ -74,4 +74,30 @@ export function aulasDaTabela(
   if (primeira === -1 || ultima < primeira) return null
   if (horario.aulas !== undefined && horario.aulas !== ultima - primeira + 1) return null
   return { primeira, ultima }
+}
+
+/**
+ * O intervalo do horário em minutos, [início, fim). Sem o fim (horário salvo antes
+ * de existir o campo), vai até o fim da última aula que a grade marca para ele; se
+ * não bate com a tabela, vale o início mais as aulas de 45 min (ou uma). Null se a
+ * hora não é válida.
+ */
+export function intervaloHorario(h: Pick<Horario, 'inicio' | 'fim' | 'aulas'>): [number, number] | null {
+  const de = minutos(h.inicio)
+  if (de === null) return null
+  if (h.fim !== undefined) {
+    const ate = minutos(h.fim)
+    return ate === null || ate <= de ? null : [de, ate]
+  }
+  const aulas = aulasDoHorario(h)
+  const ate = aulas.length > 0 ? minutos(AULAS_PUC[aulas[aulas.length - 1]].fim)! : de + (h.aulas ?? 1) * MINUTOS_POR_AULA
+  return [de, ate]
+}
+
+/** Se os dois horários caem no mesmo dia com algum minuto em comum (encostar, 09:20 e 09:20, não conta). */
+export function horariosSeChocam(a: Horario, b: Horario): boolean {
+  if (a.dia !== b.dia) return false
+  const x = intervaloHorario(a)
+  const y = intervaloHorario(b)
+  return x !== null && y !== null && x[0] < y[1] && y[0] < x[1]
 }

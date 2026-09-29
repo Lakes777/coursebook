@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { REGRA_PUCPR, VERSAO_ATUAL, type Materia, type RegraAprovacao } from '../../src/logica/tipos'
 import { validarDados } from '../../src/logica/validacao'
 import {
+  aulasOcupadasNoDia,
+  horariosOcupados,
   aulasEscolhidas,
   escolherAulas,
   escolherPrimeiraAula,
@@ -611,5 +613,72 @@ describe('horário pelas aulas da tabela', () => {
       campo: idHorario(fora.chave, 'inicio'),
       mensagem: 'Escolha a primeira aula.',
     })
+  })
+})
+
+describe('horários ocupados', () => {
+  const materia = (id: string, nome: string, horarios: Materia['horarios']): Materia => ({
+    id,
+    nome,
+    professor: '',
+    cargaHoraria: 80,
+    ras: [],
+    pontosExtras: [],
+    faltas: [],
+    horarios,
+  })
+  const POO = materia('poo', 'POO', [{ dia: 2, inicio: '09:40', fim: '12:40', aulas: 4 }])
+  const FILO = materia('filo', 'Filosofia', [{ dia: 3, inicio: '07:50', fim: '09:20', aulas: 2 }])
+  const ocupados = horariosOcupados([POO, FILO])
+
+  /** Formulário válido com os horários dados (pelas aulas da tabela: posições em AULAS_PUC). */
+  function formCom(...aulas: [number, number, number][]) {
+    const horarios = aulas.map(([dia, de, ate]) => ({ ...escolherAulas(novoHorario(), de, ate), dia: dia as 2 }))
+    return { ...formularioVazio(REGRA_PUCPR), nome: 'Nova', cargaHoraria: '80', horarios }
+  }
+
+  it('horariosOcupados deixa de fora a matéria que está sendo editada', () => {
+    expect(ocupados.map((o) => o.materia)).toEqual(['POO', 'Filosofia'])
+    expect(horariosOcupados([POO, FILO], 'poo').map((o) => o.materia)).toEqual(['Filosofia'])
+  })
+
+  it('bloqueia horário que choca com outra matéria, dizendo qual e quando', () => {
+    // Terça, 6ª e 7ª aula (11:10 às 12:40): em cima da POO.
+    const form = formCom([2, 5, 6])
+    expect(conferirMateria(form, ocupados)).toEqual({
+      campo: idHorario(form.horarios[0].chave, 'inicio'),
+      mensagem: 'Choca com POO (terça-feira, 09:40 às 12:40). Escolha outro horário.',
+    })
+    // Terça, 2ª e 3ª aula: livre (encosta na POO, que começa às 09:40).
+    expect(conferirMateria(formCom([2, 1, 2]), ocupados)).toBeNull()
+    // Sem os ocupados (ex.: editando a própria POO), passa.
+    expect(conferirMateria(form)).toBeNull()
+  })
+
+  it('bloqueia dois horários da mesma matéria que se chocam', () => {
+    const form = formCom([4, 1, 3], [4, 3, 4])
+    expect(conferirMateria(form, ocupados)).toEqual({
+      campo: idHorario(form.horarios[1].chave, 'inicio'),
+      mensagem: 'Choca com o horário 1 desta matéria. Escolha outro horário.',
+    })
+  })
+
+  it('vale também para horas digitadas', () => {
+    const h = mudarHorarioForm({ ...novoHorario(), modo: 'horas', dia: 3 }, { inicio: '09:00', fim: '10:00' })
+    const form = { ...formularioVazio(REGRA_PUCPR), nome: 'Nova', cargaHoraria: '80', horarios: [h] }
+    expect(conferirMateria(form, ocupados)?.mensagem).toMatch(/^Choca com Filosofia \(quarta-feira, 07:50 às 09:20\)/)
+  })
+
+  it('aulasOcupadasNoDia: as aulas da tabela ocupadas, com o nome de quem ocupa', () => {
+    const form = formCom([2, 0, 0], [2, 1, 1])
+    const ocupadas = aulasOcupadasNoDia(2, ocupados, form.horarios, form.horarios[1].chave)
+    expect([...ocupadas.entries()]).toEqual([
+      [3, 'POO'],
+      [4, 'POO'],
+      [5, 'POO'],
+      [6, 'POO'],
+      [0, 'horário 1'],
+    ])
+    expect(aulasOcupadasNoDia(5, ocupados, form.horarios, 'x').size).toBe(0)
   })
 })

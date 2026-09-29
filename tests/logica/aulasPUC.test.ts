@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import { AULAS_PUC, aulasDaTabela, aulasDoHorario } from '../../src/logica/aulasPUC'
+import {
+  AULAS_PUC,
+  aulasDaTabela,
+  aulasDoHorario,
+  horariosSeChocam,
+  intervaloHorario,
+} from '../../src/logica/aulasPUC'
 
 /** Números das aulas ("2ª" = 2) em vez das posições, para ler fácil. */
 const numeros = (h: Parameters<typeof aulasDoHorario>[0]) => aulasDoHorario(h).map((i) => AULAS_PUC[i].numero)
@@ -49,5 +55,31 @@ describe('aulasDaTabela', () => {
     expect(aulasDaTabela({ inicio: '09:40', fim: '08:35' })).toBeNull()
     expect(aulasDaTabela({ inicio: '07:50', fim: '11:10', aulas: 3 })).toBeNull()
     expect(aulasDaTabela({ inicio: '19:00' })).toBeNull()
+  })
+})
+
+describe('intervaloHorario e horariosSeChocam', () => {
+  it('intervalo em minutos; sem fim, vai até o fim da última aula da tabela', () => {
+    expect(intervaloHorario({ inicio: '07:50', fim: '09:20' })).toEqual([470, 560])
+    expect(intervaloHorario({ inicio: '19:00', aulas: 2 })).toEqual([1140, 1230])
+    expect(intervaloHorario({ inicio: '19:00' })).toEqual([1140, 1185])
+    // 12 aulas a partir da 3ª pulam dois intervalos: vão até o fim da 14ª (18:15), não 17:20.
+    expect(intervaloHorario({ inicio: '08:20', aulas: 12 })).toEqual([500, 1095])
+    // Fora da tabela: aulas de 45 min.
+    expect(intervaloHorario({ inicio: '13:30', aulas: 2 })).toEqual([810, 900])
+    expect(intervaloHorario({ inicio: 'xx' })).toBeNull()
+    expect(intervaloHorario({ inicio: '10:00', fim: '09:00' })).toBeNull()
+  })
+
+  it('choca só no mesmo dia e com minutos em comum; encostar não conta', () => {
+    const poo = { dia: 2 as const, inicio: '09:40', fim: '12:40' }
+    expect(horariosSeChocam(poo, { dia: 2, inicio: '11:10', fim: '11:55' })).toBe(true)
+    expect(horariosSeChocam(poo, { dia: 2, inicio: '07:50', fim: '09:40' })).toBe(false)
+    expect(horariosSeChocam(poo, { dia: 2, inicio: '12:40', fim: '13:25' })).toBe(false)
+    expect(horariosSeChocam(poo, { dia: 3, inicio: '09:40', fim: '12:40' })).toBe(false)
+    // Horário antigo sem fim: 12:00 + 1 aula (até 12:45) choca.
+    expect(horariosSeChocam(poo, { dia: 2, inicio: '12:00' })).toBe(true)
+    // O que a grade mostra na mesma célula também choca.
+    expect(horariosSeChocam({ dia: 1, inicio: '08:20', aulas: 12 }, { dia: 1, inicio: '17:25', fim: '18:00' })).toBe(true)
   })
 })

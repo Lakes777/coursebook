@@ -1,7 +1,7 @@
-import { AULAS_PUC, aulasDaTabela } from '../logica/aulasPUC'
+import { AULAS_PUC, aulasDaTabela, aulasDoHorario, horariosSeChocam } from '../logica/aulasPUC'
 import { dataValida } from '../logica/datas'
 import { erroCargaHoraria, MAXIMO_AULAS_POR_DIA } from '../logica/faltas'
-import { erroHorario, HORA, sugerirAulas } from '../logica/horarios'
+import { erroHorario, faixaHorario, HORA, sugerirAulas } from '../logica/horarios'
 import { novoId } from '../logica/ids'
 import { erroAvaliacao, erroRA, NOTA_MAXIMA } from '../logica/notas'
 import { formatarNota, formatarPorcentagem, lerNumero, limpar } from '../logica/numeros'
@@ -248,7 +248,69 @@ function erroNome(texto: string, campo: string, vazio: string): ErroCampo | null
   return null
 }
 
-export function conferirMateria(form: Formulario): ErroCampo | null {
+/** Um horário de outra matéria do painel, que o formulário não pode ocupar de novo. */
+export interface HorarioOcupado {
+  materia: string
+  horario: Horario
+}
+
+/** Os horários das matérias do painel, menos os da matéria que está sendo editada. */
+export function horariosOcupados(materias: Materia[], ignorarMateriaId?: string): HorarioOcupado[] {
+  return materias
+    .filter((m) => m.id !== ignorarMateriaId)
+    .flatMap((m) => m.horarios.map((horario) => ({ materia: m.nome, horario })))
+}
+
+/** O horário do formulário como ele seria salvo (fim vazio = sem fim; aulas inválidas = sem número). */
+function horarioDoForm(h: HorarioForm): Horario {
+  return { dia: h.dia, inicio: h.inicio, fim: h.fim || undefined, aulas: lerNumero(h.aulas) ?? undefined }
+}
+
+/**
+ * "Choca com POO (terça-feira, 09:40 às 12:40)." para o primeiro horário do
+ * formulário que cai em cima de outro (de outra matéria ou desta mesma), ou null.
+ */
+function erroChoque(horarios: HorarioForm[], ocupados: HorarioOcupado[]): ErroCampo | null {
+  for (const [i, h] of horarios.entries()) {
+    const este = horarioDoForm(h)
+    const campo = idHorario(h.chave, 'inicio')
+    const outro = horarios.slice(0, i).findIndex((o) => horariosSeChocam(este, horarioDoForm(o)))
+    if (outro !== -1) {
+      return { campo, mensagem: `Choca com o horário ${outro + 1} desta matéria. Escolha outro horário.` }
+    }
+    const ocupado = ocupados.find((o) => horariosSeChocam(este, o.horario))
+    if (ocupado) {
+      const { dia, inicio, fim } = ocupado.horario
+      const quando = `${nomeDia(dia).toLowerCase()}, ${faixaHorario({ inicio, fim })}`
+      return { campo, mensagem: `Choca com ${ocupado.materia} (${quando}). Escolha outro horário.` }
+    }
+  }
+  return null
+}
+
+/**
+ * Posições das aulas da tabela (AULAS_PUC) já ocupadas num dia, com o nome de quem
+ * ocupa: as outras matérias e os outros horários deste formulário ("horário 2").
+ */
+export function aulasOcupadasNoDia(
+  dia: DiaSemana,
+  ocupados: HorarioOcupado[],
+  horarios: HorarioForm[],
+  chaveAtual: string,
+): Map<number, string> {
+  const resultado = new Map<number, string>()
+  const marcar = (h: Horario, nome: string) => {
+    if (h.dia !== dia) return
+    for (const i of aulasDoHorario(h)) if (!resultado.has(i)) resultado.set(i, nome)
+  }
+  ocupados.forEach((o) => marcar(o.horario, o.materia))
+  horarios.forEach((h, i) => {
+    if (h.chave !== chaveAtual) marcar(horarioDoForm(h), `horário ${i + 1}`)
+  })
+  return resultado
+}
+
+export function conferirMateria(form: Formulario, ocupados: HorarioOcupado[] = []): ErroCampo | null {
   const nome = erroNome(form.nome, ID_NOME, 'Dê um nome à matéria (ex.: "Programação Orientada a Objetos").')
   if (nome) return nome
   if (form.professor.trim().length > TAMANHO_MAXIMO_NOME) {
@@ -293,7 +355,8 @@ export function conferirMateria(form: Formulario): ErroCampo | null {
     const erroAulas = erroHorario({ inicio: h.inicio, aulas: aulas ?? Number.NaN })
     if (erroAulas) return { campo: idHorario(h.chave, 'aulas'), mensagem: erroAulas }
   }
-  return null
+  // Só depois de cada horário estar certo sozinho: aí dá para comparar os intervalos.
+  return erroChoque(form.horarios, ocupados)
 }
 
 export function conferirRAs(form: Formulario): ErroCampo | null {
@@ -381,10 +444,10 @@ export function erroRegra(r: RegraForm, ids: IdsRegra = IDS_REGRA_MATERIA): Erro
 }
 
 /** Conferência de cada passo, na ordem de PASSOS (o último, revisar, confere tudo). */
-export function conferirPasso(passo: number, form: Formulario): ErroCampo | null {
+export function conferirPasso(passo: number, form: Formulario, ocupados: HorarioOcupado[] = []): ErroCampo | null {
   switch (passo) {
     case 0:
-      return conferirMateria(form)
+      return conferirMateria(form, ocupados)
     case 1:
       return conferirRAs(form)
     case 2:
@@ -392,14 +455,14 @@ export function conferirPasso(passo: number, form: Formulario): ErroCampo | null
     case 3:
       return conferirRegra(form)
     default:
-      return conferirMateria(form) ?? conferirRAs(form) ?? conferirAvaliacoes(form) ?? conferirRegra(form)
+      return conferirMateria(form, ocupados) ?? conferirRAs(form) ?? conferirAvaliacoes(form) ?? conferirRegra(form)
   }
 }
 
 /** Em que passo está o campo do erro (para o revisar levar até ele). */
-export function passoDoErro(form: Formulario): number | null {
+export function passoDoErro(form: Formulario, ocupados: HorarioOcupado[] = []): number | null {
   for (let passo = 0; passo < 4; passo++) {
-    if (conferirPasso(passo, form)) return passo
+    if (conferirPasso(passo, form, ocupados)) return passo
   }
   return null
 }

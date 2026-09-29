@@ -54,6 +54,8 @@ carregar no painel vazio com "Ver com dados de exemplo".
 - **Cadastro passo a passo:** formulário em 5 passos (matéria, RAs, avaliações, regra, revisar),
   que também serve para editar uma matéria sem perder as notas lançadas. O horário é escolhido
   pelas aulas da tabela da PUC-PR ("da 2ª até a 5ª aula"); para outro horário, dá para digitar as horas.
+  Duas matérias (ou dois horários da mesma) não ocupam o mesmo horário: as aulas já ocupadas
+  aparecem desativadas, com o nome da matéria.
 - **Cadastro com IA:** o botão "Copiar instruções para uma IA" copia um texto pronto. Colado
   num chat (ChatGPT, Claude...) junto com o PDF do plano de ensino, ele faz a IA devolver o JSON
   da matéria para importar.
@@ -162,5 +164,6 @@ tests/           Espelha o src/ (logica, estado, telas, navegacao, tema)
 - [x] Avisar ao sair do formulário de matéria pelas abas ou pelo voltar do navegador
 - [x] Sincronizar entre abas sem precisar recarregar
 - [x] Editar a regra padrão do painel (hoje é a da PUC-PR, e cada matéria pode ter a sua)
+- [x] Não deixar duas matérias ocuparem o mesmo horário
 - [ ] Marcar na grade da semana a aula que está acontecendo agora
 - [ ] Guardar os dados na nuvem, para usar em mais de um aparelho
