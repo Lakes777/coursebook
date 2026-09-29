@@ -10,6 +10,11 @@ export interface Painel {
    * senão null. É um objeto novo a cada ação, mesmo com o mesmo texto.
    */
   desfazer: { readonly texto: string } | null
+  /**
+   * Troca os dados pelos que vieram de fora (a nuvem), sem oferecer desfazer, como
+   * quando outra aba salva. Para trocar com desfazer, despachar 'dados/substituir'.
+   */
+  sincronizar: (dados: Dados) => void
   /** Volta os dados para antes da última ação que apagou algo. */
   aoDesfazer: () => void
   /** Fecha o aviso de desfazer sem voltar nada. */

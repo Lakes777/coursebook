@@ -55,13 +55,18 @@ export interface Sincronizador {
   resolver(escolha: 'nuvem' | 'aparelho'): Promise<void>
   /** Outra aba mudou a chave da conta (evento storage): passa a ver a mesma revisão. */
   releuConta(): void
-  /** Desliga o envio agendado (ao desmontar). */
+  /** Desliga (ao desmontar): cancela o envio agendado e ignora as respostas que ainda vierem. */
   parar(): void
 }
 
+/** Como a nuvem aparece antes da primeira conferência: com conta, "Sincronizando...". */
+export function estadoInicial(armazenamento: ArmazenamentoNuvem): EstadoNuvem {
+  const conta = lerConta(armazenamento)
+  return { conta, situacao: conta ? { tipo: 'conferindo' } : { tipo: 'sincronizado' } }
+}
+
 export function criarSincronizador(o: Opcoes): Sincronizador {
-  let conta = lerConta(o.armazenamento)
-  let situacao: Situacao = conta ? { tipo: 'conferindo' } : { tipo: 'sincronizado' }
+  let { conta, situacao } = estadoInicial(o.armazenamento)
   let agendado: ReturnType<typeof setTimeout> | undefined
   // Uma chamada de cada vez: dois PUTs ao mesmo tempo com a mesma revisão dariam conflito consigo mesmo.
   let fila: Promise<void> = Promise.resolve()
@@ -69,8 +74,11 @@ export function criarSincronizador(o: Opcoes): Sincronizador {
   // Muda ao entrar, sair ou trocar de conta em outra aba: a resposta de uma chamada
   // que começou antes não vale mais e é ignorada.
   let geracao = 0
+  let desligado = false
 
-  const avisar = () => o.aoMudar({ conta, situacao })
+  const avisar = () => {
+    if (!desligado) o.aoMudar({ conta, situacao })
+  }
   const mudar = (nova: Situacao) => {
     situacao = nova
     avisar()
@@ -93,7 +101,9 @@ export function criarSincronizador(o: Opcoes): Sincronizador {
 
   function executar(tarefa: () => Promise<void>): Promise<void> {
     // O catch não deixa um erro inesperado travar a fila para sempre.
-    fila = fila.then(tarefa).catch(() => mudar({ tipo: 'erro', mensagem: 'Erro inesperado ao sincronizar.' }))
+    fila = fila
+      .then(() => (desligado ? undefined : tarefa()))
+      .catch(() => mudar({ tipo: 'erro', mensagem: 'Erro inesperado ao sincronizar.' }))
     return fila
   }
 
@@ -253,6 +263,10 @@ export function criarSincronizador(o: Opcoes): Sincronizador {
       mudar({ tipo: 'sincronizado' })
     },
 
-    parar: cancelarEnvio,
+    parar() {
+      desligado = true
+      geracao++
+      cancelarEnvio()
+    },
   }
 }
