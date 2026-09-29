@@ -96,10 +96,27 @@ export interface ErroCampo {
 export const ID_NOME = 'nm-nome'
 export const ID_PROFESSOR = 'nm-professor'
 export const ID_CARGA = 'nm-carga'
-export const ID_MEDIA = 'nm-regra-media'
-export const ID_FREQUENCIA = 'nm-regra-frequencia'
-export const ID_NOTA_MINIMA = 'nm-regra-nota-minima'
-export const ID_TETO = 'nm-regra-teto'
+
+/** Ids dos campos da regra. O prefixo separa os do formulário de matéria dos da tela Dados. */
+export interface IdsRegra {
+  media: string
+  frequencia: string
+  notaMinima: string
+  teto: string
+}
+
+export const idsRegra = (prefixo: string): IdsRegra => ({
+  media: `${prefixo}-regra-media`,
+  frequencia: `${prefixo}-regra-frequencia`,
+  notaMinima: `${prefixo}-regra-nota-minima`,
+  teto: `${prefixo}-regra-teto`,
+})
+
+export const IDS_REGRA_MATERIA = idsRegra('nm')
+export const ID_MEDIA = IDS_REGRA_MATERIA.media
+export const ID_FREQUENCIA = IDS_REGRA_MATERIA.frequencia
+export const ID_NOTA_MINIMA = IDS_REGRA_MATERIA.notaMinima
+export const ID_TETO = IDS_REGRA_MATERIA.teto
 
 export const idHorario = (chave: string, campo: 'dia' | 'inicio' | 'fim' | 'aulas') => `nm-horario-${chave}-${campo}`
 export const idRA = (chave: string, campo: 'nome' | 'peso') => `nm-ra-${chave}-${campo}`
@@ -269,27 +286,33 @@ export function conferirAvaliacoes(form: Formulario): ErroCampo | null {
 }
 
 export function conferirRegra(form: Formulario): ErroCampo | null {
-  if (form.usarRegraPadrao) return null
-  const r = form.regra
+  return form.usarRegraPadrao ? null : erroRegra(form.regra)
+}
+
+/**
+ * Primeiro erro dos campos de uma regra (a própria da matéria ou a padrão do painel).
+ * Barra o mesmo que lerRegra, no carregamento. `ids` diz a que campos o erro aponta.
+ */
+export function erroRegra(r: RegraForm, ids: IdsRegra = IDS_REGRA_MATERIA): ErroCampo | null {
   const media = lerNumero(r.mediaMinima)
   if (media === null || media > NOTA_MAXIMA) {
-    return { campo: ID_MEDIA, mensagem: `Informe a média mínima, de 0 a ${NOTA_MAXIMA} (ex.: 7,0).` }
+    return { campo: ids.media, mensagem: `Informe a média mínima, de 0 a ${NOTA_MAXIMA} (ex.: 7,0).` }
   }
   const frequencia = lerNumero(r.frequenciaMinima)
   if (frequencia === null || frequencia > 100) {
-    return { campo: ID_FREQUENCIA, mensagem: 'Informe a frequência mínima em %, de 0 a 100 (ex.: 75).' }
+    return { campo: ids.frequencia, mensagem: 'Informe a frequência mínima em %, de 0 a 100 (ex.: 75).' }
   }
   if (r.temRecuperacao) {
     const notaMinima = lerNumero(r.notaMinima)
     if (notaMinima === null || notaMinima > media) {
       return {
-        campo: ID_NOTA_MINIMA,
+        campo: ids.notaMinima,
         mensagem: 'Informe a nota mínima para a recuperação, de 0 até a média mínima (ex.: 4,0).',
       }
     }
     const teto = lerNumero(r.teto)
     if (teto === null || teto > NOTA_MAXIMA) {
-      return { campo: ID_TETO, mensagem: `Informe a nota máxima da recuperação, de 0 a ${NOTA_MAXIMA} (ex.: 7,0).` }
+      return { campo: ids.teto, mensagem: `Informe a nota máxima da recuperação, de 0 a ${NOTA_MAXIMA} (ex.: 7,0).` }
     }
   }
   return null
@@ -332,6 +355,17 @@ export function porcentagemRA(ra: Pick<RAForm, 'peso'>, ras: Pick<RAForm, 'peso'
   const soma = somaPesos(ras)
   if (peso === null || soma === 0) return null
   return formatarPorcentagem(peso / soma)
+}
+
+/** Se as duas regras dizem o mesmo (a ordem dos campos no JSON não importa). */
+export function regrasIguais(a: RegraAprovacao, b: RegraAprovacao): boolean {
+  return (
+    a.mediaMinima === b.mediaMinima &&
+    a.frequenciaMinima === b.frequenciaMinima &&
+    a.arredondarUmaCasa === b.arredondarUmaCasa &&
+    a.recuperacao?.notaMinima === b.recuperacao?.notaMinima &&
+    a.recuperacao?.teto === b.recuperacao?.teto
+  )
 }
 
 // ---------- Montar a matéria ----------

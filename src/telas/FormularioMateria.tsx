@@ -9,16 +9,14 @@ import { formatarNota, lerNumero } from '../logica/numeros'
 import { VERSAO_ATUAL, type DiaSemana, type Materia } from '../logica/tipos'
 import { validarDados } from '../logica/validacao'
 import { plural } from '../tema/textos'
+import { CamposRegra } from './CamposRegra'
 import {
   conferirPasso,
   DIAS_SEMANA,
   ID_CARGA,
-  ID_FREQUENCIA,
-  ID_MEDIA,
   ID_NOME,
-  ID_NOTA_MINIMA,
   ID_PROFESSOR,
-  ID_TETO,
+  IDS_REGRA_MATERIA,
   idAvaliacao,
   idHorario,
   idRA,
@@ -40,55 +38,12 @@ import {
   type RAForm,
   type RegraForm,
 } from './novaMateriaUtil'
+import { Rotulado } from './Rotulado'
 import './novaMateria.css'
 
 const ID_TITULO_PASSO = 'nm-titulo-passo'
 const ULTIMO = PASSOS.length - 1
 const idBotaoAdicionarAvaliacao = (chaveRA: string) => `nm-ra-${chaveRA}-adicionar`
-
-/** Props que o campo recebe: id, e a ligação com a dica e com o erro. */
-interface PropsCampo {
-  id: string
-  'aria-invalid'?: true
-  'aria-describedby'?: string
-}
-
-interface PropsRotulado {
-  id: string
-  rotulo: string
-  dica?: ReactNode
-  erro: ErroCampo | null
-  children: (props: PropsCampo) => ReactNode
-}
-
-/**
- * Rótulo, campo, dica e erro, ligados: o leitor de tela lê a dica e o erro junto
- * com o campo, e o campo com erro fica marcado com aria-invalid.
- */
-function Rotulado({ id, rotulo, dica, erro, children }: PropsRotulado) {
-  const temErro = erro?.campo === id
-  const descricao = [dica ? `${id}-dica` : '', temErro ? `${id}-erro` : ''].filter(Boolean).join(' ')
-  return (
-    <div className="nm-campo">
-      <label htmlFor={id}>{rotulo}</label>
-      {children({
-        id,
-        ...(temErro ? { 'aria-invalid': true } : {}),
-        ...(descricao ? { 'aria-describedby': descricao } : {}),
-      })}
-      {dica && (
-        <p id={`${id}-dica`} className="nm-campo__dica muted">
-          {dica}
-        </p>
-      )}
-      {temErro && (
-        <p id={`${id}-erro`} className="nm-campo__erro">
-          {erro.mensagem}
-        </p>
-      )}
-    </div>
-  )
-}
 
 /** Passo das avaliações: é nele que ficam os erros de `conferirExtra`. */
 const PASSO_AVALIACOES = 2
@@ -625,7 +580,6 @@ export function FormularioMateria({
   }
 
   function passoRegra() {
-    const r = form.regra
     return (
       <>
         <fieldset className="nm-grupo">
@@ -655,89 +609,7 @@ export function FormularioMateria({
           </label>
         </fieldset>
         {!form.usarRegraPadrao && (
-          <fieldset className="nm-grupo">
-            <legend>Regra própria</legend>
-            <div className="nm-item__campos">
-              <Rotulado id={ID_MEDIA} rotulo="Média mínima" dica="De 0 a 10." erro={erro}>
-                {(p) => (
-                  <input
-                    {...p}
-                    className="campo"
-                    inputMode="decimal"
-                    autoComplete="off"
-                    value={r.mediaMinima}
-                    onChange={(e) => mudarRegra({ mediaMinima: e.target.value }, ID_MEDIA)}
-                  />
-                )}
-              </Rotulado>
-              <Rotulado id={ID_FREQUENCIA} rotulo="Frequência mínima (%)" dica="Ex.: 75." erro={erro}>
-                {(p) => (
-                  <input
-                    {...p}
-                    className="campo"
-                    inputMode="decimal"
-                    autoComplete="off"
-                    value={r.frequenciaMinima}
-                    onChange={(e) => mudarRegra({ frequenciaMinima: e.target.value }, ID_FREQUENCIA)}
-                  />
-                )}
-              </Rotulado>
-            </div>
-            <label className="nm-caixa">
-              <input
-                type="checkbox"
-                checked={r.temRecuperacao}
-                onChange={(e) => mudarRegra({ temRecuperacao: e.target.checked })}
-              />
-              Tem recuperação no fim do semestre
-            </label>
-            {r.temRecuperacao && (
-              <div className="nm-item__campos">
-                <Rotulado
-                  id={ID_NOTA_MINIMA}
-                  rotulo="Nota final mínima para a recuperação"
-                  dica="Abaixo dela, reprova direto."
-                  erro={erro}
-                >
-                  {(p) => (
-                    <input
-                      {...p}
-                      className="campo"
-                      inputMode="decimal"
-                      autoComplete="off"
-                      value={r.notaMinima}
-                      onChange={(e) => mudarRegra({ notaMinima: e.target.value }, ID_NOTA_MINIMA)}
-                    />
-                  )}
-                </Rotulado>
-                <Rotulado
-                  id={ID_TETO}
-                  rotulo="Nota máxima da recuperação"
-                  dica="A recuperação não dá mais que isso a um RA."
-                  erro={erro}
-                >
-                  {(p) => (
-                    <input
-                      {...p}
-                      className="campo"
-                      inputMode="decimal"
-                      autoComplete="off"
-                      value={r.teto}
-                      onChange={(e) => mudarRegra({ teto: e.target.value }, ID_TETO)}
-                    />
-                  )}
-                </Rotulado>
-              </div>
-            )}
-            <label className="nm-caixa">
-              <input
-                type="checkbox"
-                checked={r.arredondarUmaCasa}
-                onChange={(e) => mudarRegra({ arredondarUmaCasa: e.target.checked })}
-              />
-              Arredondar a nota final para 1 casa (6,95 vira 7,0)
-            </label>
-          </fieldset>
+          <CamposRegra legenda="Regra própria" regra={form.regra} ids={IDS_REGRA_MATERIA} erro={erro} mudar={mudarRegra} />
         )}
       </>
     )
