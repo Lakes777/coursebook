@@ -81,58 +81,88 @@ O esquema é aplicado uma vez por instância (na primeira chamada), com `IF NOT 
 
 ## Site
 
+O código fica em `src/nuvem/`: `cliente.ts` (fetch nas rotas), `conta.ts` (a chave no
+aparelho), `decidir.ts` (as regras abaixo, em funções puras), `sincronizador.ts` (quem
+executa as regras, fora do React), `ProvedorNuvem.tsx` (liga o sincronizador ao painel e
+aos eventos do navegador) e as telas (`SecaoNuvem.tsx`, `SituacaoNuvem.tsx`).
+
 ### Onde aparece
 
-- Na tela **Dados**, uma seção **Conta e nuvem**: entrar, criar conta (com o campo
-  do convite), sair, excluir conta. Logado, mostra o e-mail e a situação.
+- Na tela **Dados**, uma seção **Conta e nuvem**, a primeira da página: entrar, criar
+  conta (com o campo do convite), sair, excluir conta. Logado, mostra o e-mail e a situação.
 - No topo, ao lado do título, a situação da sincronização em texto curto (só para
-  quem está logado): "Sincronizado", "Salvando...", "Sem conexão: salvo neste
-  aparelho", "Entre de novo para sincronizar", "Conflito: escolha qual versão
-  manter" (este leva à tela Dados).
+  quem está logado): "Sincronizando..." (conferindo a nuvem), "Sincronizado",
+  "Salvando...", "Sem conexão: salvo neste aparelho", "Entre de novo para
+  sincronizar", "Conflito: escolha qual versão manter", "Erro ao sincronizar" (erro da
+  API, como dados inválidos ou erro interno) e "Sincronização parada" (sem salvar,
+  ver abaixo). Os três que pedem ação (entrar de novo, conflito e erro) são links para
+  a tela Dados. O leitor de tela só anuncia os que pedem atenção (sem conexão, entrar
+  de novo, conflito, erro): "Salvando..." a cada mudança seria barulho.
 
 ### O que fica guardado no aparelho
 
 - Os dados continuam no localStorage (`painel-estudos:dados`), como sempre: o
   painel abre na hora e funciona sem internet.
-- `painel-estudos:nuvem` guarda `{ email, revisao, pendente }`: de quem é a conta,
-  a última revisão que este aparelho viu e se há mudança ainda não enviada. Sem
-  essa chave, o painel está sem conta e nada muda em relação a hoje.
+- `painel-estudos:nuvem` guarda `{ email, revisao, pendente, primeiraVez? }`: de quem é
+  a conta, a última revisão que este aparelho viu, se há mudança ainda não enviada e,
+  logo depois de entrar, `primeiraVez: true` até decidir o que fazer com os dados que
+  já estavam no aparelho (assim, recarregar no meio não trata esses dados como se
+  tivessem vindo da nuvem). Sem essa chave, ou com uma que não dá para ler, o painel
+  está sem conta e nada muda em relação a hoje (nenhuma chamada à API).
 
 ### Sincronização
 
 - **Ao abrir** (e ao voltar para a aba, e no evento `online`), com conta:
-  - `eu()` deu 401: a sessão acabou. Continua local, avisa "Entre de novo para
-    sincronizar" e mantém o `pendente`.
+  - `eu()` deu 401 (ou a sessão é de outro e-mail): a sessão acabou. Continua local,
+    avisa "Entre de novo para sincronizar" e mantém o `pendente`.
   - Baixa os dados. Nuvem com a mesma revisão: se `pendente`, envia; senão, em dia.
   - Nuvem com revisão maior: sem `pendente`, troca os dados locais pelos da nuvem
-    (ação `sincronizar`); com `pendente`, é conflito (a não ser que os dois sejam
-    iguais, ver abaixo).
+    (ação `sincronizar`, sem desfazer); com `pendente`, é conflito (a não ser que os
+    dois sejam iguais, ver abaixo).
+  - Os dados da nuvem passam pela mesma conferência do localStorage (`migrar` +
+    `validarDados`); os que este site não lê (versão mais nova) viram erro, e nada é trocado.
 - **Ao mudar os dados** com conta: marca `pendente` e envia 2 segundos depois da
   última mudança, com a revisão guardada. Deu certo: guarda a revisão nova e tira
-  o `pendente`. Sem conexão: fica pendente e tenta de novo no próximo `online`,
-  ao voltar para a aba ou na próxima mudança.
+  o `pendente` (se os dados mudaram enquanto o envio ia, continua pendente e envia de
+  novo). Sem conexão: fica pendente e tenta de novo no próximo `online`, ao voltar
+  para a aba ou na próxima mudança. Só conta como mudança o que foi feito nesta aba:
+  os dados que vieram da nuvem ou de outra aba não são reenviados por ela (mas o que
+  o Desfazer traz de volta é, mesmo que seja o objeto que veio da nuvem).
 - **Conflito** (409, ou nuvem mais nova com mudança pendente): se os dados da nuvem
   forem iguais aos locais (`iguais` de `src/logica/iguais.ts`, como duas abas que
   enviaram a mesma mudança), só adota a revisão da nuvem, sem perguntar. Senão, para
   de enviar e pergunta:
   - "Usar a da nuvem": troca os dados locais pelos da nuvem. Dá para desfazer (o
-    aviso de desfazer que o painel já tem).
+    aviso de desfazer que o painel já tem), e desfazer envia de novo os dados daqui.
   - "Manter a deste aparelho": envia os locais com a revisão da nuvem (sobrescreve).
+  Com a pergunta na tela, voltar para a aba não baixa de novo (a pergunta piscaria).
 - **Duas abas**: os dados já passam de uma aba para a outra pelo evento `storage`.
   A chave `painel-estudos:nuvem` também, então as duas veem a mesma revisão; se as
-  duas enviarem a mesma coisa, a regra do "iguais" resolve sem perguntar.
-- **Primeira vez que entra** (cadastro ou entrar num aparelho sem a chave da nuvem):
-  - Nuvem vazia: se o aparelho tem matérias ou eventos, envia com revisão 0.
+  duas enviarem a mesma coisa, a regra do "iguais" resolve sem perguntar. A aba que
+  termina um envio não apaga o `pendente` que a outra marcou no meio (relê a chave
+  antes de gravar "em dia"). Se esta aba estava sem sessão e a outra entrou de novo,
+  esta confere também. A outra aba saiu: esta fica sem conta.
+- **Primeira vez que entra** (cadastro ou entrar num aparelho sem a chave da nuvem, ou
+  com a chave de outro e-mail):
+  - Nuvem vazia: se o aparelho tem dados, envia com revisão 0.
   - Nuvem com dados e aparelho vazio (ou igual): usa os da nuvem.
   - Os dois com dados diferentes: pergunta "Esta conta já tem dados na nuvem." com
     "Usar os da nuvem" e "Substituir pelos deste aparelho".
-- **Sair**: apaga a sessão e a chave da nuvem. Por padrão os dados ficam no
-  aparelho; uma opção "Sair e apagar os dados deste aparelho" serve para
-  computador emprestado (limpa o localStorage do painel).
+  - "Aparelho vazio" é sem matérias, sem eventos e com a regra padrão da PUC-PR: uma
+    regra padrão editada também é dado da pessoa.
+  - Entrar de novo com o mesmo e-mail (a sessão tinha acabado) não é primeira vez:
+    continua com a revisão e o `pendente` guardados. Por isso, no "Entre de novo" o
+    e-mail fica só para leitura; para usar outra conta, primeiro "Sair".
+- **Sair**: apaga a sessão e a chave da nuvem. Se a API não responder (sem conexão),
+  a conta continua e aparece o erro: o cookie ainda valeria. Por padrão os dados ficam
+  no aparelho; a opção "Sair e apagar os dados deste aparelho" (confirma antes, e avisa
+  se há mudança não enviada) serve para computador emprestado: apaga tudo o que começa
+  com `painel-estudos:` (dados, cópias e conta) e esvazia a tela, sem desfazer. Logo
+  depois o painel grava o painel vazio, só com a regra padrão da PUC-PR.
 - **Excluir conta**: pede a senha, apaga na nuvem e a chave da nuvem; os dados do
   aparelho ficam (o aviso diz isso).
 - **Sem salvar** (`podeSalvar` false: dados ilegíveis ou outra aba com versão mais
-  nova): não envia nada, nem troca os dados pelos da nuvem.
+  nova): não envia nada, nem troca os dados pelos da nuvem ("Sincronização parada").
 - Os dados de exemplo são dados como outros: com conta, sobem para a nuvem. A tela
   de exemplo continua funcionando sem conta.
 
