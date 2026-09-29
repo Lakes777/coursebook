@@ -17,6 +17,8 @@ mostra como ele fica em uso).
 
 ![Tela de uma matéria: notas por RA, faltas, pontos extras e regra](docs/materia.png)
 
+![Grade da semana com os horários de todas as matérias e o dia de hoje marcado](docs/semana.png)
+
 <p>
   <img src="docs/agenda.png" alt="Agenda com provas atrasadas, de hoje e chegando" width="64%">
   <img src="docs/celular.png" alt="Tela de uma matéria em recuperação, no celular" width="32%">
@@ -39,7 +41,15 @@ carregar no painel vazio com "Ver com dados de exemplo".
   final, sempre com o comentário de onde vieram.
 - **Faltas:** o limite sai da carga horária (25% das aulas). O botão "Faltei hoje" lança de uma
   vez as aulas daquele dia, pelos horários da matéria.
+- **Semana:** a grade com os horários de todas as matérias, de segunda a sábado, com o dia de
+  hoje marcado.
 - **Agenda:** provas, trabalhos e apresentações, com o que está atrasado, é hoje ou está chegando.
+- **Desfazer:** depois de remover algo ou apagar uma nota, um aviso no pé da página oferece
+  "Desfazer" (ou Ctrl+Z). Vale para a última ação.
+- **Regra padrão editável:** a da PUC-PR vem pronta, mas dá para trocar na tela Dados; cada
+  matéria ainda pode ter a sua.
+- **Várias abas:** o que muda numa aba aparece nas outras sem recarregar. Sair do formulário
+  de matéria pelas abas ou pelo voltar do navegador pergunta antes de apagar o que foi preenchido.
 - **Cadastro passo a passo:** formulário em 5 passos (matéria, RAs, avaliações, regra, revisar),
   que também serve para editar uma matéria sem perder as notas lançadas.
 - **Cadastro com IA:** o botão "Copiar instruções para uma IA" copia um texto pronto. Colado
@@ -76,7 +86,7 @@ Para gerar a versão de produção: `npm run build` (sai na pasta `dist/`, que �
 ## Testes
 
 ```bash
-npx vitest run   # 408 testes (lógica e telas)
+npx vitest run   # 483 testes (lógica e telas)
 npx oxlint       # lint
 npx tsc -b       # tipos
 ```
@@ -99,9 +109,9 @@ src/
     transferencia.ts  Exportar, importar e juntar dados
     instrucoesIA.ts   Texto e exemplo para a IA
     exemplo.ts     Dados de exemplo (datas relativas a hoje)
-  estado/        useReducer + Context (ações, reducer, provedor que salva)
+  estado/        useReducer + Context (ações, reducer, desfazer, provedor que salva e sincroniza abas)
   navegacao/     Rotas no # do endereço
-  telas/         Uma tela por arquivo (Materias, Materia, Formulario, Agenda, Dados)
+  telas/         Uma tela por arquivo (Materias, Materia, Formulario, Semana, Agenda, Dados)
   componentes/   Peças reaproveitadas (selo, avisos, cabeçalho, remover em 2 passos, "hoje")
   tema/          Cores das situações, ícones e textos
 tests/           Espelha o src/ (logica, estado, telas, navegacao, tema)
@@ -120,7 +130,14 @@ tests/           Espelha o src/ (logica, estado, telas, navegacao, tema)
   0,1 em 0,1 (no máximo 101 contas).
 - **Dados que nunca somem:** o que não dá para ler do localStorage é copiado para outra chave
   antes de o painel começar vazio. Os dados têm versão e migração. Quando outra aba salva, esta
-  para de salvar e pede para recarregar, em vez de gravar por cima.
+  relê os dados sem regravá-los (senão as abas ficariam se respondendo sem parar); se não
+  conseguir ler (ex.: versão mais nova do site na outra aba), para de salvar em vez de gravar por cima.
+- **Desfazer sem cópia:** o reducer nunca altera o objeto que recebe, então guardar a
+  referência dos dados de antes basta. Qualquer ação nova esquece o desfazer, porque voltar
+  àqueles dados apagaria a ação nova junto.
+- **Sair do formulário sem perder nada:** os cliques nas abas são segurados antes de virarem
+  histórico, e o voltar do navegador é revertido com `history.go(1)` (reescrever a entrada com
+  `replaceState` estragaria o histórico). Conferido no Chromium com o Playwright.
 - **Rotas no `#`:** `#/materia/<id>`, `#/agenda`... Assim o botão voltar funciona e o site
   estático não precisa de configuração de rotas no servidor.
 - **Importação tolerante, validação rígida:** o JSON importado pode vir sem ids, sem versão ou
@@ -128,16 +145,17 @@ tests/           Espelha o src/ (logica, estado, telas, navegacao, tema)
   ("Matéria 1 (POO) > RA 2 > Avaliação 1: ...").
 - **Visual:** tema escuro grafite com o bordô da PUC-PR (Pantone 201) só atrás de texto branco;
   em texto, um tom claro dele, para ter contraste.
-- **Feito com o Claude Code:** o formulário de nova matéria e a agenda foram feitos por
-  subagentes em `git worktree` separados, ao mesmo tempo que outras telas, e um agente revisor
+- **Feito com o Claude Code:** o formulário de nova matéria, a agenda, a grade da semana e a
+  edição da regra padrão foram feitos por subagentes em `git worktree` separados, ao mesmo tempo que outras telas, e um agente revisor
   confere cada mudança antes do commit.
 
 ## Próximos passos
 
 - [x] Publicar o site na Vercel
-- [ ] Grade da semana com os horários de todas as matérias
-- [ ] Desfazer a última ação (remover uma nota ou falta sem querer)
-- [ ] Avisar ao sair do formulário de matéria pelas abas ou pelo voltar do navegador
-- [ ] Sincronizar entre abas sem precisar recarregar
-- [ ] Editar a regra padrão do painel (hoje é a da PUC-PR, e cada matéria pode ter a sua)
+- [x] Grade da semana com os horários de todas as matérias
+- [x] Desfazer a última ação (remover uma nota ou falta sem querer)
+- [x] Avisar ao sair do formulário de matéria pelas abas ou pelo voltar do navegador
+- [x] Sincronizar entre abas sem precisar recarregar
+- [x] Editar a regra padrão do painel (hoje é a da PUC-PR, e cada matéria pode ter a sua)
+- [ ] Marcar na grade da semana a aula que está acontecendo agora
 - [ ] Guardar os dados na nuvem, para usar em mais de um aparelho
