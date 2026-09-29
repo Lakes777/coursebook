@@ -22,3 +22,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Worktrees temporários do Claude Code (um por subagente)
+.claude/worktrees/

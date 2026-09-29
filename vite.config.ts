@@ -12,5 +12,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./tests/setup.ts'],
+    // Só a pasta tests/: os worktrees dos subagentes (.claude/worktrees) têm cópias dos testes.
+    include: ['tests/**/*.test.{ts,tsx}'],
   },
 })
