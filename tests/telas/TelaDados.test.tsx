@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
 import { CHAVE, dadosVazios } from '../../src/logica/armazenamento'
 import { EXEMPLO_IA, INSTRUCOES_IA } from '../../src/logica/instrucoesIA'
-import type { Dados, Materia } from '../../src/logica/tipos'
+import { REGRA_PUCPR, type Dados, type Materia, type RegraAprovacao } from '../../src/logica/tipos'
 import { TAMANHO_MAXIMO_IMPORTACAO, textoExportacao } from '../../src/logica/transferencia'
 import { TelaDados } from '../../src/telas/TelaDados'
 
@@ -246,5 +246,147 @@ describe('TelaDados', () => {
     await user.click(screen.getByRole('button', { name: 'Copiar instruções para uma IA' }))
     expect(screen.getByText(/Não deu para copiar sozinho/)).toBeInTheDocument()
     expect(screen.getByText('Ver as instruções').closest('details')).toHaveAttribute('open')
+  })
+})
+
+describe('TelaDados: regra padrão', () => {
+  const PROPRIA: RegraAprovacao = { mediaMinima: 6, frequenciaMinima: 0.7, arredondarUmaCasa: true }
+  const SEIS: RegraAprovacao = { mediaMinima: 6, frequenciaMinima: 0.75, arredondarUmaCasa: false }
+
+  function montarRegra(opcoes: { materias?: Materia[]; regraPadrao?: RegraAprovacao; podeSalvar?: boolean } = {}) {
+    const { materias = [POO], regraPadrao = REGRA_PUCPR, podeSalvar = true } = opcoes
+    const nav = navegador()
+    render(
+      <ProvedorPainel
+        inicial={{ dados: { ...dadosVazios(), materias, regraPadrao }, aviso: null, podeSalvar }}
+        armazenamento={nav}
+      >
+        <TelaDados />
+      </ProvedorPainel>,
+    )
+    return nav
+  }
+
+  const secao = () => screen.getByRole('region', { name: 'Regra padrão de aprovação' })
+  const botao = (nome: string | RegExp) => within(secao()).getByRole('button', { name: nome })
+  const editar = () => userEvent.click(botao('Editar regra padrão'))
+
+  it('mostra a regra atual e para quantas matérias ela vale', () => {
+    const materias = [
+      POO,
+      { ...POO, id: 'b', nome: 'B' },
+      { ...POO, id: 'c', nome: 'C', regra: PROPRIA },
+      { ...POO, id: 'd', nome: 'D' },
+    ]
+    montarRegra({ materias })
+    expect(secao()).toHaveTextContent('Toda matéria sem regra própria segue esta regra.')
+    expect(secao()).toHaveTextContent('Vale para 3 das 4 matérias (a outra tem regra própria).')
+    expect(secao()).toHaveTextContent('Regra da PUC-PR')
+    expect(secao()).toHaveTextContent('Média mínima 7,0 e frequência mínima de 75%.')
+    // Já é a da PUC-PR: não há para onde voltar.
+    expect(within(secao()).queryByRole('button', { name: /Voltar para a regra/ })).not.toBeInTheDocument()
+  })
+
+  it.each([
+    [[], 'Ainda não há matérias no painel.'],
+    [[POO], 'Vale para a única matéria do painel.'],
+    [[POO, { ...POO, id: 'b', nome: 'B' }], 'Vale para todas as 2 matérias do painel.'],
+    [[{ ...POO, regra: PROPRIA }], 'Hoje não vale para nenhuma: a única matéria do painel tem regra própria.'],
+    [
+      [POO, { ...POO, id: 'b', nome: 'B', regra: PROPRIA }, { ...POO, id: 'c', nome: 'C', regra: PROPRIA }],
+      'Vale para 1 das 3 matérias (as outras têm regra própria).',
+    ],
+  ] as [Materia[], string][])('conta as matérias afetadas: %#', (materias, texto) => {
+    montarRegra({ materias })
+    expect(secao()).toHaveTextContent(texto)
+  })
+
+  it('edita e salva a regra padrão', async () => {
+    const nav = montarRegra()
+    await editar()
+    const media = within(secao()).getByLabelText('Média mínima')
+    expect(media).toHaveValue('7')
+    expect(media).toHaveFocus()
+    await userEvent.clear(media)
+    await userEvent.type(media, '6,5')
+    await userEvent.click(within(secao()).getByLabelText('Tem recuperação no fim do semestre'))
+    await userEvent.click(botao('Salvar'))
+
+    expect(salvos(nav).regraPadrao).toEqual({ mediaMinima: 6.5, frequenciaMinima: 0.75, arredondarUmaCasa: false })
+    expect(within(secao()).queryByLabelText('Média mínima')).not.toBeInTheDocument()
+    expect(within(secao()).getByRole('status')).toHaveTextContent('Regra padrão salva.')
+    expect(secao()).toHaveTextContent('Regra personalizada')
+    expect(secao()).toHaveTextContent('Média mínima 6,5')
+    expect(botao('Editar regra padrão')).toHaveFocus()
+  })
+
+  it('mostra o erro ligado ao campo e não salva', async () => {
+    const nav = montarRegra()
+    await editar()
+    const frequencia = within(secao()).getByLabelText('Frequência mínima (%)')
+    await userEvent.clear(frequencia)
+    await userEvent.type(frequencia, '120')
+    await userEvent.click(botao('Salvar'))
+
+    expect(frequencia).toHaveFocus()
+    expect(frequencia).toHaveAttribute('aria-invalid', 'true')
+    expect(frequencia).toHaveAccessibleDescription(/Informe a frequência mínima em %, de 0 a 100/)
+    expect(nav.itens.has(CHAVE)).toBe(false)
+
+    // Corrigir o campo tira o erro.
+    await userEvent.clear(frequencia)
+    await userEvent.type(frequencia, '80')
+    expect(frequencia).not.toHaveAttribute('aria-invalid')
+    await userEvent.click(botao('Salvar'))
+    expect(salvos(nav).regraPadrao.frequenciaMinima).toBe(0.8)
+  })
+
+  it('cancelar descarta o que foi mudado', async () => {
+    const nav = montarRegra()
+    await editar()
+    const media = within(secao()).getByLabelText('Média mínima')
+    await userEvent.clear(media)
+    await userEvent.type(media, '5')
+    await userEvent.click(botao('Cancelar'))
+
+    expect(nav.itens.has(CHAVE)).toBe(false)
+    expect(secao()).toHaveTextContent('Média mínima 7,0')
+    expect(botao('Editar regra padrão')).toHaveFocus()
+
+    // Abrir de novo começa da regra salva, não do que foi descartado.
+    await editar()
+    expect(within(secao()).getByLabelText('Média mínima')).toHaveValue('7')
+  })
+
+  it('volta para a regra da PUC-PR depois de confirmar', async () => {
+    const nav = montarRegra({ regraPadrao: SEIS })
+    expect(secao()).toHaveTextContent('Regra personalizada')
+    await userEvent.click(botao('Voltar para a regra da PUC-PR'))
+    expect(botao('Cancelar')).toHaveFocus()
+    expect(nav.itens.has(CHAVE)).toBe(false)
+
+    await userEvent.click(botao('Cancelar'))
+    expect(botao('Voltar para a regra da PUC-PR')).toHaveFocus()
+
+    await userEvent.click(botao('Voltar para a regra da PUC-PR'))
+    await userEvent.click(botao('Confirmar'))
+    expect(salvos(nav).regraPadrao).toEqual(REGRA_PUCPR)
+    expect(secao()).toHaveTextContent('Regra da PUC-PR')
+    expect(within(secao()).queryByRole('button', { name: /Voltar para a regra/ })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Regra padrão de aprovação' })).toHaveFocus()
+  })
+
+  it('não deixa mudar a regra quando nada seria salvo', () => {
+    montarRegra({ regraPadrao: SEIS, podeSalvar: false })
+    expect(botao('Editar regra padrão')).toBeDisabled()
+    expect(botao('Editar regra padrão')).toHaveAccessibleDescription(/não está salvando os dados/)
+    expect(botao('Voltar para a regra da PUC-PR')).toBeDisabled()
+  })
+
+  it('não mexe na regra própria das matérias', async () => {
+    const nav = montarRegra({ materias: [{ ...POO, regra: PROPRIA }] })
+    await editar()
+    await userEvent.click(botao('Salvar'))
+    expect(salvos(nav).materias[0].regra).toEqual(PROPRIA)
   })
 })

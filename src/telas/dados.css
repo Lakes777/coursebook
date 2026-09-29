@@ -129,3 +129,22 @@
   gap: 16px;
   min-width: 0;
 }
+
+/* ---------- Regra padrão ---------- */
+.dados__regra {
+  display: grid;
+  gap: 4px;
+}
+
+.dados__regra-resumo {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.dados__regra-form {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
