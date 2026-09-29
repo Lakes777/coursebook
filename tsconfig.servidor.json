@@ -1,11 +1,10 @@
 {
   "compilerOptions": {
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.servidor.tsbuildinfo",
     "target": "es2023",
-    "lib": ["ES2023", "DOM"],
+    "lib": ["ES2023"],
     "module": "esnext",
-    "types": ["vite/client"],
-    "allowArbitraryExtensions": true,
+    "types": ["node"],
     "skipLibCheck": true,
 
     /* Bundler mode */
@@ -14,7 +13,6 @@
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
-    "jsx": "react-jsx",
 
     /* Linting */
     "noUnusedLocals": true,
@@ -22,7 +20,5 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["src", "tests"],
-  // Os testes da API rodam no Node, com os tipos dele (tsconfig.servidor.json).
-  "exclude": ["tests/servidor"]
+  "include": ["servidor", "api", "tests/servidor"]
 }
