@@ -1,0 +1,99 @@
+/* ---------- Situação da nuvem no topo ---------- */
+
+/* Título e situação juntos: em tela estreita a situação desce para baixo do título, e as abas vêm depois. */
+.topo__marca {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+  min-width: 0;
+}
+
+.situacao-nuvem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  /* Em 320 px, "Sem conexão: salvo neste aparelho" quebra a linha em vez de alargar a página. */
+  overflow-wrap: anywhere;
+}
+
+a.situacao-nuvem {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.situacao-nuvem--atencao,
+.situacao-nuvem--atencao .icone {
+  color: var(--atencao);
+}
+
+/* ---------- Seção "Conta e nuvem" na tela Dados ---------- */
+
+.nuvem__titulo:focus {
+  outline: none;
+}
+
+.nuvem__form {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+  max-width: 28rem;
+}
+
+.nuvem__conta {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.nuvem__situacao {
+  margin: 0;
+  max-width: 70ch;
+}
+
+.nuvem__situacao--atencao {
+  color: var(--atencao);
+}
+
+.nuvem__erro {
+  margin: 0;
+  color: var(--perigo);
+}
+
+.nuvem__erro:focus {
+  outline: none;
+}
+
+/* A pergunta do conflito: destacada com a borda da atenção, como os avisos. */
+.nuvem__pergunta {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--atencao);
+  border-radius: var(--radius-pequeno);
+  background: var(--bg);
+}
+
+.nuvem__pergunta-titulo {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.nuvem__pergunta-titulo:focus {
+  outline: none;
+}
+
+.nuvem__alternar {
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--destaque);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}

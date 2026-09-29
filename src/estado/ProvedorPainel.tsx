@@ -56,6 +56,7 @@ export function ProvedorPainel({ inicial, armazenamento, children }: Props) {
     () => ({
       dados,
       despachar,
+      sincronizar: (novos) => despachar({ tipo: 'sincronizar', dados: novos }),
       desfazer,
       aoDesfazer: () => despachar({ tipo: 'desfazer' }),
       esquecerDesfazer: () => despachar({ tipo: 'desfazer/esquecer' }),
