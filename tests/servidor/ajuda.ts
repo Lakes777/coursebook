@@ -31,9 +31,11 @@ export function prepararAmbiente(): Ambiente {
       agora = new Date(agora.getTime() + minutos * 60_000)
     },
   }
+  // Subir o PGlite (compilar o WebAssembly do Postgres) leva alguns segundos, e mais
+  // quando os arquivos de teste sobem os seus ao mesmo tempo: daí o prazo maior.
   beforeAll(async () => {
     await aplicarEsquema(banco)
-  })
+  }, 60_000)
   beforeEach(async () => {
     await pg.exec('TRUNCATE usuarios, sessoes, tentativas_login, paineis')
     agora = INICIO
