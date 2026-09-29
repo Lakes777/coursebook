@@ -120,3 +120,12 @@ export const faixaAula = (aula: AulaPUC) => faixaHorario({ inicio: aula.inicio, 
 export function textoFaixa(horario: Horario): string {
   return faixaHorario({ inicio: horario.inicio, fim: horario.fim })
 }
+
+/**
+ * A aula da tabela que está acontecendo no momento `agora` (do início, inclusive, ao
+ * fim, exclusive), ou null no intervalo e fora do horário de aulas.
+ */
+export function aulaDeAgora(agora: Date): AulaPUC | null {
+  const minuto = agora.getHours() * 60 + agora.getMinutes()
+  return AULAS_PUC.find((a) => minutos(a.inicio)! <= minuto && minuto < minutos(a.fim)!) ?? null
+}

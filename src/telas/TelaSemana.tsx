@@ -1,10 +1,12 @@
 import { Eye, Plus } from 'lucide-react'
 import { CabecalhoTela } from '../componentes/CabecalhoTela'
-import { useHoje } from '../componentes/useHoje'
+import { useAgora } from '../componentes/useHoje'
 import { useVerExemplo } from '../componentes/useVerExemplo'
 import { usePainel } from '../estado/contexto'
 import { paraHash } from '../navegacao/rota'
+import type { AulaPUC } from '../logica/aulasPUC'
 import {
+  aulaDeAgora,
   faixaAula,
   gradeDaSemana,
   nomeAula,
@@ -20,7 +22,8 @@ import './semana.css'
 export function TelaSemana() {
   const { dados } = usePainel()
   const { verExemplo, podeVerExemplo } = useVerExemplo()
-  const hoje = useHoje()
+  // Atualiza a cada minuto (não só quando o dia vira) para acompanhar a aula em andamento.
+  const agora = useAgora()
   const { materias } = dados
 
   if (materias.length === 0) {
@@ -66,14 +69,15 @@ export function TelaSemana() {
     )
   }
 
-  const diaDeHoje = hoje.getDay()
+  const diaDeHoje = agora.getDay()
+  const aulaAgora = aulaDeAgora(agora)
   const grade = gradeDaSemana(materias)
   return (
     <CabecalhoTela titulo="Semana">
       {grade.linhas.length > 0 && (
         <>
-          <TabelaSemana grade={grade} diaDeHoje={diaDeHoje} />
-          <ListaSemana grade={grade} diaDeHoje={diaDeHoje} />
+          <TabelaSemana grade={grade} diaDeHoje={diaDeHoje} aulaAgora={aulaAgora} />
+          <ListaSemana grade={grade} diaDeHoje={diaDeHoje} aulaAgora={aulaAgora} />
         </>
       )}
       {grade.foraDaGrade.length > 0 && (
@@ -108,8 +112,15 @@ function Materias({ aulas }: { aulas: AulaNaGrade[] }) {
   ))
 }
 
+interface PropsGrade {
+  grade: Grade
+  diaDeHoje: number
+  /** A aula da tabela em andamento agora (null no intervalo e fora do horário). */
+  aulaAgora: AulaPUC | null
+}
+
 /** Tela larga: a grade do portal, com uma linha por aula e uma coluna por dia. */
-function TabelaSemana({ grade, diaDeHoje }: { grade: Grade; diaDeHoje: number }) {
+function TabelaSemana({ grade, diaDeHoje, aulaAgora }: PropsGrade) {
   return (
     <div className="grade-semana">
       <table className="grade-semana__tabela">
@@ -147,14 +158,21 @@ function TabelaSemana({ grade, diaDeHoje }: { grade: Grade; diaDeHoje: number })
                     <span className="grade-semana__faixa">{faixaAula(linha.aula)}</span>
                   </span>
                 </th>
-                {linha.celulas.map((aulas, j) => (
-                  <td
-                    key={grade.dias[j].dia}
-                    className={grade.dias[j].dia === diaDeHoje ? 'grade-semana__hoje' : undefined}
-                  >
-                    <Materias aulas={aulas} />
-                  </td>
-                ))}
+                {linha.celulas.map((aulas, j) => {
+                  const hoje = grade.dias[j].dia === diaDeHoje
+                  const agora = hoje && linha.aula.numero === aulaAgora?.numero && aulas.length > 0
+                  const classes = [hoje && 'grade-semana__hoje', agora && 'grade-semana__agora'].filter(Boolean)
+                  return (
+                    <td
+                      key={grade.dias[j].dia}
+                      className={classes.length > 0 ? classes.join(' ') : undefined}
+                      aria-current={agora ? 'time' : undefined}
+                    >
+                      {agora && <RotuloAgora />}
+                      <Materias aulas={aulas} />
+                    </td>
+                  )
+                })}
               </tr>
             ),
           )}
@@ -165,7 +183,7 @@ function TabelaSemana({ grade, diaDeHoje }: { grade: Grade; diaDeHoje: number })
 }
 
 /** Celular: um dia embaixo do outro, com uma linha por aula. */
-function ListaSemana({ grade, diaDeHoje }: { grade: Grade; diaDeHoje: number }) {
+function ListaSemana({ grade, diaDeHoje, aulaAgora }: PropsGrade) {
   return (
     <div className="semana-lista">
       {grade.dias.map((d, j) => {
@@ -187,17 +205,25 @@ function ListaSemana({ grade, diaDeHoje }: { grade: Grade; diaDeHoje: number }) 
               <p className="muted semana__sem-aulas">Sem aulas</p>
             ) : (
               <ul className="semana__aulas" aria-labelledby={idTitulo}>
-                {aulas.map(({ aula, celulas }) => (
-                  <li key={aula.numero} className="semana__linha">
-                    <span className="grade-semana__aula">
-                      <span className="grade-semana__numero">{nomeAula(aula)}</span>
-                      <span className="grade-semana__faixa">{faixaAula(aula)}</span>
-                    </span>
-                    <span>
-                      <Materias aulas={celulas[j]} />
-                    </span>
-                  </li>
-                ))}
+                {aulas.map(({ aula, celulas }) => {
+                  const agora = ehHoje && aula.numero === aulaAgora?.numero
+                  return (
+                    <li
+                      key={aula.numero}
+                      className={`semana__linha${agora ? ' semana__linha--agora' : ''}`}
+                      aria-current={agora ? 'time' : undefined}
+                    >
+                      <span className="grade-semana__aula">
+                        <span className="grade-semana__numero">{nomeAula(aula)}</span>
+                        <span className="grade-semana__faixa">{faixaAula(aula)}</span>
+                      </span>
+                      <span>
+                        {agora && <RotuloAgora />}
+                        <Materias aulas={celulas[j]} />
+                      </span>
+                    </li>
+                  )
+                })}
               </ul>
             )}
           </section>
@@ -214,6 +240,19 @@ function RotuloHoje() {
       <span className="invisivel">, hoje</span>
       <span aria-hidden="true" className="semana__hoje">
         Hoje
+      </span>
+    </>
+  )
+}
+
+function RotuloAgora() {
+  return (
+    <>
+      {/* Como no "Hoje": o rótulo visível é só visual; o leitor ouve "Acontecendo agora: POO". */}
+      <span className="invisivel">Acontecendo agora: </span>
+      {/* Mesmo visual do rótulo "Hoje" (.semana__hoje), com o espaço de .semana__agora. */}
+      <span aria-hidden="true" className="semana__hoje semana__agora">
+        Agora
       </span>
     </>
   )

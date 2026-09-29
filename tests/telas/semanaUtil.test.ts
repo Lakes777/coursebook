@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { AULAS_PUC } from '../../src/logica/aulasPUC'
 import type { Horario, Materia } from '../../src/logica/tipos'
-import { faixaAula, gradeDaSemana, nomeAula, textoFaixa } from '../../src/telas/semanaUtil'
+import { aulaDeAgora, faixaAula, gradeDaSemana, nomeAula, textoFaixa } from '../../src/telas/semanaUtil'
 
 function materia(id: string, nome: string, horarios: Horario[]): Materia {
   return { id, nome, professor: '', horarios, cargaHoraria: 80, ras: [], pontosExtras: [], faltas: [] }
@@ -78,5 +78,25 @@ describe('textos', () => {
   it('faixa de um horário com e sem fim', () => {
     expect(textoFaixa({ dia: 1, inicio: '19:00', fim: '22:30', aulas: 4 })).toBe('19:00 às 22:30')
     expect(textoFaixa({ dia: 1, inicio: '19:00' })).toBe('19:00')
+  })
+})
+
+describe('aulaDeAgora', () => {
+  const numero = (h: number, m: number) => aulaDeAgora(new Date(2026, 9, 1, h, m))?.numero ?? null
+
+  it('a aula em andamento, do início (inclusive) ao fim (exclusive)', () => {
+    expect(numero(7, 5)).toBe(1)
+    expect(numero(7, 49)).toBe(1)
+    expect(numero(7, 50)).toBe(2)
+    expect(numero(19, 10)).toBe(16)
+    expect(numero(22, 59)).toBe(20)
+  })
+
+  it('null no intervalo e fora do horário de aulas', () => {
+    expect(numero(9, 20)).toBeNull()
+    expect(numero(9, 39)).toBeNull()
+    expect(numero(9, 40)).toBe(4)
+    expect(numero(6, 0)).toBeNull()
+    expect(numero(23, 0)).toBeNull()
   })
 })

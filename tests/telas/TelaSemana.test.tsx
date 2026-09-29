@@ -110,6 +110,47 @@ describe('TelaSemana', () => {
     expect(dia('Quinta-feira')).not.toHaveAttribute('aria-current')
   })
 
+  describe('aula acontecendo agora', () => {
+    it('marca com texto a célula de hoje na aula em andamento (na tabela e na lista)', () => {
+      // Quinta, 19:10: 16ª aula (19:00 às 19:45), Algoritmos.
+      vi.setSystemTime(new Date(2026, 9, 1, 19, 10))
+      montar()
+      const agora = within(tabela()).getByText('Agora').closest('td')!
+      expect(agora).toHaveAttribute('aria-current', 'time')
+      expect(agora).toHaveTextContent('Acontecendo agora: AgoraAlgoritmos')
+      expect(linha('16ª aula')[3]).toBe(agora.textContent)
+      // Terça também tem Algoritmos na 16ª, mas não é hoje.
+      expect(linha('16ª aula')[1]).toBe('AlgoritmosProf.ª Ana')
+      const item = within(dia('Quinta-feira, hoje')).getByText('Agora').closest('li')!
+      expect(item).toHaveAttribute('aria-current', 'time')
+      expect(item).toHaveTextContent(/^16ª aula/)
+      expect(screen.getAllByText('Agora')).toHaveLength(2)
+    })
+
+    it.each([
+      ['no intervalo', new Date(2026, 9, 1, 20, 35)],
+      ['numa aula sem matéria hoje (7ª)', new Date(2026, 9, 1, 12, 0)],
+      ['numa aula vazia na quinta (17ª)', new Date(2026, 9, 1, 19, 50)],
+      ['depois da última aula', new Date(2026, 9, 1, 23, 30)],
+      ['no domingo, que não tem coluna', new Date(2026, 9, 4, 19, 10)],
+    ])('não marca nada %s', (_, quando) => {
+      vi.setSystemTime(quando)
+      montar()
+      expect(screen.queryByText('Agora')).not.toBeInTheDocument()
+    })
+
+    it('passa para a aula seguinte sozinho, com a tela aberta', () => {
+      vi.useFakeTimers({ toFake: ['Date', 'setInterval', 'clearInterval'] })
+      vi.setSystemTime(new Date(2026, 9, 1, 20, 40))
+      montar()
+      expect(screen.queryByText('Agora')).not.toBeInTheDocument()
+      // 20:45: começa a 18ª aula, Banco de Dados.
+      vi.setSystemTime(new Date(2026, 9, 1, 20, 45))
+      act(() => void vi.advanceTimersByTime(15_000))
+      expect(within(tabela()).getByText('Agora').closest('td')).toHaveTextContent(/Banco de Dados/)
+    })
+  })
+
   it('mostra o sábado e o domingo só quando há aula neles', () => {
     montar([materia('ead', 'Estágio', [{ dia: 0, inicio: '07:50', fim: '08:35' }])])
     expect(within(dia('Domingo')).getByRole('link', { name: 'Estágio' })).toBeInTheDocument()

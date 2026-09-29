@@ -44,6 +44,7 @@ carregar no painel vazio com "Ver com dados de exemplo".
 - **Semana:** a grade como a do portal da PUC-PR, com uma linha por aula (1ª a 20ª) e uma
   coluna por dia, o nome da matéria em cada aula que ela ocupa e o dia de hoje marcado. Aulas
   vazias seguidas (entre a manhã e a noite) viram uma linha só; no celular, um dia embaixo do outro.
+  A aula que está acontecendo agora aparece marcada com "Agora" e muda sozinha com a tela aberta.
 - **Agenda:** provas, trabalhos e apresentações, com o que está atrasado, é hoje ou está chegando.
 - **Desfazer:** depois de remover algo ou apagar uma nota, um aviso no pé da página oferece
   "Desfazer" (ou Ctrl+Z). Vale para a última ação.
@@ -166,5 +167,5 @@ tests/           Espelha o src/ (logica, estado, telas, navegacao, tema)
 - [x] Sincronizar entre abas sem precisar recarregar
 - [x] Editar a regra padrão do painel (hoje é a da PUC-PR, e cada matéria pode ter a sua)
 - [x] Não deixar duas matérias ocuparem o mesmo horário
-- [ ] Marcar na grade da semana a aula que está acontecendo agora
+- [x] Marcar na grade da semana a aula que está acontecendo agora
 - [ ] Guardar os dados na nuvem, para usar em mais de um aparelho
