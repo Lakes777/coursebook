@@ -47,6 +47,30 @@ describe('cookie da sessão', () => {
   })
 })
 
+describe('limpeza de sessões', () => {
+  it('ao criar uma sessão, apaga as vencidas de qualquer conta', async () => {
+    await cadastrar(amb.ctx)
+    amb.avancar(30 * 24 * 60)
+    await cadastrar(amb.ctx, 'bia@exemplo.com')
+    const { rows } = await amb.pg.query<{ email: string }>(
+      'SELECT u.email FROM sessoes s JOIN usuarios u ON u.id = s.usuario_id',
+    )
+    expect(rows).toEqual([{ email: 'bia@exemplo.com' }])
+  })
+
+  it('cadastrar com o cookie de outra conta apaga a sessão antiga', async () => {
+    const daAna = await cadastrar(amb.ctx)
+    const resposta = await chamar(cadastro, amb.ctx, '/api/cadastro', {
+      metodo: 'POST',
+      cookie: daAna,
+      corpo: { email: 'bia@exemplo.com', senha: 'senha-boa-123', convite: CONVITE },
+    })
+    expect(resposta.status).toBe(201)
+    expect(await contar('sessoes')).toBe(1)
+    expect((await chamar(eu, amb.ctx, '/api/eu', { cookie: daAna })).status).toBe(401)
+  })
+})
+
 describe('GET /api/eu', () => {
   it('sem cookie responde 401 sem-sessao, sem consultar o banco', async () => {
     const consultar = vi.fn()
@@ -126,6 +150,16 @@ describe('DELETE /api/conta', () => {
     for (let i = 0; i < 5; i++) await excluir(token, 'senha-errada')
     const resposta = await excluir(token, 'senha-boa-123')
     expect(resposta.status).toBe(429)
+    expect(await contar('usuarios')).toBe(1)
+  })
+
+  it('20 pedidos ao mesmo tempo com senha errada: só 5 chegam a conferir, o resto é 429', async () => {
+    const token = await cadastrar(amb.ctx)
+    const respostas = await Promise.all(Array.from({ length: 20 }, () => excluir(token, 'senha-errada')))
+    const status = respostas.map((r) => r.status)
+    expect(status.filter((s) => s === 401).length).toBeLessThanOrEqual(5)
+    expect(status.filter((s) => s !== 401).every((s) => s === 429)).toBe(true)
+    expect(await contar('tentativas_login')).toBeLessThanOrEqual(5)
     expect(await contar('usuarios')).toBe(1)
   })
 

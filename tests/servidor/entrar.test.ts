@@ -48,7 +48,10 @@ describe('POST /api/entrar', () => {
     }
     const resposta = await entrarCom('ANA@exemplo.com', 'senha-boa-123')
     expect(resposta.status).toBe(429)
-    expect(await resposta.json()).toEqual({ codigo: 'bloqueado', erro: 'Muitas tentativas. Tente de novo em 10 minutos.' })
+    expect(await erroDe(resposta)).toEqual({
+      codigo: 'bloqueado',
+      erro: 'Muitas tentativas. Tente de novo em 10 minutos.',
+    })
     // A primeira errada foi há 5 minutos: faltam 10 para ela sair da janela de 15.
     expect(resposta.headers.get('Retry-After')).toBe('600')
     expect(cookieDe(resposta)).toBeNull()
@@ -94,10 +97,51 @@ describe('POST /api/entrar', () => {
     expect(rows).toEqual([{ email: 'bia@exemplo.com' }])
   })
 
-  it('recusa senha acima do máximo sem gastar argon2 com ela', async () => {
+  it('recusa senha acima do máximo antes de gravar tentativa ou rodar o argon2', async () => {
     const resposta = await entrarCom('ana@exemplo.com', 'x'.repeat(201))
     expect(resposta.status).toBe(400)
     expect((await erroDe(resposta)).codigo).toBe('pedido-invalido')
+    expect(await tentativas()).toBe(0)
+  })
+
+  it('confere o e-mail (tamanho, só ASCII, formato) antes de gravar tentativa', async () => {
+    const longo = await entrarCom('a'.repeat(1_000_000) + '@x.com', 'senha-boa-123')
+    expect(longo.status).toBe(400)
+    expect(await erroDe(longo)).toEqual({
+      codigo: 'pedido-invalido',
+      erro: 'O e-mail pode ter no máximo 254 caracteres.',
+    })
+    const acento = await entrarCom('joão@exemplo.com', 'senha-boa-123')
+    expect(await erroDe(acento)).toEqual({
+      codigo: 'pedido-invalido',
+      erro: 'Use um e-mail sem acentos ou outros caracteres especiais.',
+    })
+    expect((await entrarCom('sem-arroba', 'senha-boa-123')).status).toBe(400)
+    expect(await tentativas()).toBe(0)
+  })
+
+  it('20 pedidos ao mesmo tempo com senha errada: só 5 chegam a conferir, o resto é 429', async () => {
+    await cadastrar(amb.ctx)
+    const respostas = await Promise.all(
+      Array.from({ length: 20 }, (_, i) => entrarCom('ana@exemplo.com', 'errada-' + i)),
+    )
+    const status = respostas.map((r) => r.status)
+    expect(status.filter((s) => s === 401).length).toBeLessThanOrEqual(5)
+    expect(status.filter((s) => s !== 401).every((s) => s === 429)).toBe(true)
+    expect(await tentativas()).toBeLessThanOrEqual(5)
+    expect((await entrarCom('ana@exemplo.com', 'senha-boa-123')).status).toBe(429)
+  })
+
+  it('entrar com o cookie de uma sessão antiga apaga essa sessão', async () => {
+    const antiga = await cadastrar(amb.ctx)
+    const resposta = await chamar(entrar, amb.ctx, '/api/entrar', {
+      metodo: 'POST',
+      cookie: antiga,
+      corpo: { email: 'ana@exemplo.com', senha: 'senha-boa-123' },
+    })
+    expect(resposta.status).toBe(200)
+    const { rows } = await amb.pg.query('SELECT 1 FROM sessoes')
+    expect(rows).toHaveLength(1)
   })
 
   it('recusa pedido sem senha', async () => {

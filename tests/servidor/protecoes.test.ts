@@ -42,7 +42,10 @@ describe('corpo do pedido', () => {
     const grande = JSON.stringify({ dados: dadosVazios(), revisao: 0, sobra: 'x'.repeat(LIMITES.corpoMaximo) })
     const resposta = await chamar(dados, amb.ctx, '/api/dados', { metodo: 'PUT', cookie: token, corpo: grande })
     expect(resposta.status).toBe(413)
-    expect(await erroDe(resposta)).toEqual({ codigo: 'muito-grande', erro: 'O pedido é grande demais (máximo de 2 MB).' })
+    expect(await erroDe(resposta)).toEqual({
+      codigo: 'muito-grande',
+      erro: 'O pedido é grande demais (máximo de 2 MB).',
+    })
 
     // Content-Length mentindo (dizendo menos): o limite vale para o que chega de verdade.
     const req = new Request('https://painel.exemplo/api/entrar', {
@@ -104,6 +107,29 @@ describe('Origin', () => {
     }
     // A sessão continua viva.
     expect((await chamar(eu, amb.ctx, '/api/eu', { cookie: token })).status).toBe(200)
+  })
+
+  it('vale também para salvar os dados e excluir a conta', async () => {
+    const token = await cadastrar(amb.ctx)
+    const origin = { origin: 'https://malicioso.exemplo' }
+    const salvar = await chamar(dados, amb.ctx, '/api/dados', {
+      metodo: 'PUT',
+      cookie: token,
+      corpo: { dados: dadosVazios(), revisao: 0 },
+      cabecalhos: origin,
+    })
+    expect(salvar.status).toBe(403)
+    const excluir = await chamar(conta, amb.ctx, '/api/conta', {
+      metodo: 'DELETE',
+      cookie: token,
+      corpo: { senha: 'senha-boa-123' },
+      cabecalhos: origin,
+    })
+    expect(excluir.status).toBe(403)
+    const { rows } = await amb.pg.query(
+      'SELECT (SELECT count(*)::int FROM usuarios) AS u, (SELECT count(*)::int FROM paineis) AS p',
+    )
+    expect(rows).toEqual([{ u: 1, p: 0 }])
   })
 
   it('aceita o mesmo site, pelo endereço do pedido ou pelo Host', async () => {

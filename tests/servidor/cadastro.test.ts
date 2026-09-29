@@ -4,6 +4,11 @@ import { cadastro } from '../../servidor/rotas/cadastro'
 import { eu } from '../../servidor/rotas/eu'
 import { chamar, CONVITE, cookieDe, erroDe, prepararAmbiente } from './ajuda'
 
+async function tentativas(): Promise<number> {
+  const { rows } = await amb.pg.query<{ n: number }>('SELECT count(*)::int AS n FROM tentativas_login')
+  return rows[0].n
+}
+
 const amb = prepararAmbiente()
 
 function cadastrarCom(corpo: Record<string, unknown>, ctx = amb.ctx) {
@@ -65,6 +70,15 @@ describe('POST /api/cadastro', () => {
     expect((await erroDe(resposta)).codigo).toBe('pedido-invalido')
   })
 
+  it('recusa e-mail com acento, com mensagem própria', async () => {
+    const resposta = await cadastrarCom({ ...valido, email: 'joão@exemplo.com' })
+    expect(resposta.status).toBe(400)
+    expect(await erroDe(resposta)).toEqual({
+      codigo: 'pedido-invalido',
+      erro: 'Use um e-mail sem acentos ou outros caracteres especiais.',
+    })
+  })
+
   it('aceita senha de 8 a 200 caracteres', async () => {
     const curta = await cadastrarCom({ ...valido, senha: '1234567' })
     expect(curta.status).toBe(400)
@@ -94,5 +108,50 @@ describe('POST /api/cadastro', () => {
     expect((await erroDe(resposta)).codigo).toBe('email-em-uso')
     expect(cookieDe(resposta)).toBeNull()
     expect((await amb.pg.query('SELECT 1 FROM usuarios')).rows).toHaveLength(1)
+  })
+})
+
+describe('limite de chutes do convite', () => {
+  it('depois de 5 convites errados em 15 minutos, recusa até o convite certo, com Retry-After', async () => {
+    for (let i = 0; i < 5; i++) {
+      expect((await cadastrarCom({ ...valido, email: `p${i}@x.com`, convite: 'chute-' + i })).status).toBe(403)
+    }
+    amb.avancar(3)
+    const resposta = await cadastrarCom(valido)
+    expect(resposta.status).toBe(429)
+    expect(await erroDe(resposta)).toEqual({
+      codigo: 'bloqueado',
+      erro: 'Muitas tentativas com o código de convite. Tente de novo em 12 minutos.',
+    })
+    expect(resposta.headers.get('Retry-After')).toBe('720')
+    expect(await tentativas()).toBe(5)
+
+    amb.avancar(12)
+    expect((await cadastrarCom(valido)).status).toBe(201)
+  })
+
+  it('convite certo não conta como chute nem zera os chutes dos outros', async () => {
+    for (let i = 0; i < 4; i++) await cadastrarCom({ ...valido, convite: 'chute' })
+    for (let i = 0; i < 3; i++) {
+      expect((await cadastrarCom({ ...valido, email: `c${i}@x.com` })).status).toBe(201)
+    }
+    expect(await tentativas()).toBe(4)
+    expect((await cadastrarCom({ ...valido, convite: 'chute' })).status).toBe(403)
+    expect((await cadastrarCom({ ...valido, email: 'z@x.com' })).status).toBe(429)
+  })
+
+  it('20 chutes ao mesmo tempo: no máximo 5 são conferidos, o resto é 429', async () => {
+    const respostas = await Promise.all(
+      Array.from({ length: 20 }, (_, i) => cadastrarCom({ ...valido, convite: 'chute-' + i })),
+    )
+    const status = respostas.map((r) => r.status)
+    expect(status.filter((s) => s === 403).length).toBeLessThanOrEqual(5)
+    expect(status.filter((s) => s !== 403).every((s) => s === 429)).toBe(true)
+    expect(await tentativas()).toBeLessThanOrEqual(5)
+  })
+
+  it('cadastro fechado não grava tentativa', async () => {
+    await cadastrarCom(valido, { ...amb.ctx, convite: undefined })
+    expect(await tentativas()).toBe(0)
   })
 })
