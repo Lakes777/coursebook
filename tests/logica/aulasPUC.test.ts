@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { AULAS_PUC, aulasDoHorario } from '../../src/logica/aulasPUC'
+import { AULAS_PUC, aulasDaTabela, aulasDoHorario } from '../../src/logica/aulasPUC'
 
 /** Números das aulas ("2ª" = 2) em vez das posições, para ler fácil. */
 const numeros = (h: Parameters<typeof aulasDoHorario>[0]) => aulasDoHorario(h).map((i) => AULAS_PUC[i].numero)
@@ -35,5 +35,19 @@ describe('aulasDoHorario', () => {
     expect(numeros({ inicio: '13:30' })).toEqual([])
     expect(numeros({ inicio: '23:10' })).toEqual([])
     expect(numeros({ inicio: 'xx:yy' })).toEqual([])
+  })
+})
+
+describe('aulasDaTabela', () => {
+  it('acha a primeira e a última aula de um horário exato da tabela', () => {
+    expect(aulasDaTabela({ inicio: '07:50', fim: '11:10', aulas: 4 })).toEqual({ primeira: 1, ultima: 4 })
+    expect(aulasDaTabela({ inicio: '19:00', fim: '19:45' })).toEqual({ primeira: 15, ultima: 15 })
+  })
+
+  it('não bate: hora fora da tabela, fim antes do início ou número de aulas diferente', () => {
+    expect(aulasDaTabela({ inicio: '19:00', fim: '22:30' })).toBeNull()
+    expect(aulasDaTabela({ inicio: '09:40', fim: '08:35' })).toBeNull()
+    expect(aulasDaTabela({ inicio: '07:50', fim: '11:10', aulas: 3 })).toBeNull()
+    expect(aulasDaTabela({ inicio: '19:00' })).toBeNull()
   })
 })

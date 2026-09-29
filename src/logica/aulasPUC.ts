@@ -60,3 +60,18 @@ export function aulasDoHorario(horario: Pick<Horario, 'inicio' | 'fim' | 'aulas'
   const quantas = Math.min(horario.aulas ?? 1, AULAS_PUC.length - primeira)
   return Array.from({ length: quantas }, (_, i) => primeira + i)
 }
+
+/**
+ * Se o horário é exatamente "da aula X até a aula Y" da tabela (início de uma, fim
+ * da outra e, se informado, o número de aulas entre elas), devolve as posições das
+ * duas; senão, null. O formulário usa para abrir o horário já nas aulas.
+ */
+export function aulasDaTabela(
+  horario: Pick<Horario, 'inicio' | 'fim' | 'aulas'>,
+): { primeira: number; ultima: number } | null {
+  const primeira = AULAS_PUC.findIndex((a) => a.inicio === horario.inicio)
+  const ultima = AULAS_PUC.findIndex((a) => a.fim === horario.fim)
+  if (primeira === -1 || ultima < primeira) return null
+  if (horario.aulas !== undefined && horario.aulas !== ultima - primeira + 1) return null
+  return { primeira, ultima }
+}

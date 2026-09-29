@@ -52,7 +52,8 @@ carregar no painel vazio com "Ver com dados de exemplo".
 - **Várias abas:** o que muda numa aba aparece nas outras sem recarregar. Sair do formulário
   de matéria pelas abas ou pelo voltar do navegador pergunta antes de apagar o que foi preenchido.
 - **Cadastro passo a passo:** formulário em 5 passos (matéria, RAs, avaliações, regra, revisar),
-  que também serve para editar uma matéria sem perder as notas lançadas.
+  que também serve para editar uma matéria sem perder as notas lançadas. O horário é escolhido
+  pelas aulas da tabela da PUC-PR ("da 2ª até a 5ª aula"); para outro horário, dá para digitar as horas.
 - **Cadastro com IA:** o botão "Copiar instruções para uma IA" copia um texto pronto. Colado
   num chat (ChatGPT, Claude...) junto com o PDF do plano de ensino, ele faz a IA devolver o JSON
   da matéria para importar.
@@ -87,7 +88,7 @@ Para gerar a versão de produção: `npm run build` (sai na pasta `dist/`, que �
 ## Testes
 
 ```bash
-npx vitest run   # 489 testes (lógica e telas)
+npx vitest run   # 503 testes (lógica e telas)
 npx oxlint       # lint
 npx tsc -b       # tipos
 ```

@@ -4,6 +4,8 @@ import { flushSync } from 'react-dom'
 import { CabecalhoTela } from '../componentes/CabecalhoTela'
 import { usePainel } from '../estado/contexto'
 import { formatarData } from '../logica/datas'
+import { AULAS_PUC } from '../logica/aulasPUC'
+import { MAXIMO_AULAS_POR_DIA } from '../logica/faltas'
 import { faixaHorario } from '../logica/horarios'
 import { formatarNota, lerNumero } from '../logica/numeros'
 import { VERSAO_ATUAL, type DiaSemana, type Materia } from '../logica/tipos'
@@ -23,6 +25,10 @@ import {
   idRA,
   montarRegra,
   mudarHorarioForm,
+  aulasEscolhidas,
+  escolherAulas,
+  escolherPrimeiraAula,
+  trocarModoHorario,
   nomeDia,
   novaAvaliacao,
   novoHorario,
@@ -231,6 +237,132 @@ export function FormularioMateria({
     if (campo) limparErro(campo)
   }
 
+  /** "Da aula" e "Até a aula": usam os ids de início e fim, onde a conferência põe os erros. */
+  function camposAulas(h: HorarioForm) {
+    const { primeira, ultima } = aulasEscolhidas(h)
+    return (
+      <>
+        <Rotulado id={idHorario(h.chave, 'inicio')} rotulo="Da aula" erro={erro}>
+          {(p) => (
+            <select
+              {...p}
+              className="campo"
+              value={primeira}
+              onChange={(e) =>
+                mudarAulas(h.chave, (atual) => escolherPrimeiraAula(atual, Number(e.target.value)), p.id)
+              }
+            >
+              <option value={-1}>Escolha</option>
+              {AULAS_PUC.map((a, i) => (
+                <option key={a.numero} value={i}>
+                  {a.numero}ª aula ({a.inicio})
+                </option>
+              ))}
+            </select>
+          )}
+        </Rotulado>
+        <Rotulado id={idHorario(h.chave, 'fim')} rotulo="Até a aula" erro={erro}>
+          {(p) => (
+            <select
+              {...p}
+              className="campo"
+              value={ultima}
+              onChange={(e) =>
+                mudarAulas(h.chave, (atual) => escolherAulas(atual, primeira, Number(e.target.value)), p.id)
+              }
+            >
+              <option value={-1}>Escolha</option>
+              {/* Só da primeira até o máximo de aulas num dia ("da 4ª até a 2ª" não existe). A
+                  escolhida fica sempre na lista, para o seletor mostrar o que está salvo. */}
+              {AULAS_PUC.map((a, i) =>
+                i !== ultima && (i < primeira || i >= primeira + MAXIMO_AULAS_POR_DIA) ? null : (
+                  <option key={a.numero} value={i}>
+                    {a.numero}ª aula (até {a.fim})
+                  </option>
+                ),
+              )}
+            </select>
+          )}
+        </Rotulado>
+      </>
+    )
+  }
+
+  /** Horário digitado, para aulas fora da tabela da PUC-PR. */
+  function camposHoras(h: HorarioForm) {
+    return (
+      <>
+        <Rotulado id={idHorario(h.chave, 'inicio')} rotulo="Começa às" erro={erro}>
+          {(p) => (
+            <input
+              {...p}
+              type="time"
+              className="campo"
+              value={h.inicio}
+              onChange={(e) => mudarHorario(h.chave, { inicio: e.target.value }, p.id)}
+            />
+          )}
+        </Rotulado>
+        <Rotulado id={idHorario(h.chave, 'fim')} rotulo="Termina às" erro={erro}>
+          {(p) => (
+            <input
+              {...p}
+              type="time"
+              className="campo"
+              value={h.fim}
+              onChange={(e) => mudarHorario(h.chave, { fim: e.target.value }, p.id)}
+            />
+          )}
+        </Rotulado>
+        <Rotulado
+          id={idHorario(h.chave, 'aulas')}
+          rotulo="Aulas"
+          dica={h.aulasManual ? undefined : 'Aulas de 45 min que cabem no horário. Corrija se preciso.'}
+          erro={erro}
+        >
+          {(p) => (
+            <input
+              {...p}
+              className="campo nm-campo--curto"
+              inputMode="numeric"
+              autoComplete="off"
+              value={h.aulas}
+              onChange={(e) => mudarHorario(h.chave, { aulas: e.target.value }, p.id)}
+            />
+          )}
+        </Rotulado>
+      </>
+    )
+  }
+
+  /** "07:50 às 11:10 · 4 aulas", quando as duas aulas foram escolhidas. */
+  function resumoAulas(h: HorarioForm) {
+    const { primeira, ultima } = aulasEscolhidas(h)
+    if (primeira === -1 || ultima < primeira) return null
+    const aulas = ultima - primeira + 1
+    return (
+      <p className="muted nm-horario__resumo">
+        {h.inicio} às {h.fim} · {aulas} {plural(aulas, 'aula', 'aulas')}
+      </p>
+    )
+  }
+
+  function mudarAulas(chave: string, trocar: (h: HorarioForm) => HorarioForm, campo: string) {
+    setForm((f) => ({ ...f, horarios: f.horarios.map((h) => (h.chave === chave ? trocar(h) : h)) }))
+    limparErro(campo)
+  }
+
+  function trocarModo(h: HorarioForm, numero: number) {
+    setForm((f) => ({ ...f, horarios: f.horarios.map((x) => (x.chave === h.chave ? trocarModoHorario(x) : x)) }))
+    if (erro?.campo.startsWith(`nm-horario-${h.chave}`)) setErro(null)
+    // Os campos trocam embaixo do foco (que fica no botão): o anúncio diz o que apareceu.
+    setStatus(
+      h.modo === 'aulas'
+        ? `Horário ${numero}: informe o início, o fim e as aulas.`
+        : `Horário ${numero}: escolha a primeira e a última aula.`,
+    )
+  }
+
   // Ao adicionar, o foco vai para o primeiro campo do item novo; ao remover, para o
   // botão de adicionar, que continua na tela. flushSync: o item já existe (ou já
   // sumiu) quando o foco muda.
@@ -360,46 +492,19 @@ export function FormularioMateria({
                     </select>
                   )}
                 </Rotulado>
-                <Rotulado id={idHorario(h.chave, 'inicio')} rotulo="Começa às" erro={erro}>
-                  {(p) => (
-                    <input
-                      {...p}
-                      type="time"
-                      className="campo"
-                      value={h.inicio}
-                      onChange={(e) => mudarHorario(h.chave, { inicio: e.target.value }, p.id)}
-                    />
-                  )}
-                </Rotulado>
-                <Rotulado id={idHorario(h.chave, 'fim')} rotulo="Termina às" erro={erro}>
-                  {(p) => (
-                    <input
-                      {...p}
-                      type="time"
-                      className="campo"
-                      value={h.fim}
-                      onChange={(e) => mudarHorario(h.chave, { fim: e.target.value }, p.id)}
-                    />
-                  )}
-                </Rotulado>
-                <Rotulado
-                  id={idHorario(h.chave, 'aulas')}
-                  rotulo="Aulas"
-                  dica={h.aulasManual ? undefined : 'Aulas de 45 min que cabem no horário. Corrija se preciso.'}
-                  erro={erro}
-                >
-                  {(p) => (
-                    <input
-                      {...p}
-                      className="campo nm-campo--curto"
-                      inputMode="numeric"
-                      autoComplete="off"
-                      value={h.aulas}
-                      onChange={(e) => mudarHorario(h.chave, { aulas: e.target.value }, p.id)}
-                    />
-                  )}
-                </Rotulado>
+                {h.modo === 'aulas' ? camposAulas(h) : camposHoras(h)}
               </div>
+              {h.modo === 'aulas' && resumoAulas(h)}
+              <button
+                type="button"
+                className="botao botao--fantasma botao--pequeno nm-horario__modo"
+                onClick={() => trocarModo(h, i + 1)}
+                aria-label={
+                  h.modo === 'aulas' ? `Informar o horário ${i + 1} em horas` : `Escolher o horário ${i + 1} pelas aulas`
+                }
+              >
+                {h.modo === 'aulas' ? 'Informar em horas' : 'Escolher pelas aulas'}
+              </button>
               <button
                 type="button"
                 className="botao botao--fantasma botao--pequeno nm-item__remover"

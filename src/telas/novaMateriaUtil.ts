@@ -1,10 +1,11 @@
+import { AULAS_PUC, aulasDaTabela } from '../logica/aulasPUC'
 import { dataValida } from '../logica/datas'
-import { erroCargaHoraria } from '../logica/faltas'
+import { erroCargaHoraria, MAXIMO_AULAS_POR_DIA } from '../logica/faltas'
 import { erroHorario, HORA, sugerirAulas } from '../logica/horarios'
 import { novoId } from '../logica/ids'
 import { erroAvaliacao, erroRA, NOTA_MAXIMA } from '../logica/notas'
 import { formatarNota, formatarPorcentagem, lerNumero, limpar } from '../logica/numeros'
-import type { Avaliacao, DiaSemana, Materia, RegraAprovacao, ResultadoAprendizagem } from '../logica/tipos'
+import type { Avaliacao, DiaSemana, Horario, Materia, RegraAprovacao, ResultadoAprendizagem } from '../logica/tipos'
 import { TAMANHO_MAXIMO_NOME } from '../logica/validacao'
 
 // Lógica do formulário "Nova matéria", sem React. Os campos guardam o texto como
@@ -38,6 +39,11 @@ export interface HorarioForm {
   aulas: string
   /** Se a pessoa mexeu no número de aulas: aí mudar o início ou o fim não troca mais a sugestão. */
   aulasManual: boolean
+  /**
+   * 'aulas': escolhido pelas aulas da tabela da PUC-PR (da 2ª à 5ª); início, fim e
+   * número de aulas saem delas. 'horas': digitado, para aulas fora da tabela.
+   */
+  modo: 'aulas' | 'horas'
 }
 
 export interface AvaliacaoForm {
@@ -125,7 +131,49 @@ export const idAvaliacao = (chave: string, campo: 'nome' | 'valor' | 'peso' | 'd
 // ---------- Valores iniciais ----------
 
 export function novoHorario(): HorarioForm {
-  return { chave: novoId(), dia: 1, inicio: '', fim: '', aulas: '', aulasManual: false }
+  return { chave: novoId(), dia: 1, inicio: '', fim: '', aulas: '', aulasManual: false, modo: 'aulas' }
+}
+
+/** Posições (em AULAS_PUC) da primeira e da última aula escolhidas; -1 se ainda não escolheu. */
+export function aulasEscolhidas(horario: HorarioForm): { primeira: number; ultima: number } {
+  return {
+    primeira: AULAS_PUC.findIndex((a) => a.inicio === horario.inicio),
+    ultima: AULAS_PUC.findIndex((a) => a.fim === horario.fim),
+  }
+}
+
+/**
+ * Escolhe as aulas (posições em AULAS_PUC; -1 = nenhuma) e preenche início, fim e
+ * número de aulas. Última antes da primeira vira a primeira (da 4ª até a 4ª), e
+ * nunca passa de MAXIMO_AULAS_POR_DIA aulas (o máximo que uma falta aceita).
+ */
+export function escolherAulas(horario: HorarioForm, primeira: number, ultima: number): HorarioForm {
+  let ate = ultima
+  if (primeira !== -1 && ate !== -1) ate = Math.min(Math.max(ate, primeira), primeira + MAXIMO_AULAS_POR_DIA - 1)
+  const inicio = primeira === -1 ? '' : AULAS_PUC[primeira].inicio
+  const fim = ate === -1 ? '' : AULAS_PUC[ate].fim
+  const aulas = primeira !== -1 && ate !== -1 ? String(ate - primeira + 1) : ''
+  // aulasManual false: ninguém digitou o número; indo para horas, ele volta a acompanhar o horário.
+  return { ...horario, inicio, fim, aulas, aulasManual: false }
+}
+
+/** Trocar a primeira aula: sem última escolhida, ela vem junto (quase toda aula tem mais de uma). */
+export function escolherPrimeiraAula(horario: HorarioForm, primeira: number): HorarioForm {
+  const { ultima } = aulasEscolhidas(horario)
+  return escolherAulas(horario, primeira, ultima === -1 ? primeira : ultima)
+}
+
+/**
+ * Troca entre escolher pelas aulas e digitar as horas. Nada é apagado: indo para
+ * as aulas, o que não bate com a tabela aparece como "Escolha" (e a conferência
+ * pede para escolher), e voltar para horas mostra as horas de antes. Quando as duas
+ * aulas batem, o número de aulas passa a ser o da tabela.
+ */
+export function trocarModoHorario(horario: HorarioForm): HorarioForm {
+  if (horario.modo === 'aulas') return { ...horario, modo: 'horas' }
+  const { primeira, ultima } = aulasEscolhidas(horario)
+  if (primeira === -1 || ultima < primeira) return { ...horario, modo: 'aulas' }
+  return { ...horario, modo: 'aulas', aulas: String(ultima - primeira + 1) }
 }
 
 /**
@@ -216,6 +264,20 @@ export function conferirMateria(form: Formulario): ErroCampo | null {
   const erroCarga = erroCargaHoraria(carga)
   if (erroCarga) return { campo: ID_CARGA, mensagem: erroCarga }
   for (const h of form.horarios) {
+    if (h.modo === 'aulas') {
+      // Os seletores das aulas usam os ids de início e fim, então o erro cai num seletor
+      // que está na tela (o campo de aulas não existe neste modo).
+      const { primeira, ultima } = aulasEscolhidas(h)
+      if (primeira === -1) return { campo: idHorario(h.chave, 'inicio'), mensagem: 'Escolha a primeira aula.' }
+      if (ultima < primeira) return { campo: idHorario(h.chave, 'fim'), mensagem: 'Escolha a última aula.' }
+      if (ultima - primeira + 1 > MAXIMO_AULAS_POR_DIA) {
+        return {
+          campo: idHorario(h.chave, 'fim'),
+          mensagem: `Escolha no máximo ${MAXIMO_AULAS_POR_DIA} aulas seguidas.`,
+        }
+      }
+      continue
+    }
     if (!HORA.test(h.inicio)) {
       return {
         campo: idHorario(h.chave, 'inicio'),
@@ -427,6 +489,16 @@ export function montarMateria(form: Formulario, id: string = novoId()): Materia 
 // que RA e que avaliação continuam lá e manter as notas deles. Os ids de avaliação só
 // são únicos dentro do RA, então a avaliação é sempre procurada dentro do RA dela.
 
+/**
+ * Um horário salvo nos campos do formulário. Se bate com a tabela da PUC-PR, abre
+ * nas aulas, com o número de aulas da tabela (horário antigo pode não ter o número).
+ */
+function horarioParaForm(h: Horario): Pick<HorarioForm, 'aulas' | 'aulasManual' | 'modo'> {
+  const bate = aulasDaTabela(h)
+  if (bate) return { aulas: String(bate.ultima - bate.primeira + 1), aulasManual: false, modo: 'aulas' }
+  return { aulas: h.aulas === undefined ? '' : String(h.aulas), aulasManual: h.aulas !== undefined, modo: 'horas' }
+}
+
 /** O formulário preenchido com a matéria, para editar. */
 export function materiaParaForm(materia: Materia, regraPadrao: RegraAprovacao): Formulario {
   return {
@@ -439,8 +511,7 @@ export function materiaParaForm(materia: Materia, regraPadrao: RegraAprovacao): 
       inicio: h.inicio,
       // Horário salvo antes de existir o fim: fica vazio, e o formulário pede para completar.
       fim: h.fim ?? '',
-      aulas: h.aulas === undefined ? '' : String(h.aulas),
-      aulasManual: h.aulas !== undefined,
+      ...horarioParaForm(h),
     })),
     ras: materia.ras.map((ra) => ({
       chave: novoId(),

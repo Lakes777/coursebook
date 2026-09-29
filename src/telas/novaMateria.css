@@ -326,3 +326,14 @@
   margin: 0;
   padding-left: 1.2em;
 }
+
+/* Horário escolhido pelas aulas: o resumo das horas e o botão de trocar para horas digitadas. */
+.nm-horario__resumo {
+  margin: 0;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.nm-horario__modo {
+  justify-self: start;
+}

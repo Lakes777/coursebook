@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { REGRA_PUCPR, VERSAO_ATUAL, type Materia, type RegraAprovacao } from '../../src/logica/tipos'
 import { validarDados } from '../../src/logica/validacao'
 import {
+  aulasEscolhidas,
+  escolherAulas,
+  escolherPrimeiraAula,
+  trocarModoHorario,
   mudarHorarioForm,
   novoHorario,
   aplicarEdicao,
@@ -51,7 +55,7 @@ function preenchido(): Formulario {
     nome: '  POO  ',
     professor: ' Ana ',
     cargaHoraria: '80',
-    horarios: [{ chave: 'h1', dia: 2, inicio: '07:45', fim: '09:15', aulas: '2', aulasManual: false }],
+    horarios: [{ chave: 'h1', dia: 2, inicio: '07:45', fim: '09:15', aulas: '2', aulasManual: false, modo: 'horas' }],
     ras: [ra1, ra2],
   }
 }
@@ -106,7 +110,15 @@ describe('conferirMateria', () => {
   })
 
   it('confere o início, o fim e as aulas de cada horário', () => {
-    const horario = { chave: 'h1', dia: 1 as const, inicio: '', fim: '', aulas: '', aulasManual: false }
+    const horario = {
+      chave: 'h1',
+      dia: 1 as const,
+      inicio: '',
+      fim: '',
+      aulas: '',
+      aulasManual: false,
+      modo: 'horas' as const,
+    }
     const form = { ...preenchido(), horarios: [horario] }
     expect(conferirMateria(form)?.campo).toBe(idHorario('h1', 'inicio'))
     horario.inicio = '25:00'
@@ -524,3 +536,80 @@ describe('editar uma matéria', () => {
   })
 })
 
+describe('horário pelas aulas da tabela', () => {
+  it('escolherAulas preenche início, fim e número de aulas', () => {
+    const h = escolherAulas(novoHorario(), 1, 4)
+    expect(h).toMatchObject({ inicio: '07:50', fim: '11:10', aulas: '4', modo: 'aulas' })
+    expect(aulasEscolhidas(h)).toEqual({ primeira: 1, ultima: 4 })
+    // Última antes da primeira vira a primeira.
+    expect(escolherAulas(h, 6, 4)).toMatchObject({ inicio: '11:55', fim: '12:40', aulas: '1' })
+    // Tirar a última deixa sem fim (a conferência pede para escolher).
+    expect(escolherAulas(h, 1, -1)).toMatchObject({ inicio: '07:50', fim: '', aulas: '' })
+    expect(escolherAulas(novoHorario(), -1, -1)).toMatchObject({ inicio: '', fim: '', aulas: '' })
+  })
+
+  it('escolherAulas nunca passa de 12 aulas', () => {
+    expect(escolherAulas(novoHorario(), 0, 19)).toMatchObject({ inicio: '07:05', fim: '16:45', aulas: '12' })
+  })
+
+  it('escolherPrimeiraAula puxa a última só quando ela ainda não foi escolhida', () => {
+    const so = escolherPrimeiraAula(novoHorario(), 3)
+    expect(aulasEscolhidas(so)).toEqual({ primeira: 3, ultima: 3 })
+    const ate7 = escolherAulas(so, 3, 6)
+    expect(aulasEscolhidas(escolherPrimeiraAula(ate7, 4))).toEqual({ primeira: 4, ultima: 6 })
+  })
+
+  it('editar abre nas aulas só o horário que bate com a tabela', () => {
+    const materia: Materia = {
+      id: 'm',
+      nome: 'M',
+      professor: '',
+      cargaHoraria: 80,
+      ras: [],
+      pontosExtras: [],
+      faltas: [],
+      horarios: [
+        { dia: 2, inicio: '19:00', fim: '22:15', aulas: 4 },
+        { dia: 4, inicio: '19:00', fim: '22:30', aulas: 4 },
+        { dia: 5, inicio: '07:50', fim: '11:10', aulas: 3 },
+        { dia: 1, inicio: '19:00' },
+      ],
+    }
+    const modos = materiaParaForm(materia, REGRA_PUCPR).horarios.map((h) => h.modo)
+    expect(modos).toEqual(['aulas', 'horas', 'horas', 'horas'])
+  })
+
+  it('horário antigo sem o número de aulas, mas na tabela: abre nas aulas com o número certo e salva', () => {
+    const materia: Materia = {
+      id: 'm',
+      nome: 'M',
+      professor: '',
+      cargaHoraria: 80,
+      ras: [{ id: 'r', nome: 'RA1', peso: 1, recuperacaoNoSemestre: false, notaRecuperacao: null, avaliacoes: [] }],
+      pontosExtras: [],
+      faltas: [],
+      horarios: [{ dia: 5, inicio: '07:50', fim: '11:10' }],
+    }
+    const form = materiaParaForm(materia, REGRA_PUCPR)
+    expect(form.horarios[0]).toMatchObject({ modo: 'aulas', aulas: '4' })
+    expect(conferirMateria(form)).toBeNull()
+  })
+
+  it('trocarModoHorario mantém as horas indo para horas e limpa o que não bate indo para aulas', () => {
+    const aulas = escolherAulas(novoHorario(), 15, 18)
+    const horas = trocarModoHorario(aulas)
+    expect(horas).toMatchObject({ modo: 'horas', inicio: '19:00', fim: '22:15', aulas: '4' })
+    expect(trocarModoHorario(horas)).toMatchObject({ modo: 'aulas', inicio: '19:00', fim: '22:15' })
+    // Número digitado diferente da tabela: nas aulas vale o da tabela.
+    const tres = mudarHorarioForm(horas, { aulas: '3' })
+    expect(trocarModoHorario(tres)).toMatchObject({ modo: 'aulas', aulas: '4' })
+    // Fora da tabela: nada é apagado, e a conferência pede para escolher.
+    const fora = trocarModoHorario(mudarHorarioForm(horas, { inicio: '13:30' }))
+    expect(fora).toMatchObject({ modo: 'aulas', inicio: '13:30', fim: '22:15' })
+    const form = { ...formularioVazio(REGRA_PUCPR), nome: 'X', cargaHoraria: '80', horarios: [fora] }
+    expect(conferirMateria(form)).toEqual({
+      campo: idHorario(fora.chave, 'inicio'),
+      mensagem: 'Escolha a primeira aula.',
+    })
+  })
+})

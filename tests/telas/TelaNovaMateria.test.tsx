@@ -105,9 +105,11 @@ describe('TelaNovaMateria', () => {
     expect(within(horario).getByLabelText('Dia')).toHaveFocus()
     expect(screen.getByRole('status')).toHaveTextContent('Horário 1 adicionado.')
     await continuar()
-    const inicio = within(horario).getByLabelText('Começa às')
-    expect(inicio).toHaveAttribute('aria-invalid', 'true')
-    expect(inicio).toHaveFocus()
+    // Horário novo começa pelas aulas da tabela: o erro vai para o seletor da primeira aula.
+    const primeira = within(horario).getByLabelText('Da aula')
+    expect(primeira).toHaveAttribute('aria-invalid', 'true')
+    expect(primeira).toHaveFocus()
+    expect(primeira).toHaveAccessibleDescription(/Escolha a primeira aula\./)
 
     await userEvent.click(screen.getByRole('button', { name: 'Remover horário 1' }))
     expect(screen.queryByRole('group', { name: 'Horário 1' })).not.toBeInTheDocument()
@@ -182,6 +184,90 @@ describe('TelaNovaMateria', () => {
     expect(tituloPasso()).toHaveTextContent('Passo 4 de 5')
   })
 
+  describe('horário pelas aulas da PUC-PR', () => {
+    it('escolher a primeira puxa a última junto, e a última só oferece aulas depois da primeira', async () => {
+      montar()
+      await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+      const horario = grupo('Horário 1')
+      await userEvent.selectOptions(within(horario).getByLabelText('Da aula'), '4ª aula (09:40)')
+      const ultima = within(horario).getByLabelText('Até a aula')
+      expect(ultima).toHaveDisplayValue('4ª aula (até 10:25)')
+      expect(within(ultima).queryByRole('option', { name: '3ª aula (até 09:20)' })).not.toBeInTheDocument()
+      // Da 4ª até a 7ª, passando pelo intervalo que não existe entre elas.
+      await userEvent.selectOptions(ultima, '7ª aula (até 12:40)')
+      expect(within(horario).getByText('09:40 às 12:40 · 4 aulas')).toBeInTheDocument()
+    })
+
+    it('dá para trocar para horas digitadas, e voltar sem perder nada', async () => {
+      montar()
+      await preencherMateria()
+      await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+      const horario = grupo('Horário 1')
+      await userEvent.selectOptions(within(horario).getByLabelText('Da aula'), '16ª aula (19:00)')
+      await userEvent.selectOptions(within(horario).getByLabelText('Até a aula'), '19ª aula (até 22:15)')
+
+      await userEvent.click(within(horario).getByRole('button', { name: 'Informar o horário 1 em horas' }))
+      expect(screen.getByRole('status')).toHaveTextContent('Horário 1: informe o início, o fim e as aulas.')
+      // As horas escolhidas continuam, agora nos campos de hora.
+      expect(within(horario).getByLabelText('Começa às')).toHaveValue('19:00')
+      expect(within(horario).getByLabelText('Termina às')).toHaveValue('22:15')
+      expect(within(horario).getByLabelText('Aulas')).toHaveValue('4')
+      // Escolhido pela tabela não é "digitado à mão": mudar o fim acompanha as aulas.
+      fireEvent.change(within(horario).getByLabelText('Termina às'), { target: { value: '20:30' } })
+      expect(within(horario).getByLabelText('Aulas')).toHaveValue('2')
+
+      // Fora da tabela: nas aulas aparece "Escolha", mas voltar para horas mostra o que estava.
+      fireEvent.change(within(horario).getByLabelText('Começa às'), { target: { value: '13:30' } })
+      await userEvent.click(within(horario).getByRole('button', { name: 'Escolher o horário 1 pelas aulas' }))
+      expect(within(horario).getByLabelText('Da aula')).toHaveDisplayValue('Escolha')
+      await userEvent.click(within(horario).getByRole('button', { name: 'Informar o horário 1 em horas' }))
+      expect(within(horario).getByLabelText('Começa às')).toHaveValue('13:30')
+    })
+
+    it('trocar de modo com um erro aberto tira o erro', async () => {
+      montar()
+      await preencherMateria()
+      await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+      await continuar()
+      const horario = grupo('Horário 1')
+      expect(within(horario).getByLabelText('Da aula')).toHaveAttribute('aria-invalid', 'true')
+      await userEvent.click(within(horario).getByRole('button', { name: 'Informar o horário 1 em horas' }))
+      expect(within(horario).getByLabelText('Começa às')).not.toHaveAttribute('aria-invalid', 'true')
+    })
+
+    it('trocar a primeira aula depois de escolher a última mantém a última', async () => {
+      montar()
+      await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+      const horario = grupo('Horário 1')
+      await userEvent.selectOptions(within(horario).getByLabelText('Da aula'), '2ª aula (07:50)')
+      await userEvent.selectOptions(within(horario).getByLabelText('Até a aula'), '5ª aula (até 11:10)')
+      await userEvent.selectOptions(within(horario).getByLabelText('Da aula'), '3ª aula (08:35)')
+      expect(within(horario).getByLabelText('Até a aula')).toHaveDisplayValue('5ª aula (até 11:10)')
+      expect(within(horario).getByText('08:35 às 11:10 · 3 aulas')).toBeInTheDocument()
+    })
+
+    it('não deixa escolher mais de 12 aulas seguidas', async () => {
+      montar()
+      await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+      const horario = grupo('Horário 1')
+      await userEvent.selectOptions(within(horario).getByLabelText('Da aula'), '1ª aula (07:05)')
+      const ultima = within(horario).getByLabelText('Até a aula')
+      expect(within(ultima).getByRole('option', { name: '12ª aula (até 16:45)' })).toBeInTheDocument()
+      expect(within(ultima).queryByRole('option', { name: '13ª aula (até 17:30)' })).not.toBeInTheDocument()
+    })
+
+    it('sem a última aula, o erro vai para o seletor dela', async () => {
+      montar()
+      await preencherMateria()
+      await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+      const horario = grupo('Horário 1')
+      await userEvent.selectOptions(within(horario).getByLabelText('Da aula'), '2ª aula (07:50)')
+      await userEvent.selectOptions(within(horario).getByLabelText('Até a aula'), 'Escolha')
+      await continuar()
+      expect(within(horario).getByLabelText('Até a aula')).toHaveAccessibleDescription(/Escolha a última aula\./)
+    })
+  })
+
   it('preenche tudo com a regra padrão, salva sem o campo regra e abre a matéria', async () => {
     const nav = montar()
     // Passo 1
@@ -190,10 +276,9 @@ describe('TelaNovaMateria', () => {
     await digitar(screen.getByLabelText('Carga horária (aulas de 45 min)'), '80')
     await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
     await userEvent.selectOptions(within(grupo('Horário 1')).getByLabelText('Dia'), 'Terça-feira')
-    fireEvent.change(within(grupo('Horário 1')).getByLabelText('Começa às'), { target: { value: '07:45' } })
-    fireEvent.change(within(grupo('Horário 1')).getByLabelText('Termina às'), { target: { value: '09:15' } })
-    // As aulas vêm sugeridas pela duração: 1h30 são 2 aulas de 45 min.
-    expect(within(grupo('Horário 1')).getByLabelText('Aulas')).toHaveValue('2')
+    await userEvent.selectOptions(within(grupo('Horário 1')).getByLabelText('Da aula'), '2ª aula (07:50)')
+    await userEvent.selectOptions(within(grupo('Horário 1')).getByLabelText('Até a aula'), '3ª aula (até 09:20)')
+    expect(within(grupo('Horário 1')).getByText('07:50 às 09:20 · 2 aulas')).toBeInTheDocument()
     await continuar()
 
     // Passo 2
@@ -226,7 +311,7 @@ describe('TelaNovaMateria', () => {
     // Passo 5: o resumo
     expect(tituloPasso()).toHaveTextContent('Passo 5 de 5: Revisar e salvar')
     expect(screen.getByText('Programação Orientada a Objetos')).toBeInTheDocument()
-    expect(screen.getByText('Terça-feira, 07:45 às 09:15 (2 aulas)')).toBeInTheDocument()
+    expect(screen.getByText('Terça-feira, 07:50 às 09:20 (2 aulas)')).toBeInTheDocument()
     expect(screen.getByText('80 aulas de 45 min')).toBeInTheDocument()
     expect(screen.getByText(/Prova 1: vale 3,0, peso 1, em 05\/10\/2026/)).toBeInTheDocument()
     expect(screen.getByText('Regra padrão do painel')).toBeInTheDocument()
@@ -238,7 +323,7 @@ describe('TelaNovaMateria', () => {
       nome: 'Programação Orientada a Objetos',
       professor: 'Ana Souza',
       cargaHoraria: 80,
-      horarios: [{ dia: 2, inicio: '07:45', fim: '09:15', aulas: 2 }],
+      horarios: [{ dia: 2, inicio: '07:50', fim: '09:20', aulas: 2 }],
       pontosExtras: [],
       faltas: [],
       ras: [
