@@ -25,3 +25,6 @@ dist-ssr
 
 # Worktrees temporários do Claude Code (um por subagente)
 .claude/worktrees/
+
+# Banco local da API no `npm run dev` (PGlite)
+.pglite/

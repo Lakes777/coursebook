@@ -21,6 +21,12 @@ O `package.json` não tem `"type": "module"`: a Vercel compila cada arquivo de `
 separado, e em ESM os imports sem extensão (o estilo do projeto) quebram em produção.
 Em CommonJS eles funcionam (conferido com `vercel build`).
 
+O `tsconfig.json` da raiz só tem `references` para o `tsc -b`, mas também tem
+`compilerOptions`: é ele que o `vercel build` usa para compilar `api/`. O `module`
+tem que ser `nodenext`: sem `module`, a Vercel desliga o `strict` (e aponta erros de
+tipo que não existem); com `esnext`, ela gera ESM, e os imports sem extensão quebram.
+Com `nodenext` e sem `"type": "module"`, sai CommonJS, conferido com strict.
+
 ## API
 
 ### Contexto
@@ -35,12 +41,15 @@ controlarem tudo:
 - `convite`: o `CODIGO_CONVITE`, ou undefined (cadastro fechado).
 - `seguro`: se o cookie leva `Secure` (false só em http://localhost).
 
-O esquema é aplicado uma vez por instância (na primeira chamada), com `IF NOT EXISTS`.
+O esquema é aplicado uma vez por instância, na primeira **consulta** ao banco (não na
+primeira chamada: o `/api/eu` sem cookie responde sem tocar no banco), com
+`IF NOT EXISTS`, comando a comando (o driver HTTP do Neon roda um por vez).
 
 ### Contas e sessões
 
-- **Cadastro**: confere o convite (comparação em tempo constante), o e-mail (tem `@`,
-  sem espaço, até 254) e a senha (8 a 200 caracteres). Senha com argon2id
+- **Cadastro**: confere o convite (comparação em tempo constante, com limite de
+  chutes: ver o bloqueio abaixo), o e-mail (até 254, só ASCII, tem `@`, sem espaço)
+  e a senha (8 a 200 caracteres). Senha com argon2id
   (`@node-rs/argon2`, parâmetros padrão). Id `u_` + 16 bytes aleatórios em hex.
   E-mail repetido (sem diferenciar maiúsculas): 409 `email-em-uso`. Já cria a sessão.
 - **Sessão**: token de 32 bytes aleatórios (base64url) no cookie `sessao`
@@ -48,9 +57,21 @@ O esquema é aplicado uma vez por instância (na primeira chamada), com `IF NOT 
   guarda só o SHA-256 do token. Sessão vencida conta como sem sessão (e é apagada).
 - **Entrar**: e-mail ou senha errados dão sempre 401 `credenciais`, com a mesma
   mensagem e mais ou menos o mesmo tempo (e-mail que não existe também roda um
-  verify contra um hash falso). Cada senha errada grava em `tentativas_login`; com
-  5 na janela de 15 minutos, responde 429 `bloqueado` com `Retry-After` antes de
-  conferir a senha. Entrar certo apaga as tentativas daquele e-mail.
+  verify contra um hash falso). Antes de tudo, confere o e-mail como no cadastro e o
+  tamanho da senha (400, sem gravar tentativa nem rodar o argon2). Entrar certo
+  apaga as tentativas daquele e-mail e a sessão do cookie antigo, se vier uma.
+- **Bloqueio** (`tentativas_login`): a tentativa é **reservada antes** de conferir a
+  senha: grava a linha, conta as da janela de 15 minutos com id até a sua e, se
+  passou de 5, apaga a própria linha (para o bloqueio não se estender sozinho) e
+  responde 429 `bloqueado` com `Retry-After` (até a primeira da janela sair). Contar
+  primeiro e gravar depois deixava 20 pedidos simultâneos passarem todos. A chave é
+  o e-mail em minúsculas; e-mail só ASCII garante que o `toLowerCase` do JS e o
+  `lower()` do índice concordam. Os chutes de convite usam a mesma tabela e regra,
+  com a chave fixa `convite` (convite certo apaga só a própria reserva). Por isso
+  o `CODIGO_CONVITE` deve ser longo e aleatório (ex.: `openssl rand -hex 16`); o
+  preço é que chutes de alguém podem travar o cadastro de todos por 15 minutos.
+- **Limpeza**: tentativas fora da janela são apagadas a cada reserva; sessões
+  vencidas, a cada sessão criada.
 - **Sair**: apaga a sessão e manda o cookie vencido.
 - **Excluir conta**: pede a senha; errada = 401 `credenciais` (conta como tentativa).
   O `ON DELETE CASCADE` leva sessões e painel junto.
@@ -73,7 +94,11 @@ O esquema é aplicado uma vez por instância (na primeira chamada), com `IF NOT 
 - Corpo acima de 2 MB: 413 `muito-grande`.
 - POST, PUT e DELETE com corpo exigem `Content-Type: application/json`, e, se o
   navegador mandar `Origin`, ele tem que ser o mesmo host do pedido. Junto com o
-  SameSite=Lax, isso impede outro site de usar o cookie (CSRF).
+  SameSite=Lax, isso impede outro site de usar o cookie (CSRF). O contrato não tem
+  códigos próprios para isso: Content-Type errado é **415** e Origin de outro site
+  é **403**, os dois com o código `pedido-invalido`. O Origin é conferido em todo
+  método que não é GET (inclusive o sair, sem corpo) e vale se bater com o host da
+  URL ou com o cabeçalho `Host`; `Origin: null` é recusado.
 - Toda resposta com `Cache-Control: no-store`.
 - Erro inesperado: 500 `erro-interno` com mensagem genérica (o detalhe vai só
   para o `console.error`, que aparece nos logs da Vercel). Nunca devolver o hash,
