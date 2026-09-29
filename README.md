@@ -41,8 +41,9 @@ carregar no painel vazio com "Ver com dados de exemplo".
   final, sempre com o comentário de onde vieram.
 - **Faltas:** o limite sai da carga horária (25% das aulas). O botão "Faltei hoje" lança de uma
   vez as aulas daquele dia, pelos horários da matéria.
-- **Semana:** a grade com os horários de todas as matérias, de segunda a sábado, com o dia de
-  hoje marcado.
+- **Semana:** a grade como a do portal da PUC-PR, com uma linha por aula (1ª a 20ª) e uma
+  coluna por dia, o nome da matéria em cada aula que ela ocupa e o dia de hoje marcado. Aulas
+  vazias seguidas (entre a manhã e a noite) viram uma linha só; no celular, um dia embaixo do outro.
 - **Agenda:** provas, trabalhos e apresentações, com o que está atrasado, é hoje ou está chegando.
 - **Desfazer:** depois de remover algo ou apagar uma nota, um aviso no pé da página oferece
   "Desfazer" (ou Ctrl+Z). Vale para a última ação.
@@ -86,7 +87,7 @@ Para gerar a versão de produção: `npm run build` (sai na pasta `dist/`, que �
 ## Testes
 
 ```bash
-npx vitest run   # 483 testes (lógica e telas)
+npx vitest run   # 489 testes (lógica e telas)
 npx oxlint       # lint
 npx tsc -b       # tipos
 ```
@@ -138,6 +139,9 @@ tests/           Espelha o src/ (logica, estado, telas, navegacao, tema)
 - **Sair do formulário sem perder nada:** os cliques nas abas são segurados antes de virarem
   histórico, e o voltar do navegador é revertido com `history.go(1)` (reescrever a entrada com
   `replaceState` estragaria o histórico). Conferido no Chromium com o Playwright.
+- **Tabela de aulas da PUC-PR:** as 20 aulas do portal ficam em `src/logica/aulasPUC.ts`. Uma
+  matéria ocupa as aulas que começam dentro do horário dela (07:50 às 11:10 = 2ª a 5ª, pulando o
+  intervalo); horário que não bate com a tabela aparece numa lista à parte, para não sumir.
 - **Rotas no `#`:** `#/materia/<id>`, `#/agenda`... Assim o botão voltar funciona e o site
   estático não precisa de configuração de rotas no servidor.
 - **Importação tolerante, validação rígida:** o JSON importado pode vir sem ids, sem versão ou

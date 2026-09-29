@@ -63,8 +63,8 @@ export function dadosDeExemplo(hoje: Date = new Date()): Dados {
         nome: 'Programação Orientada a Objetos',
         professor: 'Prof. Ricardo Matos',
         horarios: [
-          { dia: 2, inicio: '19:00', fim: '22:30', aulas: 4 },
-          { dia: 4, inicio: '19:00', fim: '22:30', aulas: 4 },
+          { dia: 2, inicio: '19:00', fim: '22:15', aulas: 4 },
+          { dia: 4, inicio: '19:00', fim: '22:15', aulas: 4 },
         ],
         cargaHoraria: 120,
         ras: [
@@ -104,7 +104,7 @@ export function dadosDeExemplo(hoje: Date = new Date()): Dados {
         id: 'exemplo-calculo',
         nome: 'Cálculo Numérico',
         professor: 'Prof. Márcio Sampaio',
-        horarios: [{ dia: 5, inicio: '07:45', fim: '11:15', aulas: 4 }],
+        horarios: [{ dia: 5, inicio: '07:50', fim: '11:10', aulas: 4 }],
         cargaHoraria: 60,
         ras: [
           {

@@ -10,12 +10,14 @@ function materia(id: string, nome: string, horarios: Horario[]): Materia {
   return { id, nome, professor: '', horarios, cargaHoraria: 80, ras: [], pontosExtras: [], faltas: [] }
 }
 
+// Terça: Algoritmos da 16ª à 19ª aula. Quinta: Algoritmos na 16ª (horário antigo, sem fim)
+// e Banco de Dados na 18ª e na 19ª.
 const MATERIAS = [
-  materia('alg', 'Algoritmos', [
-    { dia: 2, inicio: '19:00', fim: '22:30', aulas: 4 },
+  { ...materia('alg', 'Algoritmos', [
+    { dia: 2, inicio: '19:00', fim: '22:15', aulas: 4 },
     { dia: 4, inicio: '19:00' },
-  ]),
-  materia('bd', 'Banco de Dados', [{ dia: 4, inicio: '20:40', fim: '22:20', aulas: 2 }]),
+  ]), professor: 'Prof.ª Ana' },
+  materia('bd', 'Banco de Dados', [{ dia: 4, inicio: '20:45', fim: '22:15', aulas: 2 }]),
 ]
 
 function montar(materias: Materia[] = MATERIAS, podeSalvar = false) {
@@ -30,7 +32,14 @@ function montar(materias: Materia[] = MATERIAS, podeSalvar = false) {
   )
 }
 
+/** A lista de um dia (a versão do celular). */
 const dia = (nome: string | RegExp) => screen.getByRole('region', { name: nome })
+const tabela = () => screen.getByRole('table')
+/** O texto de cada célula de uma linha da tabela, a partir do cabeçalho da linha ("16ª aula"). */
+function linha(aula: string) {
+  const cabecalho = within(tabela()).getByRole('rowheader', { name: new RegExp(`^${aula}`) })
+  return [...cabecalho.closest('tr')!.querySelectorAll('td')].map((td) => td.textContent)
+}
 
 beforeEach(() => {
   vi.useFakeTimers({ toFake: ['Date'] })
@@ -43,50 +52,52 @@ afterEach(() => {
 })
 
 describe('TelaSemana', () => {
-  it('mostra um título para cada dia, de segunda a sábado', () => {
+  it('tabela: uma coluna por dia (segunda a sexta) e uma linha por aula, da primeira à última ocupada', () => {
     montar()
-    expect(screen.getByRole('heading', { level: 2, name: 'Semana' })).toBeInTheDocument()
-    const titulos = screen.getAllByRole('heading', { level: 3 })
-    const esperados = ['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira, hoje', 'Sexta-feira', 'Sábado']
-    expect(titulos).toHaveLength(esperados.length)
-    esperados.forEach((nome, i) => expect(titulos[i]).toHaveAccessibleName(nome))
-    expect(screen.queryByRole('heading', { name: 'Domingo' })).not.toBeInTheDocument()
+    const colunas = within(tabela()).getAllByRole('columnheader').map((th) => th.textContent)
+    expect(colunas).toEqual(['Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira, hojeHoje', 'Sexta-feira'])
+    const linhas = within(tabela()).getAllByRole('rowheader').map((th) => th.textContent)
+    // A 17ª fica mesmo vazia na quinta: as linhas do meio não são puladas.
+    expect(linhas).toEqual(['16ª aula19:00 às 19:45', '17ª aula19:45 às 20:30', '18ª aula20:45 às 21:30', '19ª aula21:30 às 22:15'])
   })
 
-  it('lista as aulas do dia com o link da matéria, o horário e as aulas', () => {
+  it('tabela: o nome da matéria se repete em cada aula que ela ocupa, com o professor', () => {
     montar()
-    const terca = dia('Terça-feira')
-    const aulas = within(terca).getAllByRole('listitem')
-    expect(aulas).toHaveLength(1)
-    expect(within(aulas[0]).getByRole('link', { name: 'Algoritmos' })).toHaveAttribute('href', '#/materia/alg')
-    expect(aulas[0]).toHaveTextContent('19:00 às 22:30')
-    expect(aulas[0]).toHaveTextContent('4 aulas')
+    // Colunas: seg, ter, qua, qui, sex.
+    expect(linha('16ª aula')).toEqual(['', 'AlgoritmosProf.ª Ana', '', 'AlgoritmosProf.ª Ana', ''])
+    expect(linha('17ª aula')).toEqual(['', 'AlgoritmosProf.ª Ana', '', '', ''])
+    expect(linha('18ª aula')).toEqual(['', 'AlgoritmosProf.ª Ana', '', 'Banco de Dados', ''])
+    expect(linha('19ª aula')).toEqual(['', 'AlgoritmosProf.ª Ana', '', 'Banco de Dados', ''])
+    expect(within(tabela()).getAllByRole('link', { name: 'Algoritmos' })[0]).toHaveAttribute('href', '#/materia/alg')
   })
 
-  it('na ordem do início, e horário antigo mostra só o início, sem número de aulas', () => {
+  it('celular: cada dia lista as aulas com o número, o horário e a matéria', () => {
     montar()
-    const lista = within(dia(/Quinta-feira/)).getByRole('list')
-    const [primeira, segunda] = within(lista).getAllByRole('listitem')
-    expect(primeira).toHaveTextContent(/^19:00Algoritmos$/)
-    expect(segunda).toHaveTextContent('20:40 às 22:20')
-    expect(segunda).toHaveTextContent('Banco de Dados')
-    expect(segunda).toHaveTextContent('2 aulas')
+    const aulas = within(dia(/Quinta-feira/)).getAllByRole('listitem')
+    expect(aulas.map((li) => li.textContent)).toEqual([
+      '16ª aula19:00 às 19:45AlgoritmosProf.ª Ana',
+      '18ª aula20:45 às 21:30Banco de Dados',
+      '19ª aula21:30 às 22:15Banco de Dados',
+    ])
+    expect(within(aulas[1]).getByRole('link', { name: 'Banco de Dados' })).toHaveAttribute('href', '#/materia/bd')
   })
 
-  it('diz quando o dia não tem aula', () => {
+  it('celular: diz quando o dia não tem aula', () => {
     montar()
     expect(within(dia('Segunda-feira')).getByText('Sem aulas')).toBeInTheDocument()
     expect(within(dia('Segunda-feira')).queryByRole('list')).not.toBeInTheDocument()
   })
 
-  it('marca o dia de hoje com texto, não só com a borda', () => {
+  it('marca o dia de hoje com texto, não só com a cor (na tabela e na lista)', () => {
     montar()
     const hoje = dia('Quinta-feira, hoje')
     expect(hoje).toHaveAttribute('aria-current', 'date')
     expect(hoje).toHaveClass('semana__dia--hoje')
     expect(within(hoje).getByText('Hoje')).toBeVisible()
     expect(dia('Terça-feira')).not.toHaveAttribute('aria-current')
-    expect(screen.getAllByText('Hoje')).toHaveLength(1)
+    const coluna = within(tabela()).getByRole('columnheader', { name: 'Quinta-feira, hoje' })
+    expect(coluna).toHaveAttribute('aria-current', 'date')
+    expect(screen.getAllByText('Hoje')).toHaveLength(2)
   })
 
   it('troca o dia de hoje quando a aba volta a ficar visível no dia seguinte', () => {
@@ -99,17 +110,33 @@ describe('TelaSemana', () => {
     expect(dia('Quinta-feira')).not.toHaveAttribute('aria-current')
   })
 
-  it('mostra o domingo quando há aula nele', () => {
-    montar([materia('ead', 'Estágio', [{ dia: 0, inicio: '08:00' }])])
+  it('mostra o sábado e o domingo só quando há aula neles', () => {
+    montar([materia('ead', 'Estágio', [{ dia: 0, inicio: '07:50', fim: '08:35' }])])
     expect(within(dia('Domingo')).getByRole('link', { name: 'Estágio' })).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Sábado' })).not.toBeInTheDocument()
+    expect(within(tabela()).getAllByRole('columnheader').at(-1)).toHaveTextContent('Domingo')
+  })
+
+  it('junta as aulas vazias entre a manhã e a noite numa linha só', () => {
+    montar([materia('c', 'Cálculo', [{ dia: 5, inicio: '10:25', fim: '11:10' }]), ...MATERIAS])
+    expect(within(tabela()).getByRole('cell', { name: 'Sem aulas das 11:10 às 19:00' })).toHaveAttribute('colspan', '6')
+    expect(within(tabela()).getAllByRole('rowheader')).toHaveLength(5)
+  })
+
+  it('horário que não bate com a tabela da PUC-PR vai para uma lista à parte, sem sumir', () => {
+    montar([materia('lab', 'Laboratório', [{ dia: 1, inicio: '13:30', fim: '13:40' }])])
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    const fora = screen.getByRole('region', { name: 'Fora da grade da PUC-PR' })
+    expect(within(fora).getByRole('listitem')).toHaveTextContent('Segunda-feira, 13:30 às 13:40: Laboratório')
   })
 
   it('sem matérias, leva para o cadastro e mostra o exemplo', async () => {
     montar([], true)
     expect(screen.getByRole('link', { name: 'Cadastrar a primeira matéria' })).toHaveAttribute('href', '#/nova-materia')
     await userEvent.click(screen.getByRole('button', { name: 'Ver com dados de exemplo' }))
-    // O exemplo tem horários: a grade aparece, com o foco no título da tela.
-    expect(screen.getAllByRole('heading', { level: 3 }).length).toBeGreaterThanOrEqual(6)
+    // O exemplo tem horários (nas aulas da tabela da PUC-PR): a grade aparece, sem nada de fora.
+    expect(screen.getByRole('table')).toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Fora da grade da PUC-PR' })).not.toBeInTheDocument()
     expect(screen.getAllByRole('link').length).toBeGreaterThan(0)
   })
 
