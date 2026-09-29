@@ -98,7 +98,7 @@ npx tsc -b       # tipos
 ```
 
 O GitHub Actions roda tudo isso a cada push, no Node 22 e 24. Os testes rodam sempre no fuso
-de Brasília (definido no `vite.config.ts`), para "hoje" e "amanhã" darem o mesmo resultado no
+de Brasília (definido no `vite.config.mts`), para "hoje" e "amanhã" darem o mesmo resultado no
 meu PC e no Actions.
 
 ## Estrutura
