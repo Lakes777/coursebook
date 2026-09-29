@@ -587,8 +587,9 @@ describe('TelaNovaMateria', () => {
       await abrirPelaLista()
       const entradas = history.length
       act(() => history.back())
-      await waitFor(() => expect(window.location.hash).toBe('#/nova-materia'))
-      await userEvent.click(screen.getByRole('button', { name: 'Sair sem salvar' }))
+      // O hash já era #/nova-materia antes do voltar: esperar por ele não espera o voltar
+      // ser tratado. Quem diz que foi tratado é a pergunta aparecer.
+      await userEvent.click(await screen.findByRole('button', { name: 'Sair sem salvar' }))
       await waitFor(() => expect(window.location.hash).toBe('#/materias'))
       await waitFor(() => expect(screen.queryByLabelText('Nome da matéria')).not.toBeInTheDocument())
       expect(history.length).toBe(entradas)
