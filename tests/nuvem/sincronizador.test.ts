@@ -400,6 +400,56 @@ describe('sincronizador', () => {
       expect(nuvem.salvos).toEqual([{ dados: comMaterias('POO', 'BD'), revisao: 2 }])
     })
 
+    it('não apaga o pendente que outra aba marcou enquanto o envio daqui ia', async () => {
+      const nuvem = nuvemCom(null, 0)
+      nuvem.segurar()
+      const { s, nav, conta: guardada, situacao } = montar({ local: comMaterias('POO'), nuvem })
+      const entrando = s.entrou('andre@exemplo.com')
+      await vi.advanceTimersByTimeAsync(0)
+      // A outra aba mudou algo e marcou pendente; o evento storage ainda não chegou aqui.
+      nav.setItem(CHAVE_NUVEM, JSON.stringify(conta({ pendente: true, primeiraVez: true })))
+      nuvem.soltar()
+      await entrando
+      expect(nuvem.dados).toEqual(comMaterias('POO'))
+      expect(guardada()).toEqual(conta({ revisao: 1, pendente: true }))
+      expect(situacao()).toBe('salvando')
+    })
+
+    it('esta aba sem sessão: quando a outra entra de novo, confere daqui também', async () => {
+      const nuvem = nuvemCom(dadosVazios(), 1)
+      nuvem.logado = false
+      const { s, nav, situacao } = montar({
+        conta: conta({ revisao: 1, pendente: true }),
+        nuvem,
+        local: comMaterias('POO'),
+      })
+      await s.conferir()
+      expect(situacao()).toBe('sem-sessao')
+      nuvem.logado = true
+      nav.setItem(CHAVE_NUVEM, JSON.stringify(conta({ revisao: 1, pendente: true })))
+      s.releuConta()
+      await vi.advanceTimersByTimeAsync(0)
+      expect(nuvem.dados).toEqual(comMaterias('POO'))
+      expect(situacao()).toBe('sincronizado')
+    })
+
+    it('"Manter a deste aparelho" é descartado se a conta mudou antes da vez dele', async () => {
+      const nuvem = nuvemCom(comMaterias('Cálculo'), 4)
+      const { s, nav, situacao } = montar({
+        local: comMaterias('POO'),
+        conta: conta({ revisao: 2, pendente: true }),
+        nuvem,
+      })
+      await s.conferir()
+      expect(situacao()).toBe('conflito')
+      const escolha = s.resolver('aparelho')
+      // Antes da tarefa rodar (ela espera a fila), outra aba entra com outra conta.
+      nav.setItem(CHAVE_NUVEM, JSON.stringify(conta({ email: 'outra@exemplo.com' })))
+      s.releuConta()
+      await escolha
+      expect(nuvem.salvos).toEqual([])
+    })
+
     it('a outra aba saiu da conta: esta também fica sem conta', async () => {
       const { s, nav, nuvem, mudar } = montar({ conta: conta(), nuvem: nuvemCom(null, 0) })
       await s.conferir()

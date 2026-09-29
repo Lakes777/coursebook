@@ -1,6 +1,6 @@
 import type { ClienteNuvem } from '../api/contrato'
 import type { Dados } from '../logica/tipos'
-import { gravarConta, lerConta, mesmoEmail, type ArmazenamentoNuvem, type ContaGuardada } from './conta'
+import { CHAVE_NUVEM, gravarConta, lerConta, mesmoEmail, type ArmazenamentoNuvem, type ContaGuardada } from './conta'
 import { decidirAoAbrir, decidirAposSalvar, decidirErro, type Decisao } from './decidir'
 
 // Quem faz a sincronização acontecer: chama a API, pergunta às regras de decidir.ts
@@ -83,9 +83,36 @@ export function criarSincronizador(o: Opcoes): Sincronizador {
     situacao = nova
     avisar()
   }
+  const lerTexto = () => {
+    try {
+      return o.armazenamento.getItem(CHAVE_NUVEM)
+    } catch {
+      return null
+    }
+  }
+  // O texto da chave da conta que esta aba gravou ou leu por último. Se o de agora for
+  // outro, outra aba gravou e o evento storage ainda não chegou aqui.
+  let vista = lerTexto()
   const mudarConta = (nova: ContaGuardada | null) => {
     conta = nova
     gravarConta(o.armazenamento, nova)
+    vista = lerTexto()
+  }
+  /**
+   * Outra aba marcou uma mudança pendente que esta ainda não viu (ex.: enquanto o PUT
+   * daqui ia). Gravar "em dia" por cima apagaria o pendente dela; a mudança é da outra
+   * aba, que envia sozinha, mas até lá a conta tem que continuar pendente.
+   */
+  function pendenteDeOutraAba(): boolean {
+    if (!conta || lerTexto() === vista) return false
+    const outra = lerConta(o.armazenamento)
+    return outra !== null && mesmoEmail(outra.email, conta.email) && outra.pendente
+  }
+  /** Grava a conta em dia (ou pendente); diz se ficou pendente. */
+  function gravarEmDia(c: ContaGuardada, revisao: number, pendente = false): boolean {
+    const ficaPendente = pendente || pendenteDeOutraAba()
+    mudarConta(emDia(c, revisao, ficaPendente))
+    return ficaPendente
   }
   /** Conta em dia com esta revisão (e, com isso, já passou da primeira vez). */
   const emDia = (c: ContaGuardada, revisao: number, pendente = false): ContaGuardada => ({
@@ -113,8 +140,7 @@ export function criarSincronizador(o: Opcoes): Sincronizador {
       case 'nada':
         return mudar({ tipo: 'parado' })
       case 'em-dia':
-        mudarConta(emDia(conta, decisao.revisao))
-        return mudar({ tipo: 'sincronizado' })
+        return mudar({ tipo: gravarEmDia(conta, decisao.revisao) ? 'salvando' : 'sincronizado' })
       case 'adotar-nuvem':
         o.trocarDados(decisao.dados, false)
         mudarConta(emDia(conta, decisao.revisao))
@@ -122,9 +148,9 @@ export function criarSincronizador(o: Opcoes): Sincronizador {
       case 'enviar':
         return enviar(decisao.revisao)
       case 'salvo':
-        mudarConta(emDia(conta, decisao.revisao, decisao.aindaPendente))
-        if (!decisao.aindaPendente) return mudar({ tipo: 'sincronizado' })
-        agendar()
+        if (!gravarEmDia(conta, decisao.revisao, decisao.aindaPendente)) return mudar({ tipo: 'sincronizado' })
+        // Só agenda para a mudança desta aba; a pendente de outra aba vai pelo envio de lá.
+        if (decisao.aindaPendente) agendar()
         return mudar({ tipo: 'salvando' })
       case 'conflito':
         cancelarEnvio()
@@ -237,10 +263,13 @@ export function criarSincronizador(o: Opcoes): Sincronizador {
       }
       // Manter os daqui: envia com a revisão da nuvem, e aí o PUT passa por cima.
       mudar({ tipo: 'salvando' })
-      return executar(() => enviar(revisao))
+      const g = geracao
+      // Se a conta mudou até a vez desta tarefa (saiu, trocou em outra aba), a escolha não vale mais.
+      return executar(async () => (g === geracao ? enviar(revisao) : undefined))
     },
 
     releuConta() {
+      vista = lerTexto()
       const nova = lerConta(o.armazenamento)
       const antes = conta
       conta = nova
@@ -256,6 +285,12 @@ export function criarSincronizador(o: Opcoes): Sincronizador {
         geracao++
         cancelarEnvio()
         return mudar({ tipo: nova.primeiraVez ? 'conferindo' : nova.pendente ? 'salvando' : 'sincronizado' })
+      }
+      if (situacao.tipo === 'sem-sessao') {
+        // Provavelmente a outra aba entrou de novo (o cookie vale para as duas): confere daqui também.
+        avisar()
+        void conferir()
+        return
       }
       if (nova.pendente || situacao.tipo === 'parado') return avisar()
       // A outra aba deixou tudo em dia. A pergunta daqui só some se ela resolveu este mesmo conflito.
