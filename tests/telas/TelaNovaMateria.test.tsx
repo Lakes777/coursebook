@@ -1,6 +1,7 @@
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
+import App from '../../src/App'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
 import { dadosVazios } from '../../src/logica/armazenamento'
 import type { Materia, RegraAprovacao } from '../../src/logica/tipos'
@@ -342,7 +343,6 @@ describe('TelaNovaMateria', () => {
       expect(screen.getByText(/será apagado/)).toBeInTheDocument()
       // O foco vai para a opção que não apaga nada.
       expect(screen.getByRole('button', { name: 'Continuar preenchendo' })).toHaveFocus()
-      expect(screen.getByRole('link', { name: 'Sair sem salvar' })).toHaveAttribute('href', '#/materias')
 
       await userEvent.click(screen.getByRole('button', { name: 'Continuar preenchendo' }))
       expect(screen.queryByText(/será apagado/)).not.toBeInTheDocument()
@@ -365,6 +365,14 @@ describe('TelaNovaMateria', () => {
       expect(fechar()).toBe(false)
     })
 
+    it('"Sair sem salvar" volta para a lista de matérias', async () => {
+      montar()
+      await digitar(screen.getByLabelText('Nome da matéria'), 'Cálculo')
+      await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+      await userEvent.click(screen.getByRole('button', { name: 'Sair sem salvar' }))
+      expect(window.location.hash).toBe('#/materias')
+    })
+
     it('o Cancelar abre e fecha o aviso', async () => {
       montar()
       await digitar(screen.getByLabelText('Nome da matéria'), 'Cálculo')
@@ -374,6 +382,72 @@ describe('TelaNovaMateria', () => {
       await userEvent.click(cancelar)
       expect(cancelar).toHaveAttribute('aria-expanded', 'false')
       expect(screen.queryByText(/será apagado/)).not.toBeInTheDocument()
+    })
+  })
+
+  describe('sair pelas abas ou pelo voltar do navegador', () => {
+    function montarApp() {
+      window.location.hash = '#/nova-materia'
+      render(
+        <ProvedorPainel inicial={{ dados: dadosVazios(), aviso: null, podeSalvar: true }} armazenamento={navegador()}>
+          <App />
+        </ProvedorPainel>,
+      )
+    }
+
+    it('sem nada preenchido, a aba troca de tela direto', async () => {
+      montarApp()
+      await userEvent.click(screen.getByRole('link', { name: 'Agenda' }))
+      act(() => void window.dispatchEvent(new HashChangeEvent('hashchange')))
+      expect(window.location.hash).toBe('#/agenda')
+      expect(screen.queryByLabelText('Nome da matéria')).not.toBeInTheDocument()
+    })
+
+    it('com algo preenchido, a aba pergunta antes e "Sair sem salvar" vai para onde a pessoa clicou', async () => {
+      montarApp()
+      await digitar(screen.getByLabelText('Nome da matéria'), 'Cálculo')
+      await userEvent.click(screen.getByRole('link', { name: 'Agenda' }))
+
+      expect(window.location.hash).toBe('#/nova-materia')
+      expect(screen.getByText(/será apagado/)).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Continuar preenchendo' })).toHaveFocus()
+      expect(screen.getByLabelText('Nome da matéria')).toHaveValue('Cálculo')
+
+      await userEvent.click(screen.getByRole('button', { name: 'Sair sem salvar' }))
+      act(() => void window.dispatchEvent(new HashChangeEvent('hashchange')))
+      expect(window.location.hash).toBe('#/agenda')
+      expect(screen.getByRole('heading', { level: 2, name: 'Agenda' })).toBeInTheDocument()
+    })
+
+    it('o voltar do navegador também pergunta, e o endereço volta para o formulário', async () => {
+      montarApp()
+      await digitar(screen.getByLabelText('Nome da matéria'), 'Cálculo')
+      // O voltar muda o hash sozinho; o painel só fica sabendo pelo evento.
+      act(() => {
+        history.replaceState(null, '', '#/materias')
+        window.dispatchEvent(new HashChangeEvent('hashchange'))
+      })
+      expect(window.location.hash).toBe('#/nova-materia')
+      expect(screen.getByText(/será apagado/)).toBeInTheDocument()
+
+      await userEvent.click(screen.getByRole('button', { name: 'Continuar preenchendo' }))
+      expect(screen.getByLabelText('Nome da matéria')).toHaveValue('Cálculo')
+    })
+
+    it('depois de salvar, vai para a matéria sem perguntar', async () => {
+      montarApp()
+      await preencherMateria()
+      await continuar()
+      await digitar(within(grupo('RA 1')).getByLabelText('Peso na nota final'), '1')
+      await continuar()
+      await digitar(within(grupo('Avaliação 1 do RA1')).getByLabelText('Nome'), 'Prova')
+      await continuar()
+      await continuar()
+      await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
+      act(() => void window.dispatchEvent(new HashChangeEvent('hashchange')))
+      expect(window.location.hash).toMatch(/^#\/materia\//)
+      expect(screen.queryByText(/será apagado/)).not.toBeInTheDocument()
+      expect(screen.getByRole('heading', { level: 2, name: 'POO' })).toBeInTheDocument()
     })
   })
 })

@@ -1,24 +1,104 @@
-import { useSyncExternalStore } from 'react'
+import { useEffect, useRef, useSyncExternalStore } from 'react'
 import { lerRota, paraHash, type Rota } from './rota'
-
-function assinar(avisar: () => void) {
-  window.addEventListener('hashchange', avisar)
-  return () => window.removeEventListener('hashchange', avisar)
-}
 
 // O hash é "estado de fora do React": useSyncExternalStore lê ele e redesenha
 // quando muda (clique num link, botão voltar), sem copiar para um useState.
-const lerHash = () => window.location.hash
+//
+// Um formulário preenchido pode BLOQUEAR a saída: aí a troca de tela não chega às
+// telas; o hash volta para o de antes e quem bloqueou decide (pergunta "Sair sem
+// salvar?" e, se a pessoa quiser, chama sairPara()).
+
+const ouvintes = new Set<() => void>()
+/** O hash que as telas estão mostrando (o último que não foi bloqueado). */
+let hashAceito = ''
+/** Quem está bloqueando: recebe o hash para onde a pessoa tentou ir. */
+let bloqueio: ((destino: string) => void) | null = null
+/** Hash liberado por navegar()/sairPara(): mudança pedida pelo próprio painel, não pela pessoa. */
+let liberado: string | null = null
+
+function aoMudarHash() {
+  const destino = window.location.hash
+  if (destino === hashAceito) return
+  if (bloqueio && destino !== liberado) {
+    // Volta o endereço sem criar outra entrada no histórico e sem disparar outro hashchange.
+    history.replaceState(history.state, '', hashAceito || window.location.pathname + window.location.search)
+    bloqueio(destino)
+    return
+  }
+  liberado = null
+  hashAceito = destino
+  ouvintes.forEach((avisar) => avisar())
+}
+
+/**
+ * Link do próprio painel ("#/agenda") clicado com a saída bloqueada: segura antes
+ * de o navegador criar uma entrada no histórico (desfazer isso depois deixaria uma
+ * entrada repetida, e o "voltar" pareceria não funcionar).
+ */
+function aoClicar(e: MouseEvent) {
+  if (!bloqueio || e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return
+  const link = e.target instanceof Element ? e.target.closest('a[href^="#"]') : null
+  const destino = link?.getAttribute('href')
+  if (!destino || destino === hashAceito || link?.hasAttribute('target')) return
+  e.preventDefault()
+  bloqueio(destino)
+}
+
+function assinar(avisar: () => void) {
+  if (ouvintes.size === 0) {
+    hashAceito = window.location.hash
+    window.addEventListener('hashchange', aoMudarHash)
+  }
+  ouvintes.add(avisar)
+  return () => {
+    ouvintes.delete(avisar)
+    if (ouvintes.size === 0) window.removeEventListener('hashchange', aoMudarHash)
+  }
+}
+
+// Sem ninguém assinando (antes da 1ª tela), vale o endereço de verdade.
+const lerHash = () => (ouvintes.size > 0 ? hashAceito : window.location.hash)
 
 /** A tela atual, lida do endereço. */
 export function useRota(): Rota {
   return lerRota(useSyncExternalStore(assinar, lerHash))
 }
 
+/** Vai para o hash sem passar pelo bloqueio (entra no histórico, então "voltar" funciona). */
+export function sairPara(hash: string): void {
+  liberado = hash
+  window.location.hash = hash
+}
+
 /**
- * Vai para outra tela (entra no histórico, então "voltar" funciona). Ir para a
- * tela em que já está não faz nada: o hash não muda e o navegador não avisa.
+ * Vai para outra tela. É o painel que pede (ex.: depois de salvar), então passa por
+ * cima do bloqueio. Ir para a tela em que já está não faz nada: o hash não muda e o
+ * navegador não avisa.
  */
 export function navegar(rota: Rota): void {
-  window.location.hash = paraHash(rota)
+  sairPara(paraHash(rota))
+}
+
+/**
+ * Enquanto `ativo`, sair da tela pelas abas, por links ou pelo voltar do navegador
+ * chama `aoTentarSair(destino)` em vez de trocar de tela. Um bloqueio por vez: é o
+ * da tela aberta.
+ */
+export function useBloquearSaida(ativo: boolean, aoTentarSair: (destino: string) => void): void {
+  // Guardado num ref: a função muda a cada desenho, e o bloqueio não precisa ser refeito por isso.
+  const atual = useRef(aoTentarSair)
+  useEffect(() => {
+    atual.current = aoTentarSair
+  })
+  useEffect(() => {
+    if (!ativo) return
+    const esteBloqueio = (destino: string) => atual.current(destino)
+    bloqueio = esteBloqueio
+    // Fase de captura: vem antes do clique chegar ao link.
+    document.addEventListener('click', aoClicar, true)
+    return () => {
+      if (bloqueio === esteBloqueio) bloqueio = null
+      document.removeEventListener('click', aoClicar, true)
+    }
+  }, [ativo])
 }

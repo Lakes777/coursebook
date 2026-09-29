@@ -8,6 +8,7 @@ import { faixaHorario } from '../logica/horarios'
 import { formatarNota, lerNumero } from '../logica/numeros'
 import { VERSAO_ATUAL, type DiaSemana, type Materia } from '../logica/tipos'
 import { validarDados } from '../logica/validacao'
+import { sairPara, useBloquearSaida } from '../navegacao/useRota'
 import { plural } from '../tema/textos'
 import {
   conferirPasso,
@@ -129,6 +130,8 @@ export function FormularioMateria({
   // Digitar e apagar conta como preenchido: perguntar à toa é melhor que apagar sem avisar.
   const preenchido = form !== inicial
   const [confirmandoSaida, setConfirmandoSaida] = useState(false)
+  /** Para onde a pessoa tentou ir pelas abas ou pelo voltar; null = pelo Cancelar. */
+  const [destinoSaida, setDestinoSaida] = useState<string | null>(null)
   const botaoCancelar = useRef<HTMLButtonElement>(null)
   const botaoFicar = useRef<HTMLButtonElement>(null)
   const [passo, setPasso] = useState(0)
@@ -148,15 +151,26 @@ export function FormularioMateria({
     return () => window.removeEventListener('beforeunload', avisar)
   }, [preenchido])
 
+  // Sair pelas abas do topo, por um link ou pelo voltar do navegador: a tela não
+  // troca, e a mesma pergunta do Cancelar aparece, lembrando para onde a pessoa ia.
+  useBloquearSaida(preenchido, (destino) => abrirConfirmacaoDeSaida(destino))
+
+  function abrirConfirmacaoDeSaida(destino: string | null) {
+    flushSync(() => {
+      setDestinoSaida(destino)
+      setConfirmandoSaida(true)
+    })
+    // O foco vai para a opção que não apaga nada (e rola a página até a pergunta).
+    botaoFicar.current?.focus()
+  }
+
   function pedirConfirmacaoDeSaida() {
     // Com o aviso aberto, o Cancelar fecha ele de novo (é o que o aria-expanded promete).
     if (confirmandoSaida) {
       setConfirmandoSaida(false)
       return
     }
-    flushSync(() => setConfirmandoSaida(true))
-    // O foco vai para a opção que não apaga nada.
-    botaoFicar.current?.focus()
+    abrirConfirmacaoDeSaida(null)
   }
 
   function continuarPreenchendo() {
@@ -907,9 +921,14 @@ export function FormularioMateria({
               >
                 Continuar preenchendo
               </button>
-              <a href={sair} className="botao botao--perigo botao--pequeno">
+              {/* Botão, e não link: um link passaria pelo bloqueio e perguntaria de novo. */}
+              <button
+                type="button"
+                className="botao botao--perigo botao--pequeno"
+                onClick={() => sairPara(destinoSaida ?? sair)}
+              >
                 Sair sem salvar
-              </a>
+              </button>
             </div>
           </div>
         )}
