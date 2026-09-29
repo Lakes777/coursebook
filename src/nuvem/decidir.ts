@@ -1,6 +1,6 @@
 import { ehConflito, type RespostaDados, type RespostaErro, type Resposta, type RespostaSalvar } from '../api/contrato'
 import { iguais } from '../logica/iguais'
-import type { Dados } from '../logica/tipos'
+import { REGRA_PUCPR, type Dados } from '../logica/tipos'
 import { vazio } from '../logica/transferencia'
 import type { ContaGuardada } from './conta'
 
@@ -26,6 +26,12 @@ export type Decisao =
   /** Outro erro da API (dados inválidos, erro interno...): fica pendente e tenta de novo depois. */
   | { tipo: 'erro'; mensagem: string }
 
+/**
+ * Aparelho sem nada da pessoa: sem matérias, sem eventos e com a regra padrão da PUC-PR.
+ * Uma regra padrão editada também é um dado dela, que não pode sumir sem perguntar.
+ */
+export const semNada = (dados: Dados) => vazio(dados) && iguais(dados.regraPadrao, REGRA_PUCPR)
+
 /** O que fazer quando uma chamada à API não deu certo. */
 export function decidirErro(erro: RespostaErro): Decisao {
   if (erro.codigo === 'sem-conexao') return { tipo: 'sem-conexao' }
@@ -45,13 +51,13 @@ export function decidirAoAbrir({ local, conta, nuvem, podeSalvar }: AoAbrir): De
   if (!podeSalvar) return { tipo: 'nada' }
   if (nuvem.dados === null) {
     // Nuvem vazia: um aparelho sem nada também não tem o que mandar.
-    const enviar = !vazio(local) || conta.pendente
+    const enviar = !semNada(local) || conta.pendente
     return { tipo: enviar ? 'enviar' : 'em-dia', revisao: nuvem.revisao }
   }
   // Iguais (duas abas que mandaram a mesma coisa, ou entrar num aparelho já igual): não há o que perguntar.
   if (iguais(local, nuvem.dados)) return { tipo: 'em-dia', revisao: nuvem.revisao }
   if (conta.primeiraVez) {
-    return vazio(local)
+    return semNada(local)
       ? { tipo: 'adotar-nuvem', dados: nuvem.dados, revisao: nuvem.revisao }
       : { tipo: 'conflito', dados: nuvem.dados, revisao: nuvem.revisao, primeiraVez: true }
   }

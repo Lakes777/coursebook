@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { RespostaConflito, RespostaSalvar, Resposta } from '../../src/api/contrato'
 import { dadosVazios } from '../../src/logica/armazenamento'
-import type { Evento } from '../../src/logica/tipos'
+import { REGRA_PUCPR, type Evento } from '../../src/logica/tipos'
 import type { ContaGuardada } from '../../src/nuvem/conta'
 import { decidirAoAbrir, decidirAposSalvar, decidirErro } from '../../src/nuvem/decidir'
 import { comMaterias } from './apoio'
@@ -73,6 +73,13 @@ describe('decidirAoAbrir', () => {
 
     it('nuvem vazia e aparelho vazio: nada a enviar', () => {
       expect(abrir(primeira, { dados: null, revisao: 0 }, dadosVazios())).toEqual({ tipo: 'em-dia', revisao: 0 })
+    })
+
+    it('só a regra padrão editada já conta como dado do aparelho', () => {
+      const local = { ...dadosVazios(), regraPadrao: { ...REGRA_PUCPR, mediaMinima: 6 } }
+      expect(abrir(primeira, { dados: null, revisao: 0 }, local)).toEqual({ tipo: 'enviar', revisao: 0 })
+      const comNuvem = abrir(primeira, { dados: NUVEM, revisao: 4 }, local)
+      expect(comNuvem).toMatchObject({ tipo: 'conflito', primeiraVez: true })
     })
 
     it('nuvem com dados e aparelho vazio: usa a da nuvem', () => {
