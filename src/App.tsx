@@ -1,4 +1,4 @@
-import { CalendarDays, DatabaseBackup, GraduationCap, LibraryBig } from 'lucide-react'
+import { CalendarDays, CalendarRange, DatabaseBackup, GraduationCap, LibraryBig } from 'lucide-react'
 import { useEffect, useRef } from 'react'
 import { Avisos } from './componentes/Avisos'
 import { AvisoDesfazer } from './componentes/AvisoDesfazer'
@@ -11,16 +11,18 @@ import { TelaEditarMateria } from './telas/TelaEditarMateria'
 import { TelaMateria } from './telas/TelaMateria'
 import { TelaMaterias } from './telas/TelaMaterias'
 import { TelaNovaMateria } from './telas/TelaNovaMateria'
+import { TelaSemana } from './telas/TelaSemana'
 
 const ABAS = [
   { tela: 'materias', nome: 'Matérias', Icone: LibraryBig },
+  { tela: 'semana', nome: 'Semana', Icone: CalendarRange },
   { tela: 'agenda', nome: 'Agenda', Icone: CalendarDays },
   { tela: 'dados', nome: 'Dados', Icone: DatabaseBackup },
 ] as const
 
 /** Qual aba fica marcada: a matéria aberta, a nova e a editada ficam dentro de "Matérias". */
 function abaDe(rota: Rota): (typeof ABAS)[number]['tela'] {
-  return rota.tela === 'agenda' || rota.tela === 'dados' ? rota.tela : 'materias'
+  return rota.tela === 'semana' || rota.tela === 'agenda' || rota.tela === 'dados' ? rota.tela : 'materias'
 }
 
 function Tela({ rota }: { rota: Rota }) {
@@ -34,6 +36,8 @@ function Tela({ rota }: { rota: Rota }) {
       return <TelaEditarMateria key={rota.id} id={rota.id} />
     case 'nova-materia':
       return <TelaNovaMateria />
+    case 'semana':
+      return <TelaSemana />
     case 'agenda':
       return <TelaAgenda />
     case 'dados':

@@ -1,0 +1,111 @@
+/* ---------- Tela da semana ---------- */
+
+/* No celular, um dia embaixo do outro; no meio, 3 por linha; na tela larga, uma coluna por dia. */
+.semana {
+  display: grid;
+  gap: 12px;
+  align-items: start;
+}
+
+@media (min-width: 601px) {
+  .semana {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 960px) {
+  .semana {
+    /* Seis ou sete colunas, conforme o domingo entrar ou não. */
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+    grid-template-columns: none;
+  }
+}
+
+.semana__dia {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  padding: 14px;
+}
+
+/* Hoje: borda e rótulo no tom de destaque; o rótulo diz em texto o que a borda sugere. */
+.semana__dia--hoje {
+  border-color: var(--destaque);
+}
+
+.semana__nome {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin: 0;
+  font-size: 1rem;
+}
+
+.semana__hoje {
+  padding: 0 8px;
+  border: 1px solid var(--destaque);
+  border-radius: 999px;
+  color: var(--destaque);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.semana__sem-aulas {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.semana__aulas {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.aula-semana {
+  display: grid;
+  gap: 2px;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pequeno);
+  /* Sem isto, um nome comprido sem espaços estoura a coluna. */
+  overflow-wrap: anywhere;
+}
+
+.aula-semana p {
+  margin: 0;
+}
+
+.aula-semana__hora {
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.aula-semana__materia {
+  color: var(--text);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: var(--borda-campo);
+  text-underline-offset: 3px;
+}
+
+.aula-semana__materia:hover {
+  color: var(--destaque);
+  text-decoration-color: currentColor;
+}
+
+.aula-semana__aulas {
+  font-size: 0.85rem;
+}
+
+.semana__editar {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding-left: 20px;
+}

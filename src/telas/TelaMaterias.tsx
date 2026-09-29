@@ -1,10 +1,8 @@
 import { Eye, Plus } from 'lucide-react'
-import { flushSync } from 'react-dom'
-import { CabecalhoTela, ID_TITULO_TELA } from '../componentes/CabecalhoTela'
+import { CabecalhoTela } from '../componentes/CabecalhoTela'
 import { Selo } from '../componentes/Selo'
+import { useVerExemplo } from '../componentes/useVerExemplo'
 import { usePainel } from '../estado/contexto'
-import { dadosDeExemplo } from '../logica/exemplo'
-import { mesclar } from '../logica/transferencia'
 import { paraHash } from '../navegacao/rota'
 import { tomFaltas, tomNota } from '../tema/tons'
 import { resumoMateria, textoFaltas, textoNota } from '../tema/textos'
@@ -13,15 +11,9 @@ import './materias.css'
 const NOVA_MATERIA = paraHash({ tela: 'nova-materia' })
 
 export function TelaMaterias() {
-  const { dados, despachar, podeSalvar } = usePainel()
+  const { dados } = usePainel()
   const { materias, regraPadrao } = dados
-
-  function verExemplo() {
-    // Junta, e não substitui: a lista pode estar vazia com eventos na agenda.
-    // O botão some com a lista cheia; o foco vai para o título da tela.
-    flushSync(() => despachar({ tipo: 'dados/substituir', dados: mesclar(dados, dadosDeExemplo()) }))
-    document.getElementById(ID_TITULO_TELA)?.focus()
-  }
+  const { verExemplo, podeVerExemplo } = useVerExemplo()
 
   return (
     <CabecalhoTela titulo="Matérias">
@@ -36,8 +28,7 @@ export function TelaMaterias() {
               <Plus className="icone" size={16} />
               Cadastrar a primeira matéria
             </a>
-            {/* Sem salvar (dados ilegíveis, outra aba), o exemplo pareceria guardado sem estar. */}
-            <button type="button" className="botao botao--fantasma" onClick={verExemplo} disabled={!podeSalvar}>
+            <button type="button" className="botao botao--fantasma" onClick={verExemplo} disabled={!podeVerExemplo}>
               <Eye className="icone" size={16} />
               Ver com dados de exemplo
             </button>

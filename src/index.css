@@ -138,10 +138,19 @@ a {
   color: var(--destaque);
 }
 
-/* Celular estreito: as 3 abas não cabem com ícone; o texto fica e o ícone sai. */
+/* Celular estreito: as 4 abas não cabem com ícone; o texto fica e o ícone sai. */
 @media (max-width: 420px) {
+  /* As abas ocupam a linha toda e dividem a sobra; em 320 px as 4 cabem sem rolar. */
+  .abas {
+    width: 100%;
+    gap: 2px;
+  }
+
   .abas__item {
-    padding-inline: 10px;
+    flex: 1 1 auto;
+    justify-content: center;
+    padding-inline: 6px;
+    font-size: 0.9rem;
   }
 
   .abas__item .icone {

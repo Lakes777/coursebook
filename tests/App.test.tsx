@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it } from 'vitest'
 import App from '../src/App'
@@ -46,6 +46,17 @@ describe('App', () => {
     await userEvent.click(screen.getByRole('link', { name: 'Agenda' }))
     expect(screen.getByRole('heading', { level: 2, name: 'Agenda' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Agenda' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('tem a aba da semana entre Matérias e Agenda', async () => {
+    montar()
+    const nav = screen.getByRole('navigation', { name: 'Seções' })
+    const abas = within(nav).getAllByRole('link').map((a) => a.textContent)
+    expect(abas).toEqual(['Matérias', 'Semana', 'Agenda', 'Dados'])
+    await userEvent.click(screen.getByRole('link', { name: 'Semana' }))
+    expect(screen.getByRole('heading', { level: 2, name: 'Semana' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Semana' })).toHaveAttribute('aria-current', 'page')
+    expect(document.title).toBe('Semana · Painel de estudos')
   })
 
   it('segue o endereço (botão voltar, link colado)', () => {

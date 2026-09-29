@@ -4,6 +4,7 @@ import { INICIO, lerRota, paraHash, type Rota } from '../../src/navegacao/rota'
 describe('lerRota', () => {
   it('lê cada tela', () => {
     expect(lerRota('#/materias')).toEqual({ tela: 'materias' })
+    expect(lerRota('#/semana')).toEqual({ tela: 'semana' })
     expect(lerRota('#/agenda')).toEqual({ tela: 'agenda' })
     expect(lerRota('#/dados')).toEqual({ tela: 'dados' })
     expect(lerRota('#/nova-materia')).toEqual({ tela: 'nova-materia' })
@@ -17,7 +18,7 @@ describe('lerRota', () => {
   })
 
   it('manda o que não conhece para o início', () => {
-    const desconhecidos = ['', '#', '#/', '#/nada', '#/materia', '#/materia/a/b', '#/materia/a/editar/x', '#/agenda/x']
+    const desconhecidos = ['', '#', '#/', '#/nada', '#/materia', '#/materia/a/b', '#/materia/a/editar/x', '#/agenda/x', '#/semana/x']
     for (const hash of [...desconhecidos, '#/materia/%E0', '#/materia/%E0/editar']) {
       expect(lerRota(hash), hash).toEqual(INICIO)
     }
@@ -28,6 +29,7 @@ describe('paraHash', () => {
   it('volta a dar a mesma rota', () => {
     const rotas: Rota[] = [
       { tela: 'materias' },
+      { tela: 'semana' },
       { tela: 'agenda' },
       { tela: 'dados' },
       { tela: 'nova-materia' },
