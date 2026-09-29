@@ -13,6 +13,10 @@ import {
   conferirPasso,
   conferirRAs,
   conferirRegra,
+  erroRegra,
+  idsRegra,
+  montarRegra,
+  regrasIguais,
   formularioVazio,
   ID_CARGA,
   ID_FREQUENCIA,
@@ -224,6 +228,44 @@ describe('conferirRegra', () => {
     expect(com({ teto: '10,5' })?.campo).toBe(ID_TETO)
     // Sem recuperação, os campos dela não importam.
     expect(com({ temRecuperacao: false, teto: 'x' })).toBeNull()
+  })
+})
+
+describe('erroRegra', () => {
+  it('aponta para os ids pedidos, para servir fora do formulário de matéria', () => {
+    const ids = idsRegra('dados')
+    const regra = regraParaForm(REGRA_PUCPR)
+    expect(erroRegra(regra, ids)).toBeNull()
+    expect(erroRegra({ ...regra, mediaMinima: '' }, ids)?.campo).toBe('dados-regra-media')
+    expect(erroRegra({ ...regra, frequenciaMinima: '-1' }, ids)?.campo).toBe('dados-regra-frequencia')
+    expect(erroRegra({ ...regra, notaMinima: '7,5' }, ids)?.campo).toBe('dados-regra-nota-minima')
+    expect(erroRegra({ ...regra, teto: 'abc' }, ids)?.campo).toBe('dados-regra-teto')
+  })
+
+  it('sem ids, usa os do formulário de matéria', () => {
+    expect(erroRegra({ ...regraParaForm(REGRA_PUCPR), mediaMinima: '' })?.campo).toBe(ID_MEDIA)
+  })
+
+  it('o que passa na conferência também passa no carregamento', () => {
+    const regra = montarRegra({ ...regraParaForm(REGRA_PUCPR), mediaMinima: '6,5', frequenciaMinima: '70' })
+    const lida = validarDados({ versao: VERSAO_ATUAL, materias: [], eventos: [], regraPadrao: regra })
+    expect(lida.ok && lida.valor.regraPadrao).toEqual(regra)
+  })
+})
+
+describe('regrasIguais', () => {
+  it('compara os valores, não a ordem dos campos', () => {
+    const mesma: RegraAprovacao = {
+      arredondarUmaCasa: false,
+      recuperacao: { teto: 7, notaMinima: 4 },
+      frequenciaMinima: 0.75,
+      mediaMinima: 7,
+    }
+    expect(regrasIguais(mesma, REGRA_PUCPR)).toBe(true)
+    expect(regrasIguais({ ...REGRA_PUCPR, mediaMinima: 6 }, REGRA_PUCPR)).toBe(false)
+    expect(regrasIguais({ ...REGRA_PUCPR, arredondarUmaCasa: true }, REGRA_PUCPR)).toBe(false)
+    expect(regrasIguais({ ...REGRA_PUCPR, recuperacao: undefined }, REGRA_PUCPR)).toBe(false)
+    expect(regrasIguais({ ...REGRA_PUCPR, recuperacao: { notaMinima: 4, teto: 6 } }, REGRA_PUCPR)).toBe(false)
   })
 })
 

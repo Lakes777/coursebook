@@ -1,12 +1,12 @@
-import { Bot, Download, Eye, Trash2, Upload } from 'lucide-react'
-import { useRef, useState, type ChangeEvent } from 'react'
+import { Bot, Download, Eye, Pencil, RotateCcw, Trash2, Upload } from 'lucide-react'
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { CabecalhoTela } from '../componentes/CabecalhoTela'
 import { usePainel } from '../estado/contexto'
 import { dadosVazios } from '../logica/armazenamento'
 import { dadosDeExemplo } from '../logica/exemplo'
 import { INSTRUCOES_IA } from '../logica/instrucoesIA'
-import type { Dados } from '../logica/tipos'
+import { REGRA_PUCPR, type Dados } from '../logica/tipos'
 import {
   TAMANHO_MAXIMO_IMPORTACAO,
   lerImportacao,
@@ -18,6 +18,18 @@ import {
   vazio,
 } from '../logica/transferencia'
 import type { Resultado } from '../logica/validacao'
+import { plural } from '../tema/textos'
+import { CamposRegra } from './CamposRegra'
+import {
+  erroRegra,
+  idsRegra,
+  montarRegra,
+  regraParaForm,
+  regrasIguais,
+  textoRegra,
+  type ErroCampo,
+  type RegraForm,
+} from './novaMateriaUtil'
 import './dados.css'
 
 export function TelaDados() {
@@ -32,6 +44,7 @@ export function TelaDados() {
         <div className="dados__coluna">
           <SecaoExportar />
           <SecaoRecomecar />
+          <SecaoRegra />
         </div>
         <SecaoImportar />
         <SecaoIA />
@@ -169,6 +182,186 @@ function SecaoRecomecar() {
             </button>
           </div>
         </div>
+      )}
+      <p role="status" className="dados__status muted">
+        {anuncio}
+      </p>
+    </section>
+  )
+}
+
+const IDS_REGRA = idsRegra('dados')
+
+/** Para quem vale a regra padrão: as matérias sem regra própria. */
+function alcanceDaRegra(dados: Dados): string {
+  const total = dados.materias.length
+  const semPropria = dados.materias.filter((m) => m.regra === undefined).length
+  if (total === 0) return 'Ainda não há matérias no painel.'
+  if (semPropria === total) {
+    return total === 1 ? 'Vale para a única matéria do painel.' : `Vale para todas as ${total} matérias do painel.`
+  }
+  if (semPropria === 0) {
+    return total === 1
+      ? 'Hoje não vale para nenhuma: a única matéria do painel tem regra própria.'
+      : `Hoje não vale para nenhuma: as ${total} matérias do painel têm regra própria.`
+  }
+  return `Vale para ${semPropria} das ${total} matérias (${plural(total - semPropria, 'a outra tem', 'as outras têm')} regra própria).`
+}
+
+/** A regra de aprovação das matérias que não têm regra própria. */
+function SecaoRegra() {
+  const { dados, despachar, podeSalvar, mudouEmOutraAba } = usePainel()
+  const [form, setForm] = useState<RegraForm | null>(null)
+  const [erro, setErro] = useState<ErroCampo | null>(null)
+  const [confirmando, setConfirmando] = useState(false)
+  const [anuncio, setAnuncio] = useState('')
+  const titulo = useRef<HTMLHeadingElement>(null)
+  const botaoEditar = useRef<HTMLButtonElement>(null)
+  const botaoVoltar = useRef<HTMLButtonElement>(null)
+  const botaoCancelarVolta = useRef<HTMLButtonElement>(null)
+  const ehPUCPR = regrasIguais(dados.regraPadrao, REGRA_PUCPR)
+
+  function editar() {
+    flushSync(() => {
+      setForm(regraParaForm(dados.regraPadrao))
+      setErro(null)
+      setConfirmando(false)
+      setAnuncio('')
+    })
+    document.getElementById(IDS_REGRA.media)?.focus()
+  }
+
+  function mudar(campos: Partial<RegraForm>, campo?: string) {
+    setForm((f) => (f === null ? f : { ...f, ...campos }))
+    // Mexer no campo com erro tira a mensagem: ela descrevia o valor antigo.
+    if (campo && erro?.campo === campo) setErro(null)
+  }
+
+  /** Fecha os campos, anuncia e devolve o foco ao "Editar" (ou ao título, se ele estiver desativado). */
+  function fechar(mensagem: string) {
+    flushSync(() => {
+      setForm(null)
+      setErro(null)
+      setAnuncio(mensagem)
+    })
+    const editar = botaoEditar.current
+    ;(editar && !editar.disabled ? editar : titulo.current)?.focus()
+  }
+
+  function salvar(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    if (!form) return
+    const problema = erroRegra(form, IDS_REGRA)
+    if (problema) {
+      flushSync(() => setErro(problema))
+      document.getElementById(problema.campo)?.focus()
+      return
+    }
+    despachar({ tipo: 'regraPadrao/definir', regra: montarRegra(form) })
+    fechar('Regra padrão salva.')
+  }
+
+  function pedirConfirmacao() {
+    flushSync(() => setConfirmando(true))
+    botaoCancelarVolta.current?.focus()
+  }
+
+  function cancelarVolta() {
+    flushSync(() => setConfirmando(false))
+    botaoVoltar.current?.focus()
+  }
+
+  function voltarParaPUCPR() {
+    flushSync(() => {
+      despachar({ tipo: 'regraPadrao/definir', regra: structuredClone(REGRA_PUCPR) })
+      setConfirmando(false)
+      setAnuncio('A regra padrão voltou a ser a da PUC-PR.')
+    })
+    titulo.current?.focus()
+  }
+
+  const semSalvar = podeSalvar ? undefined : 'dados-regra-nao-salva'
+
+  return (
+    <section className="cartao dados__secao" aria-labelledby="dados-regra">
+      <h3 id="dados-regra" ref={titulo} tabIndex={-1} className="dados__subtitulo">
+        Regra padrão de aprovação
+      </h3>
+      <p className="dados__texto">
+        Toda matéria sem regra própria segue esta regra. {alcanceDaRegra(dados)}
+      </p>
+      <div className="dados__regra">
+        <p className="dados__texto">
+          <strong>{ehPUCPR ? 'Regra da PUC-PR' : 'Regra personalizada'}</strong>
+        </p>
+        <ul className="dados__lista dados__regra-resumo">
+          {textoRegra(dados.regraPadrao).map((frase) => (
+            <li key={frase}>{frase}</li>
+          ))}
+        </ul>
+      </div>
+
+      {form ? (
+        <form className="dados__regra-form" onSubmit={salvar} noValidate>
+          <CamposRegra legenda="Nova regra padrão" regra={form} ids={IDS_REGRA} erro={erro} mudar={mudar} />
+          <div className="dados__botoes">
+            <button type="submit" className="botao" disabled={!podeSalvar} aria-describedby={semSalvar}>
+              Salvar
+            </button>
+            <button type="button" className="botao botao--fantasma" onClick={() => fechar('Edição cancelada.')}>
+              Cancelar
+            </button>
+          </div>
+        </form>
+      ) : confirmando ? (
+        <div className="dados__confirmar">
+          <p className="dados__texto">
+            A regra padrão volta a ser a da PUC-PR: média 7,0, frequência de 75% e recuperação de 4,0 a 6,9. As
+            matérias com regra própria não mudam.
+          </p>
+          <div className="dados__botoes">
+            <button type="button" className="botao" onClick={voltarParaPUCPR} disabled={!podeSalvar}>
+              Confirmar
+            </button>
+            <button ref={botaoCancelarVolta} type="button" className="botao botao--fantasma" onClick={cancelarVolta}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="dados__botoes">
+          <button
+            ref={botaoEditar}
+            type="button"
+            className="botao botao--fantasma"
+            onClick={editar}
+            disabled={!podeSalvar}
+            aria-describedby={semSalvar}
+          >
+            <Pencil className="icone" size={16} />
+            Editar regra padrão
+          </button>
+          {!ehPUCPR && (
+            <button
+              ref={botaoVoltar}
+              type="button"
+              className="botao botao--fantasma"
+              onClick={pedirConfirmacao}
+              disabled={!podeSalvar}
+              aria-describedby={semSalvar}
+            >
+              <RotateCcw className="icone" size={16} />
+              Voltar para a regra da PUC-PR
+            </button>
+          )}
+        </div>
+      )}
+      {!podeSalvar && (
+        <p id="dados-regra-nao-salva" className="dados__texto dados__aviso">
+          {mudouEmOutraAba
+            ? 'O painel foi alterado em outra aba. Recarregue a página antes de mudar a regra.'
+            : 'Este navegador não está salvando os dados, então a regra nova se perderia ao fechar a página.'}
+        </p>
       )}
       <p role="status" className="dados__status muted">
         {anuncio}
