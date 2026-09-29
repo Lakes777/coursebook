@@ -22,6 +22,8 @@ export async function criarSessao(ctx: Contexto, usuarioId: string): Promise<str
   const token = randomBytes(32).toString('base64url')
   const agora = ctx.agora()
   const expira = new Date(agora.getTime() + SEGUNDOS_SESSAO * 1000)
+  // Sessões vencidas de quem nunca mais voltou: limpa aqui, sem precisar de rotina à parte.
+  await ctx.banco.consultar('DELETE FROM sessoes WHERE expira_em <= $1::timestamptz', [agora.toISOString()])
   await ctx.banco.consultar(
     'INSERT INTO sessoes (token_hash, usuario_id, criada_em, expira_em) VALUES ($1, $2, $3, $4)',
     [hashToken(token), usuarioId, agora.toISOString(), expira.toISOString()],

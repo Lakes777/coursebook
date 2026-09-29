@@ -35,7 +35,11 @@ export interface OpcoesDev {
 }
 
 /** Atende o pedido se for de uma rota da API; devolve false para o Vite seguir. */
-export async function tratarApi(req: IncomingMessage, res: ServerResponse, { pg, convite }: OpcoesDev): Promise<boolean> {
+export async function tratarApi(
+  req: IncomingMessage,
+  res: ServerResponse,
+  { pg, convite }: OpcoesDev,
+): Promise<boolean> {
   const caminho = new URL(req.url ?? '/', 'http://localhost').pathname
   const rota = ROTAS_DEV[caminho]
   if (!rota) return false
