@@ -182,6 +182,26 @@ describe('ProvedorNuvem', () => {
     expect(nuvem.salvos).toEqual([{ dados: comMaterias('POO'), revisao: 5 }])
   })
 
+  it('desfazer uma mudança feita nos dados que vieram da nuvem volta a enviar (regressão)', async () => {
+    const nuvem = new NuvemFalsa()
+    nuvem.dados = comMaterias('A', 'B')
+    nuvem.revisao = 3
+    const { result } = montar({ conta: conta({ revisao: 1 }), nuvem })
+    await esperar()
+    expect(result.current.painel.dados).toEqual(comMaterias('A', 'B'))
+
+    act(() => result.current.painel.despachar({ tipo: 'materia/remover', materiaId: 'B' }))
+    await esperar(ESPERA_ENVIO_MS)
+    expect(nuvem.dados).toEqual(comMaterias('A'))
+
+    // O Desfazer devolve o mesmo objeto que veio da nuvem: mesmo assim é uma mudança daqui.
+    act(() => result.current.painel.aoDesfazer())
+    expect(result.current.nuvem.situacao.tipo).toBe('salvando')
+    await esperar(ESPERA_ENVIO_MS)
+    expect(nuvem.dados).toEqual(comMaterias('A', 'B'))
+    expect(result.current.nuvem.situacao.tipo).toBe('sincronizado')
+  })
+
   it('com podeSalvar false, não envia nem troca os dados', async () => {
     const nuvem = new NuvemFalsa()
     nuvem.dados = comMaterias('Cálculo')

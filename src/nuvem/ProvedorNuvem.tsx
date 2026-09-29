@@ -71,7 +71,13 @@ export function ProvedorNuvem({ cliente: clienteProp, armazenamento: armazenamen
       deOutraAba.current = false
       return
     }
-    if (dados === adotados.current || !podeSalvar) return
+    if (dados === adotados.current) {
+      // Consome a marca: o Desfazer pode trazer de volta este mesmo objeto mais tarde, e
+      // aí ele é uma mudança desta aba (senão a nuvem ficaria sem o que o desfazer restaurou).
+      adotados.current = null
+      return
+    }
+    if (!podeSalvar) return
     sinc.current?.mudou()
   }, [dados, podeSalvar])
 
