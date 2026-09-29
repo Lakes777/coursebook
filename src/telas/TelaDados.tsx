@@ -169,11 +169,11 @@ function SecaoRecomecar() {
       {confirmando && (
         <div className="dados__confirmar">
           <p className="dados__texto">
-            Isto apaga {resumoDados(dados)}, com as notas e as faltas. Não dá para desfazer: baixe um backup antes,
-            se quiser guardar.
+            Isto apaga {resumoDados(dados)}, com as notas e as faltas. Só dá para desfazer logo em seguida, pelo aviso
+            no pé da página: baixe um backup antes, se quiser guardar.
           </p>
           <div className="dados__botoes">
-            {/* Outra aba pode salvar com a confirmação aberta: aí apagar não seria gravado. */}
+            {/* Outra aba pode gravar algo que esta não lê com a confirmação aberta: aí apagar não seria gravado. */}
             <button type="button" className="botao botao--perigo" onClick={apagarTudo} disabled={!podeSalvar}>
               Apagar tudo
             </button>
@@ -504,7 +504,8 @@ function SecaoImportar() {
             <div className="dados__confirmar">
               <p className="dados__texto">
                 Isto apaga {resumoDados(dados)} e põe o que está no arquivo no lugar.
-                {mudaRegra && ' A regra padrão de aprovação também passa a ser a do arquivo.'} Não dá para desfazer.
+                {mudaRegra && ' A regra padrão de aprovação também passa a ser a do arquivo.'} Só dá para desfazer
+                logo em seguida, pelo aviso no pé da página.
               </p>
               <div className="dados__botoes">
                 <button
