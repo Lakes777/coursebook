@@ -6,7 +6,8 @@ Painel para acompanhar o semestre da faculdade: notas por RA, faltas, pontos ext
 de provas e trabalhos, num lugar só. Ele calcula quanto falta para passar em cada matéria,
 seguindo a regra de aprovação da PUC-PR (configurável por matéria).
 
-Os dados ficam só no navegador (localStorage). Não tem servidor, login nem banco de dados.
+Funciona sem conta, com os dados só no navegador (localStorage). Quem cria uma conta passa a ter
+os dados guardados também na nuvem (Postgres) e sincronizados entre aparelhos, como o PC e o celular.
 
 **No ar:** https://painel-estudos-cyan.vercel.app (o painel abre vazio; "Ver com dados de exemplo"
 mostra como ele fica em uso).
@@ -63,6 +64,10 @@ carregar no painel vazio com "Ver com dados de exemplo".
   da matéria para importar.
 - **Backup:** exportar e importar tudo em JSON. A importação aceita a resposta da IA do jeito
   que ela costuma vir (com o bloco de código e frases em volta).
+- **Conta e nuvem (opcional):** na tela Dados, entrar ou criar conta (e-mail, senha e o código
+  de convite). Com conta, cada mudança é enviada sozinha e aparece nos outros aparelhos; sem
+  internet, fica guardada e vai quando a conexão voltar. Se o mesmo painel mudou em dois lugares,
+  o site pergunta qual versão manter em vez de apagar uma delas.
 - **Acessível:** funciona só com o teclado e com leitor de tela (foco levado para o lugar certo,
   erros ligados aos campos, avisos anunciados). Situações têm sempre texto, não só cor.
 
@@ -72,7 +77,8 @@ carregar no painel vazio com "Ver com dados de exemplo".
    use "Cadastrar com uma IA" na tela Dados.
 2. Lance as notas na tela da matéria: cada campo salva ao sair dele ou apertar Enter (Esc desfaz).
 3. Lance as faltas com "Faltei hoje" e as provas na Agenda.
-4. De vez em quando, baixe um backup em Dados: os dados ficam só neste navegador.
+4. Para usar em mais de um aparelho, crie uma conta em Dados. Sem conta, baixe um backup de vez
+   em quando: os dados ficam só neste navegador.
 
 ## Instalação
 
@@ -85,14 +91,18 @@ npm install
 npm run dev
 ```
 
-Depois, abra `http://localhost:5173` no navegador.
+Depois, abra `http://localhost:5173` no navegador. O `npm run dev` também serve a API da conta,
+com um Postgres dentro do próprio Node ([PGlite](https://pglite.dev/)) gravado na pasta `.pglite/`,
+e o código de convite `convite-local` (ou o da variável `CODIGO_CONVITE`).
 
-Para gerar a versão de produção: `npm run build` (sai na pasta `dist/`, que é um site estático).
+Para gerar a versão de produção: `npm run build` (o site sai na pasta `dist/`; a API são as
+funções da pasta `api/`, que a Vercel publica junto). Na Vercel, a API precisa das variáveis
+`DATABASE_URL` (Neon), `NOME_DO_BANCO` e `CODIGO_CONVITE` (ver [docs/nuvem.md](docs/nuvem.md)).
 
 ## Testes
 
 ```bash
-npx vitest run   # 503 testes (lógica e telas)
+npx vitest run   # 722 testes (lógica, telas e API)
 npx oxlint       # lint
 npx tsc -b       # tipos
 ```
@@ -120,7 +130,11 @@ src/
   telas/         Uma tela por arquivo (Materias, Materia, Formulario, Semana, Agenda, Dados)
   componentes/   Peças reaproveitadas (selo, avisos, cabeçalho, remover em 2 passos, "hoje")
   tema/          Cores das situações, ícones e textos
-tests/           Espelha o src/ (logica, estado, telas, navegacao, tema)
+  api/           Contrato da API (rotas, tipos, erros), usado pelo site e pelo servidor
+  nuvem/         Cliente da API, sincronização e a seção "Conta e nuvem"
+api/             Uma função da Vercel por rota (cadastro, entrar, sair, eu, conta, dados)
+servidor/        A API de verdade: rotas, contas, sessões, esquema do banco (Neon ou PGlite)
+tests/           Espelha o src/ (logica, estado, telas, navegacao, tema, nuvem) e o servidor/
 ```
 
 ## Decisões técnicas
@@ -152,6 +166,16 @@ tests/           Espelha o src/ (logica, estado, telas, navegacao, tema)
 - **Importação tolerante, validação rígida:** o JSON importado pode vir sem ids, sem versão ou
   com texto em volta; mas qualquer valor errado recusa tudo, com o caminho do erro
   ("Matéria 1 (POO) > RA 2 > Avaliação 1: ...").
+- **API testável sem a Vercel:** cada rota é uma função `(pedido, contexto) => resposta`, e o
+  contexto traz o banco, o relógio e o convite. Nos testes, o banco é o PGlite em memória (Postgres
+  de verdade, sem instalar nada); em produção, o Neon. As funções da pasta `api/` só ligam os dois.
+- **Sem perder mudanças entre aparelhos:** cada painel na nuvem tem um número de revisão, e o
+  envio só grava se a revisão bater (num `UPDATE ... WHERE revisao = $3` só). Se outro aparelho
+  gravou antes, a API responde 409 com a versão da nuvem, e o site pergunta qual manter.
+- **Segurança da conta:** senha com argon2id; sessão num cookie HttpOnly e SameSite, com o banco
+  guardando só o SHA-256 do token; limite de tentativas de login e de código de convite, reservadas
+  antes de conferir (contar primeiro deixava 20 pedidos simultâneos passarem); e os mesmos
+  conferidores do localStorage validam o que chega na API. Detalhes em [docs/nuvem.md](docs/nuvem.md).
 - **Visual:** tema escuro grafite com o bordô da PUC-PR (Pantone 201) só atrás de texto branco;
   em texto, um tom claro dele, para ter contraste.
 - **Feito com o Claude Code:** o formulário de nova matéria, a agenda, a grade da semana e a
@@ -168,4 +192,4 @@ tests/           Espelha o src/ (logica, estado, telas, navegacao, tema)
 - [x] Editar a regra padrão do painel (hoje é a da PUC-PR, e cada matéria pode ter a sua)
 - [x] Não deixar duas matérias ocuparem o mesmo horário
 - [x] Marcar na grade da semana a aula que está acontecendo agora
-- [ ] Guardar os dados na nuvem, para usar em mais de um aparelho
+- [x] Guardar os dados na nuvem, para usar em mais de um aparelho
