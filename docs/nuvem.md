@@ -197,4 +197,7 @@ aos eventos do navegador) e as telas (`SecaoNuvem.tsx`, `SituacaoNuvem.tsx`).
   para `servidor/`, com PGlite gravado em `.pglite/` (no `.gitignore`) e convite
   `CODIGO_CONVITE` do ambiente ou, sem ele, `convite-local`.
 - Testes da API em `tests/servidor/`, com PGlite em memória e ambiente `node`.
-- Produção: variáveis `DATABASE_URL` (Neon) e `CODIGO_CONVITE` na Vercel.
+- Produção: variáveis `DATABASE_URL` (Neon), `NOME_DO_BANCO` e `CODIGO_CONVITE` na Vercel.
+  A `DATABASE_URL` vem da integração Neon, que a atualiza sozinha quando a senha é
+  trocada, mas aponta para o banco padrão (`neondb`, do Controle de Gastos);
+  `NOME_DO_BANCO=painel_estudos` troca só o nome do banco no fim do endereço.

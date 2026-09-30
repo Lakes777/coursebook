@@ -1,6 +1,7 @@
 import { comEsquema } from './banco'
 import { bancoNeon } from './banco-neon'
 import type { Banco, Contexto, Rota } from './contexto'
+import { urlDoBanco } from './url-banco'
 
 // O contexto das funções da Vercel, lido das variáveis de ambiente. Fica guardado
 // entre chamadas enquanto a instância estiver acordada (o esquema vai uma vez só).
@@ -16,7 +17,7 @@ const bancoPreguicoso: Banco = {
     if (!banco) {
       const url = process.env.DATABASE_URL
       if (!url) throw new Error('Falta a variável de ambiente DATABASE_URL.')
-      banco = comEsquema(bancoNeon(url))
+      banco = comEsquema(bancoNeon(urlDoBanco(url, process.env.NOME_DO_BANCO)))
     }
     return banco.consultar(sql, parametros)
   },
