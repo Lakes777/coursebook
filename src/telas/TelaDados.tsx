@@ -85,7 +85,7 @@ function SecaoExportar() {
         Hoje o painel tem {resumoDados(dados)}. O arquivo guarda tudo: matérias, notas, faltas, pontos extras e
         agenda.
       </p>
-      <button type="button" className="botao" onClick={baixar}>
+      <button type="button" className="botao botao--vivo" onClick={baixar}>
         <Download className="icone" size={16} />
         Baixar backup (JSON)
       </button>
@@ -604,7 +604,7 @@ function SecaoIA() {
       <p className="muted dados__nota">
         Prefere não usar IA? Cadastre pelo formulário em <a href="#/nova-materia">Nova matéria</a>.
       </p>
-      <button type="button" className="botao" onClick={copiar}>
+      <button type="button" className="botao botao--vivo" onClick={copiar}>
         <Bot className="icone" size={16} />
         Copiar instruções para uma IA
       </button>

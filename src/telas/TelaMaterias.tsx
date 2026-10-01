@@ -24,7 +24,7 @@ export function TelaMaterias() {
             ensino. O painel calcula quanto falta para passar e acompanha as faltas.
           </p>
           <div className="vazio__botoes">
-            <a className="botao" href={NOVA_MATERIA}>
+            <a className="botao botao--vivo" href={NOVA_MATERIA}>
               <Plus className="icone" size={16} />
               Cadastrar a primeira matéria
             </a>
@@ -42,7 +42,7 @@ export function TelaMaterias() {
       ) : (
         <>
           <div className="barra-acoes">
-            <a className="botao" href={NOVA_MATERIA}>
+            <a className="botao botao--vivo" href={NOVA_MATERIA}>
               <Plus className="icone" size={16} />
               Nova matéria
             </a>

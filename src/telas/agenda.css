@@ -40,6 +40,27 @@
 }
 
 /* ---------- Item ---------- */
+/* Como os cartões das matérias: o cartão salta ao passar o mouse (ou com o foco dentro dele). */
+.item-agenda {
+  transition:
+    transform 0.35s var(--ease-out),
+    border-color 0.35s,
+    box-shadow 0.35s;
+}
+
+.item-agenda:hover,
+.item-agenda:focus-within {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgb(0 0 0 / 0.35);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .item-agenda:hover,
+  .item-agenda:focus-within {
+    transform: none;
+  }
+}
+
 .item-agenda {
   display: flex;
   flex-wrap: wrap;

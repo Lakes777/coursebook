@@ -123,7 +123,7 @@ function ItemAgenda({ evento, materia, tomarFoco, aoMarcar, aoRemover }: PropsIt
   }, [])
 
   return (
-    <li className={`cartao item-agenda item-agenda--${evento.destaque}`}>
+    <li className={`cartao item-agenda item-agenda--${evento.destaque} spot`}>
       <div className="item-agenda__info">
         <p className="item-agenda__tipo">
           <Icone className="icone" size={16} />
@@ -283,7 +283,7 @@ function FormNovoEvento() {
           ))}
         </select>
       </div>
-      <button type="submit" className="botao">
+      <button type="submit" className="botao botao--vivo">
         Adicionar
       </button>
       {/* Fica sempre na página: o leitor de tela só anuncia mudanças numa região que já existia. */}

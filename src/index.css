@@ -392,6 +392,34 @@ a {
     transform 0.1s;
 }
 
+/* Botões principais com movimento (o mesmo do "Ver projetos" do portfólio):
+   sobem um pouco e ganham um brilho bordô embaixo. */
+.botao--vivo {
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    color 0.2s,
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.botao--vivo:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgb(157 34 53 / 0.45);
+}
+
+/* Ao clicar ele afunda (regra do .botao:active abaixo) e o brilho diminui. */
+.botao--vivo:active:not(:disabled) {
+  box-shadow: 0 4px 12px rgb(157 34 53 / 0.35);
+}
+
+/* Sem animação, o botão não sobe: só o brilho aparece. */
+@media (prefers-reduced-motion: reduce) {
+  .botao--vivo:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
 /* Um leve afundar ao clicar */
 .botao:active:not(:disabled) {
   transform: translateY(1px);
