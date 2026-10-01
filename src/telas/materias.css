@@ -27,8 +27,27 @@
   gap: 8px;
 }
 
-.cartao-materia:hover {
+/* O cartão salta ao passar o mouse (ou ao receber o foco do teclado), como no portfólio. */
+.cartao-materia {
+  transition:
+    transform 0.35s var(--ease-out),
+    border-color 0.35s,
+    box-shadow 0.35s;
+}
+
+.cartao-materia:hover,
+.cartao-materia:focus-within {
+  transform: translateY(-4px);
   border-color: var(--marca);
+  box-shadow: 0 18px 40px rgb(0 0 0 / 0.35);
+}
+
+/* Sem animação, o cartão não pula: só a borda muda. */
+@media (prefers-reduced-motion: reduce) {
+  .cartao-materia:hover,
+  .cartao-materia:focus-within {
+    transform: none;
+  }
 }
 
 .cartao-materia:focus-within {

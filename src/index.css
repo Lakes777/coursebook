@@ -28,6 +28,9 @@
   --mono: 'Fira Code', ui-monospace, monospace;
   --radius: 14px;
   --radius-pequeno: 10px;
+  /* As mesmas curvas do portfólio */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-texto: cubic-bezier(0, -0.02, 0.49, 0.99);
 }
 
 *,
@@ -73,6 +76,8 @@ a {
   outline: none;
 }
 
+/* Quem prefere menos animação (ex.: "Efeitos de animação" desligado no Windows) não vê
+   nada se mexer; só a troca de tela mantém um fade simples (no fim do arquivo). */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -97,6 +102,22 @@ a {
   border-bottom: 3px solid var(--marca);
 }
 
+/* No computador o topo acompanha a rolagem (no celular ele ocupa 2 linhas e roubaria espaço). */
+@media (min-width: 640px) {
+  html {
+    /* --altura-topo é medida no App.tsx (o topo pode quebrar em 2 linhas) */
+    scroll-padding-top: calc(var(--altura-topo, 80px) + 16px);
+  }
+
+  .topo {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: rgb(18 19 21 / 0.9);
+    backdrop-filter: blur(10px);
+  }
+}
+
 .topo__conteudo {
   display: flex;
   flex-wrap: wrap;
@@ -108,8 +129,23 @@ a {
 
 /* ---------- Abas ---------- */
 .abas {
+  position: relative;
   display: flex;
   gap: 4px;
+}
+
+/* Fundo da aba ativa: desliza de uma aba para a outra (posição medida no App.tsx). */
+.abas__pilula {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: var(--radius-pequeno);
+  background: var(--surface);
+  box-shadow: inset 0 -2px 0 var(--marca);
+  pointer-events: none;
+  transition:
+    transform 0.35s var(--ease-out),
+    width 0.35s var(--ease-out);
 }
 
 .abas__item {
@@ -121,17 +157,28 @@ a {
   color: var(--text-muted);
   font-weight: 600;
   text-decoration: none;
+  /* Por cima da pílula */
+  position: relative;
+  z-index: 1;
+  transition:
+    color 0.25s,
+    background-color 0.25s;
 }
 
 .abas__item:hover {
-  background: var(--surface-hover);
   color: var(--text);
 }
 
+.abas__item:not([aria-current='page']):hover {
+  background: rgb(228 229 231 / 0.04);
+}
+
 .abas__item[aria-current='page'] {
-  background: var(--surface);
   color: var(--text);
-  box-shadow: inset 0 -2px 0 var(--marca);
+}
+
+.abas__item .icone {
+  transition: color 0.25s;
 }
 
 .abas__item[aria-current='page'] .icone {
@@ -338,6 +385,16 @@ a {
   font-weight: 600;
   padding: 10px 18px;
   text-decoration: none;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s,
+    color 0.2s,
+    transform 0.1s;
+}
+
+/* Um leve afundar ao clicar */
+.botao:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 /* :not(:disabled): botão desabilitado não pode parecer clicável. */
@@ -384,4 +441,96 @@ a {
   display: inline-flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+/* ---------- Animações (as mesmas do portfólio) ---------- */
+
+/* Entrada da tela em blocos: o título em 0,1 s, o primeiro bloco em 0,3 s e o resto
+   em 0,5 s; cada um sobe 10px e aparece. "translate" (e não "transform") para não
+   brigar com o salto dos cartões. */
+.tela--entrando > section > * {
+  animation: surgir 0.5s var(--ease-texto) 0.5s both;
+}
+
+.tela--entrando > section > :first-child {
+  animation-delay: 0.1s;
+}
+
+.tela--entrando > section > :nth-child(2) {
+  animation-delay: 0.3s;
+}
+
+@keyframes surgir {
+  from {
+    opacity: 0;
+    translate: 0 10px;
+  }
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Brilho que segue o mouse (.spot; posição em --mx/--my, definida no App.tsx):
+   uma luz suave no fundo e outra acendendo a borda perto do cursor, no tom do bordô. */
+.spot {
+  position: relative;
+  isolation: isolate;
+}
+
+.spot::before,
+.spot::after {
+  content: '';
+  position: absolute;
+  border-radius: inherit;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s;
+}
+
+.spot::before {
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(380px circle at var(--mx, 50%) var(--my, 50%), rgb(224 122 140 / 0.08), transparent 60%);
+}
+
+.spot::after {
+  inset: -1px;
+  padding: 1px;
+  background: radial-gradient(220px circle at var(--mx, 50%) var(--my, 50%), rgb(224 122 140 / 0.6), transparent 70%);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+}
+
+@media (hover: hover) {
+  .spot:hover::before,
+  .spot:hover::after {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tela--entrando > section > * {
+    animation: aparecer 0.5s ease-out 0.5s both !important;
+  }
+
+  .tela--entrando > section > :first-child {
+    animation-delay: 0.1s !important;
+  }
+
+  .tela--entrando > section > :nth-child(2) {
+    animation-delay: 0.3s !important;
+  }
 }
