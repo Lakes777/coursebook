@@ -129,7 +129,7 @@ export function TelaLobby({ avisos }: { avisos?: ReactNode }) {
           </p>
           <ul className="lobby__destaques">
             {DESTAQUES.map(({ Icone, titulo, texto }) => (
-              <li key={titulo} className="lobby__destaque">
+              <li key={titulo} className="lobby__destaque spot">
                 <span className="lobby__icone">
                   <Icone className="icone" size={20} />
                 </span>
