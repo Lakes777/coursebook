@@ -31,7 +31,7 @@ describe('App', () => {
   it('mostra o título do painel', () => {
     montar()
     const titulo = screen.getByRole('heading', { level: 1 })
-    expect(titulo).toHaveTextContent('Painel de estudos')
+    expect(titulo).toHaveTextContent('Coursebook')
     // O ícone do capelo não entra no nome do título.
     expect(titulo.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
   })
@@ -58,7 +58,7 @@ describe('App', () => {
     await userEvent.click(screen.getByRole('link', { name: 'Semana' }))
     expect(screen.getByRole('heading', { level: 2, name: 'Semana' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Semana' })).toHaveAttribute('aria-current', 'page')
-    expect(document.title).toBe('Semana · Painel de estudos')
+    expect(document.title).toBe('Semana · Coursebook')
   })
 
   it('segue o endereço (botão voltar, link colado)', () => {
@@ -81,9 +81,9 @@ describe('App', () => {
 
   it('muda o título da aba do navegador', () => {
     montar()
-    expect(document.title).toBe('Matérias · Painel de estudos')
+    expect(document.title).toBe('Matérias · Coursebook')
     irPara('#/agenda')
-    expect(document.title).toBe('Agenda · Painel de estudos')
+    expect(document.title).toBe('Agenda · Coursebook')
   })
 
   it('avisa quando a matéria do endereço não existe', () => {
@@ -95,10 +95,10 @@ describe('App', () => {
 
   it('o nome no topo leva de volta ao lobby', async () => {
     montar()
-    const nome = screen.getByRole('link', { name: 'Painel de estudos' })
+    const nome = screen.getByRole('link', { name: 'Coursebook' })
     expect(nome).toHaveAttribute('href', '#/')
     await userEvent.click(nome)
-    expect(screen.getByRole('heading', { level: 1, name: 'Painel de estudos' })).toHaveFocus()
+    expect(screen.getByRole('heading', { level: 1, name: 'Coursebook' })).toHaveFocus()
     expect(screen.getByRole('link', { name: 'Início' })).toHaveAttribute('aria-current', 'page')
   })
 
@@ -108,7 +108,7 @@ describe('App', () => {
     expect(inicio).toHaveAttribute('href', '#/')
     await userEvent.click(inicio)
     expect(screen.getByRole('link', { name: 'Começar' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 1, name: 'Painel de estudos' })).toHaveFocus()
+    expect(screen.getByRole('heading', { level: 1, name: 'Coursebook' })).toHaveFocus()
   })
 
   it('endereço desconhecido continua indo para a lista de matérias', () => {
@@ -128,12 +128,12 @@ describe('lobby', () => {
     const titulos = screen.getAllByRole('heading', { level: 1 })
     expect(titulos).toHaveLength(1)
     expect(titulos[0]).toHaveClass('lobby__titulo')
-    expect(screen.getByRole('banner')).toHaveTextContent('Painel de estudos')
+    expect(screen.getByRole('banner')).toHaveTextContent('Coursebook')
     const nav = screen.getByRole('navigation', { name: 'Seções' })
     expect(within(nav).getByRole('link', { name: 'Início' })).toHaveAttribute('aria-current', 'page')
     expect(within(nav).getByRole('link', { name: 'Matérias' })).not.toHaveAttribute('aria-current')
     expect(screen.queryByRole('heading', { level: 2, name: 'Matérias' })).not.toBeInTheDocument()
-    expect(document.title).toBe('Painel de estudos')
+    expect(document.title).toBe('Coursebook')
   })
 
   it('mostra os destaques e o link para o código', () => {
@@ -148,7 +148,7 @@ describe('lobby', () => {
     // montar() usa podeSalvar: false, como um navegador que não deixa gravar.
     montar('')
     const aviso = screen.getByText(/Nada está sendo salvo neste navegador/)
-    const titulo = screen.getByRole('heading', { level: 1, name: 'Painel de estudos' })
+    const titulo = screen.getByRole('heading', { level: 1, name: 'Coursebook' })
     expect(aviso.closest('.lobby__avisos')).not.toBeNull()
     expect(aviso.compareDocumentPosition(titulo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     await userEvent.click(screen.getByRole('link', { name: 'Começar' }))

@@ -175,7 +175,7 @@ function App() {
               {/* O nome leva de volta ao lobby (passa pelo aviso de sair do formulário, como as abas). */}
               <a href={paraHash(LOBBY)} className="topo__link">
                 <GraduationCap className="icone" size={26} />
-                Painel de estudos
+                Coursebook
               </a>
             </Marca>
             <SituacaoNuvem />

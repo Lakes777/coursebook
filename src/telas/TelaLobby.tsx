@@ -96,7 +96,7 @@ function Faixa({ inicio, duracao, inverter }: (typeof FAIXAS)[number]) {
  */
 export function TelaLobby({ avisos }: { avisos?: ReactNode }) {
   useEffect(() => {
-    document.title = 'Painel de estudos'
+    document.title = 'Coursebook'
   }, [])
 
   return (
@@ -121,7 +121,7 @@ export function TelaLobby({ avisos }: { avisos?: ReactNode }) {
           </p>
           {/* tabIndex -1: ao voltar para o lobby, o App põe o foco aqui (como nas outras telas). */}
           <h1 id={ID_TITULO_TELA} tabIndex={-1} className="lobby__titulo titulo-tela">
-            Painel de estudos
+            Coursebook
           </h1>
           <p className="lobby__frase">
             Matérias, aulas, provas e notas da faculdade num lugar só: veja a semana, os prazos e quanto falta para

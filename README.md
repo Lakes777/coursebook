@@ -1,4 +1,6 @@
-# Painel de estudos
+# Coursebook
+
+Coursebook · painel de estudos da faculdade: acompanhe matérias, notas, faltas e agenda do semestre.
 
 [![Testes](https://github.com/Lakes777/painel-estudos/actions/workflows/testes.yml/badge.svg)](https://github.com/Lakes777/painel-estudos/actions/workflows/testes.yml)
 

@@ -14,7 +14,7 @@ interface Props {
  */
 export function CabecalhoTela({ titulo, children }: Props) {
   useEffect(() => {
-    document.title = `${titulo} · Painel de estudos`
+    document.title = `${titulo} · Coursebook`
   }, [titulo])
 
   return (

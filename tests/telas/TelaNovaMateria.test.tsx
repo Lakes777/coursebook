@@ -561,7 +561,7 @@ describe('TelaNovaMateria', () => {
     it('o nome do painel no topo (volta ao lobby) também pergunta antes', async () => {
       montarApp()
       await digitar(screen.getByLabelText('Nome da matéria'), 'Cálculo')
-      await userEvent.click(screen.getByRole('link', { name: 'Painel de estudos' }))
+      await userEvent.click(screen.getByRole('link', { name: 'Coursebook' }))
 
       expect(window.location.hash).toBe('#/nova-materia')
       expect(screen.getByText(/será apagado/)).toBeInTheDocument()
