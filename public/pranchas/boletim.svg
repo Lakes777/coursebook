@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 300" width="520" height="300">
+  <!-- Boletim com as notas e a média (desenho próprio do Painel de estudos) -->
+  <g fill="none" stroke="#c9ccd2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+<path d="M70 36V250H486"/>
+    <path d="M65 250H70"/>
+    <text x="58" y="254" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="end" letter-spacing="0">0</text>
+    <path d="M65 210H70"/>
+    <text x="58" y="214" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="end" letter-spacing="0">2</text>
+    <path d="M65 170H70"/>
+    <text x="58" y="174" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="end" letter-spacing="0">4</text>
+    <path d="M65 130H70"/>
+    <text x="58" y="134" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="end" letter-spacing="0">6</text>
+    <path d="M65 90H70"/>
+    <text x="58" y="94" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="end" letter-spacing="0">8</text>
+    <path d="M65 50H70"/>
+    <text x="58" y="54" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="end" letter-spacing="0">10</text>
+    <rect x="92" y="86" width="38" height="164" rx="3"/>
+    <text x="111" y="78" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">8,2</text>
+    <text x="111" y="268" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="1">CAL</text>
+    <rect x="158" y="120" width="38" height="130" rx="3"/>
+    <path d="M162 244L174 234" stroke-width="0.8"/>
+    <path d="M162 232L174 222" stroke-width="0.8"/>
+    <path d="M162 220L174 210" stroke-width="0.8"/>
+    <path d="M162 208L174 198" stroke-width="0.8"/>
+    <path d="M162 196L174 186" stroke-width="0.8"/>
+    <path d="M162 184L174 174" stroke-width="0.8"/>
+    <path d="M162 172L174 162" stroke-width="0.8"/>
+    <path d="M162 160L174 150" stroke-width="0.8"/>
+    <path d="M162 148L174 138" stroke-width="0.8"/>
+    <path d="M162 136L174 126" stroke-width="0.8"/>
+    <text x="177" y="112" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">6,5</text>
+    <text x="177" y="268" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="1">ED</text>
+    <rect x="224" y="68" width="38" height="182" rx="3"/>
+    <text x="243" y="60" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">9,1</text>
+    <text x="243" y="268" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="1">POO</text>
+    <rect x="290" y="102" width="38" height="148" rx="3"/>
+    <text x="309" y="94" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">7,4</text>
+    <text x="309" y="268" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="1">BD</text>
+    <rect x="356" y="134" width="38" height="116" rx="3"/>
+    <path d="M360 244L372 234" stroke-width="0.8"/>
+    <path d="M360 232L372 222" stroke-width="0.8"/>
+    <path d="M360 220L372 210" stroke-width="0.8"/>
+    <path d="M360 208L372 198" stroke-width="0.8"/>
+    <path d="M360 196L372 186" stroke-width="0.8"/>
+    <path d="M360 184L372 174" stroke-width="0.8"/>
+    <path d="M360 172L372 162" stroke-width="0.8"/>
+    <path d="M360 160L372 150" stroke-width="0.8"/>
+    <path d="M360 148L372 138" stroke-width="0.8"/>
+    <text x="375" y="126" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">5,8</text>
+    <text x="375" y="268" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="1">FÍS</text>
+    <rect x="422" y="74" width="38" height="176" rx="3"/>
+    <text x="441" y="66" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">8,8</text>
+    <text x="441" y="268" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="1">ES</text>
+    <path d="M70 110H486" stroke="#e07a8c" stroke-dasharray="6 5"/>
+    <text x="486" y="104" fill="#e07a8c" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="end" letter-spacing="0">média 7,0</text>
+  </g>
+</svg>

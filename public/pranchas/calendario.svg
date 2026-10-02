@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 300" width="520" height="300">
+  <!-- Calendário com prazos marcados (desenho próprio do Painel de estudos) -->
+  <g fill="none" stroke="#c9ccd2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+<rect x="80" y="36" width="360" height="248" rx="10"/>
+    <path d="M80 82H440"/>
+    <rect x="146" y="24" width="10" height="24" rx="5"/>
+    <rect x="364" y="24" width="10" height="24" rx="5"/>
+    <text x="260" y="66" fill="#c9ccd2" stroke="none" font-size="13" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="4">OUTUBRO</text>
+    <text x="105.7" y="100" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="1">D</text>
+    <text x="157.1" y="100" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="1">S</text>
+    <text x="208.6" y="100" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="1">T</text>
+    <text x="260" y="100" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="1">Q</text>
+    <text x="311.4" y="100" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="1">Q</text>
+    <text x="362.9" y="100" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="1">S</text>
+    <text x="414.3" y="100" fill="#c9ccd2" stroke="none" font-size="10" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="1">S</text>
+    <path d="M92 144H428" stroke-width="0.8" stroke-dasharray="2 4"/>
+    <path d="M92 178H428" stroke-width="0.8" stroke-dasharray="2 4"/>
+    <path d="M92 212H428" stroke-width="0.8" stroke-dasharray="2 4"/>
+    <path d="M92 246H428" stroke-width="0.8" stroke-dasharray="2 4"/>
+    <text x="260" y="131" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">1</text>
+    <text x="311.4" y="131" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">2</text>
+    <path d="M302.4 119L320.4 135" stroke-width="1.2"/>
+    <text x="362.9" y="131" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">3</text>
+    <text x="414.3" y="131" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">4</text>
+    <text x="105.7" y="165" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">5</text>
+    <text x="157.1" y="165" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">6</text>
+    <text x="208.6" y="165" fill="#e07a8c" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">7</text>
+    <circle cx="208.6" cy="161" r="12" stroke="#e07a8c"/>
+    <text x="260" y="165" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">8</text>
+    <text x="311.4" y="165" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">9</text>
+    <path d="M302.4 153L320.4 169" stroke-width="1.2"/>
+    <text x="362.9" y="165" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">10</text>
+    <text x="414.3" y="165" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">11</text>
+    <text x="105.7" y="199" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">12</text>
+    <text x="157.1" y="199" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">13</text>
+    <text x="208.6" y="199" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">14</text>
+    <text x="260" y="199" fill="#e07a8c" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">15</text>
+    <circle cx="260" cy="195" r="12" stroke="#e07a8c"/>
+    <text x="311.4" y="199" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">16</text>
+    <text x="362.9" y="199" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">17</text>
+    <text x="414.3" y="199" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">18</text>
+    <text x="105.7" y="233" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">19</text>
+    <text x="157.1" y="233" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">20</text>
+    <text x="208.6" y="233" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">21</text>
+    <text x="260" y="233" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">22</text>
+    <text x="311.4" y="233" fill="#e07a8c" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">23</text>
+    <circle cx="311.4" cy="229" r="12" stroke="#e07a8c"/>
+    <text x="362.9" y="233" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">24</text>
+    <text x="414.3" y="233" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">25</text>
+    <text x="105.7" y="267" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">26</text>
+    <text x="157.1" y="267" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">27</text>
+    <text x="208.6" y="267" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">28</text>
+    <text x="260" y="267" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">29</text>
+    <text x="311.4" y="267" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">30</text>
+    <text x="362.9" y="267" fill="#c9ccd2" stroke="none" font-size="10.5" font-family="ui-monospace, 'Fira Code', monospace" text-anchor="middle" letter-spacing="0">31</text>
+    <path d="M452 120V200M452 124H486L478 136 486 148H452" stroke="#e07a8c"/>
+  </g>
+</svg>
