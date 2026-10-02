@@ -46,6 +46,8 @@ carregar no painel vazio com "Ver com dados de exemplo".
   coluna por dia, o nome da matéria em cada aula que ela ocupa e o dia de hoje marcado. Aulas
   vazias seguidas (entre a manhã e a noite) viram uma linha só; no celular, um dia embaixo do outro.
   A aula que está acontecendo agora aparece marcada com "Agora" e muda sozinha com a tela aberta.
+- **Visão do semestre:** a lista de matérias mostra um resumo (aprovadas, em andamento, pedem
+  atenção) e o cartão "Próximos prazos", com os 3 itens da agenda que vêm primeiro.
 - **Agenda:** provas, trabalhos e apresentações, com o que está atrasado, é hoje ou está chegando.
 - **Desfazer:** depois de remover algo ou apagar uma nota, um aviso no pé da página oferece
   "Desfazer" (ou Ctrl+Z). Vale para a última ação.
