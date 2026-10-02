@@ -184,6 +184,11 @@
 }
 
 @media (min-width: 800px) {
+  /* Dia, primeira aula e última aula (ou início e fim) numa linha só. */
+  .nm-item__campos--horario {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .nm-item__campos--avaliacao {
     grid-template-columns: 2fr 1fr 1fr 1.4fr;
   }
@@ -334,6 +339,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-.nm-horario__modo {
-  justify-self: start;
+.nm-item__botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }

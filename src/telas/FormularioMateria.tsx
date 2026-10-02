@@ -488,7 +488,7 @@ export function FormularioMateria({
           {form.horarios.map((h, i) => (
             <fieldset key={h.chave} className="nm-item">
               <legend>Horário {i + 1}</legend>
-              <div className="nm-item__campos">
+              <div className="nm-item__campos nm-item__campos--horario">
                 <Rotulado id={idHorario(h.chave, 'dia')} rotulo="Dia" erro={erro}>
                   {(p) => (
                     <select
@@ -508,25 +508,28 @@ export function FormularioMateria({
                 {h.modo === 'aulas' ? camposAulas(h) : camposHoras(h)}
               </div>
               {h.modo === 'aulas' && resumoAulas(h)}
-              <button
-                type="button"
-                className="botao botao--fantasma botao--pequeno nm-horario__modo"
-                onClick={() => trocarModo(h, i + 1)}
-                aria-label={
-                  h.modo === 'aulas' ? `Informar o horário ${i + 1} em horas` : `Escolher o horário ${i + 1} pelas aulas`
-                }
-              >
-                {h.modo === 'aulas' ? 'Informar em horas' : 'Escolher pelas aulas'}
-              </button>
-              <button
-                type="button"
-                className="botao botao--fantasma botao--pequeno nm-item__remover"
-                onClick={() => removerHorario(h.chave, i + 1)}
-                aria-label={`Remover horário ${i + 1}`}
-              >
-                <Trash2 className="icone" size={16} aria-hidden="true" />
-                Remover
-              </button>
+              {/* Os dois botões do horário na mesma linha (no celular estreito, um embaixo do outro). */}
+              <div className="nm-item__botoes">
+                <button
+                  type="button"
+                  className="botao botao--fantasma botao--pequeno"
+                  onClick={() => trocarModo(h, i + 1)}
+                  aria-label={
+                    h.modo === 'aulas' ? `Informar o horário ${i + 1} em horas` : `Escolher o horário ${i + 1} pelas aulas`
+                  }
+                >
+                  {h.modo === 'aulas' ? 'Informar em horas' : 'Escolher pelas aulas'}
+                </button>
+                <button
+                  type="button"
+                  className="botao botao--fantasma botao--pequeno nm-item__remover"
+                  onClick={() => removerHorario(h.chave, i + 1)}
+                  aria-label={`Remover horário ${i + 1}`}
+                >
+                  <Trash2 className="icone" size={16} aria-hidden="true" />
+                  Remover
+                </button>
+              </div>
             </fieldset>
           ))}
           <button
