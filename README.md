@@ -164,7 +164,8 @@ tests/           Espelha o src/ (logica, estado, telas, navegacao, tema, nuvem) 
   matéria ocupa as aulas que começam dentro do horário dela (07:50 às 11:10 = 2ª a 5ª, pulando o
   intervalo); horário que não bate com a tabela aparece numa lista à parte, para não sumir.
 - **Rotas no `#`:** `#/materia/<id>`, `#/agenda`... Assim o botão voltar funciona e o site
-  estático não precisa de configuração de rotas no servidor.
+  estático não precisa de configuração de rotas no servidor. A raiz (`#/`) é a página de
+  entrada (o lobby, com a aba "Início"), e a lista de matérias fica em `#/materias`.
 - **Importação tolerante, validação rígida:** o JSON importado pode vir sem ids, sem versão ou
   com texto em volta; mas qualquer valor errado recusa tudo, com o caminho do erro
   ("Matéria 1 (POO) > RA 2 > Avaliação 1: ...").
@@ -195,3 +196,4 @@ tests/           Espelha o src/ (logica, estado, telas, navegacao, tema, nuvem) 
 - [x] Não deixar duas matérias ocuparem o mesmo horário
 - [x] Marcar na grade da semana a aula que está acontecendo agora
 - [x] Guardar os dados na nuvem, para usar em mais de um aparelho
+- [x] Página de entrada com as pranchas passando no fundo

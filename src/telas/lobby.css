@@ -8,11 +8,10 @@
   isolation: isolate;
   display: grid;
   place-items: center;
-  min-height: 100vh;
-  min-height: 100svh;
+  /* Ocupa o resto da tela abaixo do topo (--altura-topo é medida no App.tsx). */
+  min-height: calc(100vh - var(--altura-topo, 120px));
+  min-height: calc(100svh - var(--altura-topo, 120px));
   overflow: hidden;
-  /* Uma faixa de bordô em cima, como o topo do painel. */
-  border-top: 3px solid var(--marca);
 }
 
 .lobby__fundo {
@@ -59,10 +58,6 @@
   animation-direction: reverse;
 }
 
-.lobby--pausado .lobby__trilho {
-  animation-play-state: paused;
-}
-
 @keyframes deslizar {
   from {
     transform: translate3d(0, 0, 0);
@@ -107,6 +102,16 @@
 }
 
 /* ---------- Conteúdo ---------- */
+/* Avisos do armazenamento (ex.: "Nada está sendo salvo"), acima do título. */
+.lobby__avisos {
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.lobby__avisos:empty {
+  display: none;
+}
+
 .lobby__conteudo {
   width: min(880px, 100% - 32px);
   padding-block: 48px;

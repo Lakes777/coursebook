@@ -1,4 +1,4 @@
-import { CalendarDays, CalendarRange, DatabaseBackup, GraduationCap, LibraryBig } from 'lucide-react'
+import { CalendarDays, CalendarRange, DatabaseBackup, GraduationCap, House, LibraryBig } from 'lucide-react'
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Avisos } from './componentes/Avisos'
 import { AvisoDesfazer } from './componentes/AvisoDesfazer'
@@ -16,22 +16,27 @@ import { TelaNovaMateria } from './telas/TelaNovaMateria'
 import { TelaSemana } from './telas/TelaSemana'
 
 const ABAS = [
+  { tela: 'lobby', nome: 'Início', Icone: House },
   { tela: 'materias', nome: 'Matérias', Icone: LibraryBig },
   { tela: 'semana', nome: 'Semana', Icone: CalendarRange },
   { tela: 'agenda', nome: 'Agenda', Icone: CalendarDays },
   { tela: 'dados', nome: 'Dados', Icone: DatabaseBackup },
 ] as const
 
+type Aba = (typeof ABAS)[number]['tela']
+
 /** Qual aba fica marcada: a matéria aberta, a nova e a editada ficam dentro de "Matérias". */
-function abaDe(rota: Rota): (typeof ABAS)[number]['tela'] {
-  return rota.tela === 'semana' || rota.tela === 'agenda' || rota.tela === 'dados' ? rota.tela : 'materias'
+function abaDe(rota: Rota): Aba {
+  return rota.tela === 'lobby' || rota.tela === 'semana' || rota.tela === 'agenda' || rota.tela === 'dados'
+    ? rota.tela
+    : 'materias'
 }
 
-/** As telas do painel (o lobby fica fora: não tem o topo nem as abas). */
-type RotaDoPainel = Exclude<Rota, { tela: 'lobby' }>
-
-function Tela({ rota }: { rota: RotaDoPainel }) {
+function Tela({ rota }: { rota: Rota }) {
   switch (rota.tela) {
+    case 'lobby':
+      // O lobby desenha os avisos dele por cima do fundo das pranchas.
+      return <TelaLobby avisos={<Avisos />} />
     case 'materias':
       return <TelaMaterias />
     case 'materia':
@@ -151,26 +156,28 @@ function useAlturaDoTopo() {
   return topo
 }
 
-/**
- * O painel em si: o topo com as abas e a tela aberta. Fica num componente à parte para
- * montar do zero ao sair do lobby (a pílula das abas e a altura do topo são medidas ao montar).
- */
-function Painel({ rota }: { rota: RotaDoPainel }) {
+function App() {
+  const rota = useRota()
   const aba = abaDe(rota)
+  const noLobby = rota.tela === 'lobby'
+  useFocoAoTrocarDeTela(rota)
   const { nav, pilula } = usePilulaDasAbas(aba)
+  useBrilhoNosCartoes()
   const topo = useAlturaDoTopo()
+  // Um h1 por tela: no lobby, o h1 é o título grande dele; o nome no topo vira texto comum.
+  const Marca = noLobby ? 'p' : 'h1'
   return (
     <>
       <header className="topo" ref={topo}>
         <div className="container topo__conteudo">
           <div className="topo__marca">
-            <h1 className="topo__titulo">
+            <Marca className="topo__titulo">
               {/* O nome leva de volta ao lobby (passa pelo aviso de sair do formulário, como as abas). */}
               <a href={paraHash(LOBBY)} className="topo__link">
                 <GraduationCap className="icone" size={26} />
                 Painel de estudos
               </a>
-            </h1>
+            </Marca>
             <SituacaoNuvem />
           </div>
           <nav aria-label="Seções" className="abas" ref={nav}>
@@ -178,7 +185,7 @@ function Painel({ rota }: { rota: RotaDoPainel }) {
             {ABAS.map(({ tela, nome, Icone }) => (
               <a
                 key={tela}
-                href={`#/${tela}`}
+                href={paraHash({ tela })}
                 className="abas__item"
                 aria-current={aba === tela ? 'page' : undefined}
               >
@@ -189,24 +196,13 @@ function Painel({ rota }: { rota: RotaDoPainel }) {
           </nav>
         </div>
       </header>
-      <main className="container conteudo">
-        <Avisos />
+      <main className={noLobby ? 'conteudo-lobby' : 'container conteudo'}>
+        {!noLobby && <Avisos />}
         {/* key: cada endereço é uma tela nova, que entra com a animação. */}
         <EntradaDaTela key={paraHash(rota)}>
           <Tela rota={rota} />
         </EntradaDaTela>
       </main>
-    </>
-  )
-}
-
-function App() {
-  const rota = useRota()
-  useFocoAoTrocarDeTela(rota)
-  useBrilhoNosCartoes()
-  return (
-    <>
-      {rota.tela === 'lobby' ? <TelaLobby /> : <Painel rota={rota} />}
       <AvisoDesfazer />
     </>
   )

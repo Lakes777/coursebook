@@ -1,5 +1,5 @@
 import { ArrowRight, CalendarRange, ChartColumn, CodeXml, GraduationCap, RefreshCw } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { ID_TITULO_TELA } from '../componentes/CabecalhoTela'
 import { INICIO, paraHash } from '../navegacao/rota'
 import './lobby.css'
@@ -37,16 +37,41 @@ const DESTAQUES = [
   },
 ]
 
-/** A faixa gira a lista em `inicio` e repete ela duas vezes: andar 50% emenda sem pulo. */
+/**
+ * A faixa gira a lista em `inicio` e põe as pranchas duas vezes: andar 50% emenda sem
+ * pulo. Em tela muito larga (2560 px, ultrawide, zoom de 80%) um conjunto só não cobre a
+ * tela e abriria um vão no fim de cada volta; aí cada metade repete o conjunto quantas
+ * vezes precisar para passar da largura da tela.
+ */
 function Faixa({ inicio, duracao, inverter }: (typeof FAIXAS)[number]) {
   const ordem = [...PRANCHAS.slice(inicio), ...PRANCHAS.slice(0, inicio)]
+  const trilho = useRef<HTMLDivElement>(null)
+  const [repeticoes, setRepeticoes] = useState(1)
+
+  useLayoutEffect(() => {
+    function medir() {
+      const elemento = trilho.current
+      if (!elemento) return
+      // A largura de um conjunto sai do próprio trilho (o CSS muda o tamanho das pranchas no celular).
+      const conjunto = elemento.scrollWidth / 2 / repeticoes
+      if (conjunto <= 0) return // sem layout (testes)
+      const tela = Math.max(window.screen?.width ?? 0, window.innerWidth)
+      setRepeticoes(Math.max(1, Math.ceil(tela / conjunto)))
+    }
+    medir()
+    window.addEventListener('resize', medir)
+    return () => window.removeEventListener('resize', medir)
+  }, [repeticoes])
+
+  const metade = Array.from({ length: repeticoes }, () => ordem).flat()
   return (
     <div className="lobby__faixa">
       <div
+        ref={trilho}
         className={inverter ? 'lobby__trilho lobby__trilho--inverso' : 'lobby__trilho'}
-        style={{ animationDuration: `${duracao}s` }}
+        style={{ animationDuration: `${duracao * repeticoes}s` }}
       >
-        {[...ordem, ...ordem].map((nome, i) => (
+        {[...metade, ...metade].map((nome, i) => (
           <img
             key={i}
             className="lobby__prancha"
@@ -64,30 +89,18 @@ function Faixa({ inicio, duracao, inverter }: (typeof FAIXAS)[number]) {
   )
 }
 
-/** Pausa as faixas com a aba do navegador escondida: ninguém está vendo, não precisa gastar. */
-function useAbaVisivel() {
-  const [visivel, setVisivel] = useState(() => document.visibilityState !== 'hidden')
-  useEffect(() => {
-    const aoMudar = () => setVisivel(document.visibilityState !== 'hidden')
-    document.addEventListener('visibilitychange', aoMudar)
-    return () => document.removeEventListener('visibilitychange', aoMudar)
-  }, [])
-  return visivel
-}
-
 /**
- * A página de entrada, no endereço raiz: o que é o painel e o botão para começar. Fica
- * fora do topo e das abas do painel, com as pranchas de estudo passando devagar no fundo.
+ * A página de entrada, no endereço raiz: o que é o painel e o botão para começar, com
+ * as pranchas de estudo passando devagar no fundo. O topo e as abas ficam por cima,
+ * como nas outras telas; `avisos` são os do armazenamento, mostrados acima do título.
  */
-export function TelaLobby() {
-  const visivel = useAbaVisivel()
-
+export function TelaLobby({ avisos }: { avisos?: ReactNode }) {
   useEffect(() => {
     document.title = 'Painel de estudos'
   }, [])
 
   return (
-    <div className={visivel ? 'lobby' : 'lobby lobby--pausado'}>
+    <div className="lobby">
       <div className="lobby__fundo" aria-hidden="true">
         <div className="lobby__faixas">
           {FAIXAS.map((faixa) => (
@@ -99,7 +112,8 @@ export function TelaLobby() {
         <div className="lobby__grao" />
       </div>
 
-      <main className="lobby__conteudo">
+      <div className="lobby__conteudo">
+        {avisos && <div className="lobby__avisos">{avisos}</div>}
         <section aria-labelledby={ID_TITULO_TELA} className="lobby__secao">
           <p className="lobby__selo">
             <GraduationCap className="icone" size={18} />
@@ -137,7 +151,7 @@ export function TelaLobby() {
             </a>
           </div>
         </section>
-      </main>
+      </div>
     </div>
   )
 }
