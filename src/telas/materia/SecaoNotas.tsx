@@ -41,12 +41,12 @@ export function SecaoNotas({ materia, regra, situacao }: Props) {
   }
 
   return (
-    <section className="materia__secao" aria-labelledby="secao-notas">
+    <section className="cartao materia__secao materia__notas" aria-labelledby="secao-notas">
       <h3 id="secao-notas" className="materia__subtitulo">
         Notas
       </h3>
       {materia.ras.length === 0 ? (
-        <p className="cartao muted">Esta matéria não tem RAs cadastrados.</p>
+        <p className="muted materia__texto">Esta matéria não tem RAs cadastrados.</p>
       ) : (
         <div className="lista-ras">
           {materia.ras.map((ra) => (

@@ -73,6 +73,13 @@
   font-size: 1.05rem;
 }
 
+/* Notas: o título fica no cartão, como em Faltas e Pontos extras; cada RA vira um
+   bloco por dentro dele, no fundo escuro (como os itens do formulário da matéria). */
+.materia__notas .ra {
+  background: var(--bg);
+  border-radius: var(--radius-pequeno);
+}
+
 .materia__nota-rodape {
   margin: -6px 0 0;
   font-size: 0.85rem;
