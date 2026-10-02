@@ -84,10 +84,15 @@
 }
 
 .cartao-materia__selos {
+  /* Um selo por linha (nota em cima, faltas embaixo), em todo cartão: um selo longo
+     não empurra o outro para baixo só em alguns, e os cartões ficam iguais por dentro.
+     margin-top: auto prende os selos no pé do cartão, na mesma altura em toda a fileira. */
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
   margin-top: auto;
+  padding-top: 4px;
 }
 
 .vazio .vazio__alternativa {
