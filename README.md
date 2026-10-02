@@ -14,7 +14,7 @@ mostra como ele fica em uso).
 
 ## Demonstração
 
-![Lista de matérias com a situação de cada uma](docs/materias.png)
+![Lista de matérias com o resumo do semestre, a situação de cada uma e os próximos prazos](docs/materias.png)
 
 ![Tela de uma matéria: notas por RA, faltas, pontos extras e regra](docs/materia.png)
 
