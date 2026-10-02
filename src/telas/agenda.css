@@ -83,6 +83,14 @@
   border-left: 3px solid var(--marca);
 }
 
+/* A borda grossa tira 2px do recuo; sem compensar, o texto desses itens fica fora
+   do alinhamento dos outros. */
+.item-agenda--atrasado,
+.item-agenda--hoje,
+.item-agenda--proximo {
+  padding-left: 14px;
+}
+
 .item-agenda--concluido .item-agenda__titulo {
   color: var(--text-muted);
 }

@@ -71,6 +71,20 @@ a {
   color: var(--destaque);
 }
 
+/* Link com ícone ("Todas as matérias", "Ver a agenda"): sem sublinhado parado, que
+   passaria por baixo do ícone; ele aparece ao passar o mouse. */
+.link-icone {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.link-icone:hover {
+  text-decoration: underline;
+}
+
 /* O título recebe o foco pelo código ao trocar de tela; o contorno aí só confundiria. */
 .titulo-tela:focus {
   outline: none;

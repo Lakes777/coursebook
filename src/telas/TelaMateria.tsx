@@ -1,4 +1,4 @@
-import { Pencil } from 'lucide-react'
+import { ArrowLeft, Pencil } from 'lucide-react'
 import { useRef } from 'react'
 import { flushSync } from 'react-dom'
 import { BotaoRemover } from '../componentes/BotaoRemover'
@@ -54,7 +54,10 @@ export function TelaMateria({ id }: { id: string }) {
   return (
     <CabecalhoTela titulo={materia.nome}>
       <p className="materia__voltar">
-        <a href={LISTA}>Todas as matérias</a>
+        <a className="link-icone" href={LISTA}>
+          <ArrowLeft className="icone" size={14} aria-hidden="true" />
+          Todas as matérias
+        </a>
       </p>
       <div className="materia__topo">
         {detalhes.length > 0 && <p className="muted materia__detalhes">{detalhes.join(' · ')}</p>}

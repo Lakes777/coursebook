@@ -35,7 +35,7 @@ export function TelaSemana() {
             horários das aulas para ver a semana aqui.
           </p>
           <div className="vazio__botoes">
-            <a className="botao" href={paraHash({ tela: 'nova-materia' })}>
+            <a className="botao botao--vivo" href={paraHash({ tela: 'nova-materia' })}>
               <Plus className="icone" size={16} />
               Cadastrar a primeira matéria
             </a>

@@ -1,3 +1,4 @@
+import { Trash2 } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 
@@ -61,6 +62,8 @@ export function BotaoRemover({ nome, aoConfirmar, texto = 'Remover' }: Props) {
       onClick={pedirConfirmacao}
       aria-label={`${texto} ${nome}`}
     >
+      {/* A lixeira, como nos "Remover" do formulário da matéria. */}
+      <Trash2 className="icone" size={14} aria-hidden="true" />
       {texto}
     </button>
   )

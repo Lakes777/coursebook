@@ -140,11 +140,7 @@
 }
 
 .prazos__agenda {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
   font-size: 0.9rem;
-  font-weight: 600;
 }
 
 .prazos__lista {

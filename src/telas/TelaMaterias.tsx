@@ -104,7 +104,7 @@ function ProximosPrazos() {
         <h3 id={ID_PRAZOS} className="prazos__titulo">
           Próximos prazos
         </h3>
-        <a className="prazos__agenda" href={paraHash({ tela: 'agenda' })}>
+        <a className="link-icone prazos__agenda" href={paraHash({ tela: 'agenda' })}>
           {mais > 0 ? `Ver a agenda (mais ${mais})` : 'Ver a agenda'}
           <ArrowRight className="icone" size={16} aria-hidden="true" />
         </a>
