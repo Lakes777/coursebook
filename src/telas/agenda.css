@@ -17,6 +17,14 @@
   min-width: 0;
 }
 
+/* Na tela larga, o "A fazer" desce até a linha do "Novo evento" (borda + recuo do
+   cartão ao lado), para os dois títulos ficarem na mesma altura. */
+@media (min-width: 800px) {
+  .agenda__listas > .agenda__subtitulo:first-child {
+    margin-top: 21px;
+  }
+}
+
 .agenda__subtitulo {
   margin: 0 0 12px;
   font-size: 1.05rem;
