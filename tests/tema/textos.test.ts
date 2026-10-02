@@ -119,4 +119,15 @@ describe('resumoSemestre', () => {
     const faltas = [{ id: 'f', data: '2026-09-01', quantidade: 17 }]
     expect(resumoSemestre([resumo({ ...nota(9), faltas }), resumo(nota(4))])).toEqual(['2 matérias', '2 pedem atenção'])
   })
+
+  it('matéria sem avaliações fica em andamento', () => {
+    expect(resumoSemestre([resumo({ ras: [] })])).toEqual(['1 matéria', '1 em andamento'])
+  })
+
+  it('usa a regra própria da matéria', () => {
+    // 6,8 sem arredondar fica na recuperação; com a regra que pede só 6,0, já passou.
+    const regra = { ...REGRA_PUCPR, mediaMinima: 6 }
+    expect(resumoSemestre([resumo(nota(6.8))])).toEqual(['1 matéria', '1 pede atenção'])
+    expect(resumoSemestre([resumo({ ...nota(6.8), regra })])).toEqual(['1 matéria', '1 aprovada'])
+  })
 })
