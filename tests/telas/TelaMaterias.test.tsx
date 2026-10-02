@@ -1,6 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
 import { CHAVE, dadosVazios } from '../../src/logica/armazenamento'
 import type { Dados, Materia } from '../../src/logica/tipos'
@@ -60,7 +60,7 @@ describe('TelaMaterias', () => {
       </ProvedorPainel>,
     )
     await userEvent.click(screen.getByRole('button', { name: 'Ver com dados de exemplo' }))
-    const nomes = within(screen.getByRole('list')).getAllByRole('heading').map((h) => h.textContent)
+    const nomes = within(screen.getByRole('list', { name: 'Matérias' })).getAllByRole('heading').map((h) => h.textContent)
     expect(nomes).toEqual(['Estruturas de Dados', 'Programação Orientada a Objetos', 'Cálculo Numérico'])
     expect(screen.getByRole('heading', { level: 2, name: 'Matérias' })).toHaveFocus()
     // O exemplo foi juntado: o evento que já estava continua lá.
@@ -82,7 +82,7 @@ describe('TelaMaterias', () => {
     )
     montar(dados)
 
-    const cartoes = within(screen.getByRole('list')).getAllByRole('listitem')
+    const cartoes = within(screen.getByRole('list', { name: 'Matérias' })).getAllByRole('listitem')
     expect(cartoes).toHaveLength(2)
 
     const poo = within(cartoes[0])
@@ -125,5 +125,52 @@ describe('TelaMaterias', () => {
     montar(dados)
     expect(screen.getByText('Aprovado com 7,0')).toBeInTheDocument()
     expect(screen.getByText('Em recuperação')).toBeInTheDocument()
+  })
+
+  it('resume o semestre ao lado do botão de nova matéria', () => {
+    const dados = dadosVazios()
+    dados.materias.push(materia('a', 'A', 8), materia('b', 'B', null), materia('c', 'C', 6))
+    montar(dados)
+    expect(screen.getByText('3 matérias').closest('p')).toHaveTextContent(
+      '3 matérias · 1 aprovada · 1 em andamento · 1 pede atenção',
+    )
+  })
+
+  describe('próximos prazos', () => {
+    afterEach(() => vi.useRealTimers())
+
+    function comEventos(eventos: Dados['eventos']) {
+      vi.useFakeTimers({ toFake: ['Date'] })
+      vi.setSystemTime(new Date(2026, 9, 2, 12))
+      const dados = dadosVazios()
+      dados.materias.push(materia('poo', 'POO', null))
+      dados.eventos = eventos
+      montar(dados)
+    }
+
+    it('mostra os 3 primeiros pendentes, atrasados antes, com o resto na agenda', () => {
+      comEventos([
+        { id: '1', titulo: 'Seminário', tipo: 'apresentacao', data: '2026-11-20', concluido: false },
+        { id: '2', titulo: 'Prova do RA2', tipo: 'prova', data: '2026-10-07', concluido: false, materiaId: 'poo' },
+        { id: '3', titulo: 'Lista 5', tipo: 'trabalho', data: '2026-09-30', concluido: false },
+        { id: '4', titulo: 'Relatório', tipo: 'trabalho', data: '2026-10-02', concluido: false },
+        { id: '5', titulo: 'Prova do RA1', tipo: 'prova', data: '2026-09-22', concluido: true },
+      ])
+      const lista = screen.getByRole('list', { name: 'Próximos prazos' })
+      const itens = within(lista).getAllByRole('listitem')
+      expect(itens.map((i) => i.querySelector('.prazos__nome')?.textContent)).toEqual([
+        'Trabalho: Lista 5',
+        'Trabalho: Relatório',
+        'Prova: Prova do RA2',
+      ])
+      expect(within(itens[0]).getByText('Atrasado')).toHaveClass('selo--perigo')
+      expect(itens[2]).toHaveTextContent('POO · 07/10/2026 · em 5 dias')
+      expect(screen.getByRole('link', { name: 'Ver a agenda (mais 1)' })).toHaveAttribute('href', '#/agenda')
+    })
+
+    it('sem nada pendente, a seção não aparece', () => {
+      comEventos([{ id: '5', titulo: 'Prova do RA1', tipo: 'prova', data: '2026-09-22', concluido: true }])
+      expect(screen.queryByRole('heading', { name: 'Próximos prazos' })).not.toBeInTheDocument()
+    })
   })
 })

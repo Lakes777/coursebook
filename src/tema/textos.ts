@@ -5,6 +5,7 @@ import type { SituacaoNota } from '../logica/notas'
 import { extrasDaNotaFinal, extrasPorRA, situacaoNota, totalPontosExtras } from '../logica/notas'
 import { formatarNota } from '../logica/numeros'
 import type { Materia, RegraAprovacao } from '../logica/tipos'
+import { tomFaltas, tomNota } from './tons'
 
 // Frases curtas das situações, iguais em todas as telas (lista, detalhe).
 
@@ -61,6 +62,34 @@ export function textoFaltas(situacao: SituacaoFaltas): string {
   }
   if (situacao.nivel === 'reprovado') return `Reprovado por faltas (${situacao.total} de ${situacao.limite})`
   return `${situacao.total} de ${situacao.limite} ${plural(situacao.limite, 'falta', 'faltas')}`
+}
+
+/** As matérias que pedem atenção: nota ou faltas em amarelo ou vermelho. */
+function pedeAtencao({ nota, faltas }: Resumo): boolean {
+  const tons = [tomNota(nota), tomFaltas(faltas.nivel)]
+  return tons.includes('atencao') || tons.includes('perigo')
+}
+
+/**
+ * As partes da linha de resumo da lista: ["3 matérias", "1 aprovada", "1 em andamento",
+ * "1 pede atenção"] (a tela junta com " · ", sem quebrar a linha no meio de uma parte).
+ * Cada matéria conta uma vez só; a que pede atenção (pela nota ou pelas faltas) não
+ * conta como aprovada nem em andamento. Grupos sem matéria ficam de fora.
+ */
+export function resumoSemestre(resumos: Resumo[]): string[] {
+  let aprovadas = 0
+  let andamento = 0
+  let atencao = 0
+  for (const resumo of resumos) {
+    if (pedeAtencao(resumo)) atencao++
+    else if (tomNota(resumo.nota) === 'ok') aprovadas++
+    else andamento++
+  }
+  const partes = [`${resumos.length} ${plural(resumos.length, 'matéria', 'matérias')}`]
+  if (aprovadas > 0) partes.push(`${aprovadas} ${plural(aprovadas, 'aprovada', 'aprovadas')}`)
+  if (andamento > 0) partes.push(`${andamento} em andamento`)
+  if (atencao > 0) partes.push(`${atencao} ${plural(atencao, 'pede', 'pedem')} atenção`)
+  return partes
 }
 
 export function plural(n: number, um: string, varios: string): string {

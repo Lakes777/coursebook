@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { REGRA_PUCPR, type Materia } from '../../src/logica/tipos'
-import { plural, resumoMateria, textoFaltas, textoNota, textoSelo } from '../../src/tema/textos'
+import { plural, resumoMateria, resumoSemestre, textoFaltas, textoNota, textoSelo } from '../../src/tema/textos'
 
 function materia(parcial: Partial<Materia> = {}): Materia {
   return {
@@ -96,5 +96,27 @@ describe('textoSelo', () => {
     expect(textoSelo({ destaque: 'proximo', dias: 5 })).toBe('Em 5 dias')
     expect(textoSelo({ destaque: 'concluido', dias: 3 })).toBe('Concluído')
     expect(textoSelo({ destaque: 'futuro', dias: 30 })).toBeNull()
+  })
+})
+
+describe('resumoSemestre', () => {
+  const nota = (n: number | null): Partial<Materia> => ({
+    ras: [{ ...materia().ras[0], avaliacoes: [{ id: 'p', nome: 'Prova', peso: 1, valorMaximo: 10, nota: n }] }],
+  })
+  const resumo = (parcial: Partial<Materia>) => resumoMateria(materia(parcial), REGRA_PUCPR)
+
+  it('conta cada matéria uma vez, só nos grupos que têm alguma', () => {
+    expect(resumoSemestre([resumo(nota(9))])).toEqual(['1 matéria', '1 aprovada'])
+    expect(resumoSemestre([resumo(nota(9)), resumo(nota(8)), resumo(nota(null)), resumo(nota(5))])).toEqual([
+      '4 matérias',
+      '2 aprovadas',
+      '1 em andamento',
+      '1 pede atenção',
+    ])
+  })
+
+  it('aprovada pela nota, mas perto do limite de faltas, pede atenção', () => {
+    const faltas = [{ id: 'f', data: '2026-09-01', quantidade: 17 }]
+    expect(resumoSemestre([resumo({ ...nota(9), faltas }), resumo(nota(4))])).toEqual(['2 matérias', '2 pedem atenção'])
   })
 })
