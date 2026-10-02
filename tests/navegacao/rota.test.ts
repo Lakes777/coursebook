@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { INICIO, lerRota, paraHash, type Rota } from '../../src/navegacao/rota'
+import { INICIO, LOBBY, lerRota, paraHash, type Rota } from '../../src/navegacao/rota'
 
 describe('lerRota', () => {
   it('lê cada tela', () => {
@@ -17,8 +17,13 @@ describe('lerRota', () => {
     expect(lerRota('#agenda')).toEqual({ tela: 'agenda' })
   })
 
-  it('manda o que não conhece para o início', () => {
-    const desconhecidos = ['', '#', '#/', '#/nada', '#/materia', '#/materia/a/b', '#/materia/a/editar/x', '#/agenda/x', '#/semana/x']
+  it('o endereço raiz é o lobby', () => {
+    for (const hash of ['', '#', '#/', '#//']) expect(lerRota(hash), hash).toEqual(LOBBY)
+  })
+
+  it('manda o que não conhece para o início (a lista de matérias)', () => {
+    expect(INICIO).toEqual({ tela: 'materias' })
+    const desconhecidos = ['#/nada', '#/materia', '#/materia/a/b', '#/materia/a/editar/x', '#/agenda/x', '#/semana/x']
     for (const hash of [...desconhecidos, '#/materia/%E0', '#/materia/%E0/editar']) {
       expect(lerRota(hash), hash).toEqual(INICIO)
     }
@@ -28,6 +33,7 @@ describe('lerRota', () => {
 describe('paraHash', () => {
   it('volta a dar a mesma rota', () => {
     const rotas: Rota[] = [
+      { tela: 'lobby' },
       { tela: 'materias' },
       { tela: 'semana' },
       { tela: 'agenda' },
@@ -38,5 +44,9 @@ describe('paraHash', () => {
       { tela: 'editar-materia', id: 'com espaço/e barra' },
     ]
     for (const rota of rotas) expect(lerRota(paraHash(rota))).toEqual(rota)
+  })
+
+  it('o lobby fica em "#/"', () => {
+    expect(paraHash(LOBBY)).toBe('#/')
   })
 })

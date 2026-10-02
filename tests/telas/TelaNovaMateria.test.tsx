@@ -558,6 +558,20 @@ describe('TelaNovaMateria', () => {
       expect(screen.getByRole('heading', { level: 2, name: 'Agenda' })).toBeInTheDocument()
     })
 
+    it('o nome do painel no topo (volta ao lobby) também pergunta antes', async () => {
+      montarApp()
+      await digitar(screen.getByLabelText('Nome da matéria'), 'Cálculo')
+      await userEvent.click(screen.getByRole('link', { name: 'Painel de estudos' }))
+
+      expect(window.location.hash).toBe('#/nova-materia')
+      expect(screen.getByText(/será apagado/)).toBeInTheDocument()
+
+      await userEvent.click(screen.getByRole('button', { name: 'Sair sem salvar' }))
+      act(() => void window.dispatchEvent(new HashChangeEvent('hashchange')))
+      expect(window.location.hash).toBe('#/')
+      expect(screen.getByRole('link', { name: 'Começar' })).toBeInTheDocument()
+    })
+
     /** Matérias -> Nova matéria de verdade no histórico do jsdom, com o formulário preenchido. */
     async function abrirPelaLista() {
       window.location.hash = '#/materias'

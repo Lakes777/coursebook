@@ -11,6 +11,8 @@ import { comMaterias, navegador, NuvemFalsa } from './apoio'
 
 function montar(nuvem: NuvemFalsa, conta?: ContaGuardada, dados: Dados = dadosVazios()) {
   const nav = navegador(conta ? { [CHAVE_NUVEM]: JSON.stringify(conta) } : {})
+  // A situação fica no topo do painel; o lobby (endereço raiz) não tem topo.
+  if (!window.location.hash) window.location.hash = '#/materias'
   render(
     <ProvedorPainel inicial={{ dados, aviso: null, podeSalvar: true }} armazenamento={nav}>
       <ProvedorNuvem cliente={nuvem} armazenamento={nav}>

@@ -15,7 +15,7 @@ describe('navegar e useRota', () => {
 
   it('useRota acompanha as mudanças do endereço', () => {
     const { result } = renderHook(() => useRota())
-    expect(result.current).toEqual({ tela: 'materias' })
+    expect(result.current).toEqual({ tela: 'lobby' })
     act(() => {
       navegar({ tela: 'agenda' })
       window.dispatchEvent(new HashChangeEvent('hashchange'))
@@ -49,8 +49,11 @@ describe('navegar e useRota', () => {
       const { aoTentarSair } = montar()
       expect(clicar('#/agenda').defaultPrevented).toBe(true)
       expect(aoTentarSair).toHaveBeenCalledWith('#/agenda')
-      clicar('#')
+      clicar('#/materias/')
       expect(aoTentarSair).toHaveBeenLastCalledWith('#/materias')
+      // "#" é o lobby (o nome do painel no topo leva para lá).
+      clicar('#')
+      expect(aoTentarSair).toHaveBeenLastCalledWith('#/')
     })
 
     it('deixa passar: link para a mesma tela, com target, Ctrl+clique e bloqueio desligado', () => {

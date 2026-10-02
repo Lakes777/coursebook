@@ -22,7 +22,7 @@ let liberado: string | null = null
  */
 let destinoDoHistorico: string | null = null
 
-/** "#", "#/materias/" e "" são todos a lista de matérias: compara pela tela, não pelo texto. */
+/** "#", "#/" e "" são todos o lobby ("#/materias/" e "#/materias", a lista): compara pela tela, não pelo texto. */
 const normalizar = (hash: string) => paraHash(lerRota(hash))
 
 function aceitar(hash: string) {

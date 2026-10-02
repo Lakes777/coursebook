@@ -1,7 +1,7 @@
 import { act, render, renderHook, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { ReactNode } from 'react'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import App from '../../src/App'
 import { usePainel } from '../../src/estado/contexto'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
@@ -35,6 +35,10 @@ const FILOSOFIA: Materia = {
   faltas: [],
 }
 
+afterEach(() => {
+  window.location.hash = ''
+})
+
 function montar(inicial: Partial<Carregamento> = {}, nav = navegador(), reactStrictMode = false) {
   const carregamento: Carregamento = { dados: dadosVazios(), aviso: null, podeSalvar: true, ...inicial }
   const wrapper = ({ children }: { children: ReactNode }) => (
@@ -52,7 +56,9 @@ function outraAbaSalvou(chave: string | null = CHAVE) {
   })
 }
 
+/** O App já na lista de matérias (no endereço raiz ele mostra o lobby, sem os avisos). */
 function renderApp(inicial: Partial<Carregamento>, nav = navegador()) {
+  window.location.hash = '#/materias'
   render(
     <ProvedorPainel inicial={{ dados: dadosVazios(), aviso: null, podeSalvar: true, ...inicial }} armazenamento={nav}>
       <App />
@@ -218,6 +224,7 @@ describe('App com o provedor', () => {
         </button>
       )
     }
+    window.location.hash = '#/materias'
     render(
       <ProvedorPainel inicial={{ dados: dadosVazios(), aviso: null, podeSalvar: true }} armazenamento={navegador(true)}>
         <App />

@@ -5,7 +5,9 @@ import App from '../src/App'
 import { ProvedorPainel } from '../src/estado/ProvedorPainel'
 import { dadosVazios } from '../src/logica/armazenamento'
 
-function montar() {
+/** Monta o App no endereço dado; o padrão é a lista de matérias (a raiz é o lobby). */
+function montar(hash = '#/materias') {
+  window.location.hash = hash
   render(
     <ProvedorPainel inicial={{ dados: dadosVazios(), aviso: null, podeSalvar: false }}>
       <App />
@@ -91,7 +93,78 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: 'Voltar para as matérias' })).toHaveAttribute('href', '#/materias')
   })
 
+  it('o nome no topo leva de volta ao lobby', async () => {
+    montar()
+    const nome = screen.getByRole('link', { name: 'Painel de estudos' })
+    expect(nome).toHaveAttribute('href', '#/')
+    await userEvent.click(nome)
+    expect(screen.getByRole('heading', { level: 1, name: 'Painel de estudos' })).toHaveFocus()
+    expect(screen.queryByRole('navigation', { name: 'Seções' })).not.toBeInTheDocument()
+  })
+
+  it('endereço desconhecido continua indo para a lista de matérias', () => {
+    montar('#/nada')
+    expect(screen.getByRole('heading', { level: 2, name: 'Matérias' })).toBeInTheDocument()
+  })
+
   it('roda no fuso de Brasília', () => {
     expect(new Date(2026, 0, 15).getTimezoneOffset()).toBe(180)
+  })
+})
+
+describe('lobby', () => {
+  it.each(['', '#', '#/'])('aparece no endereço raiz (%j), sem o topo do painel', (hash) => {
+    montar(hash)
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
+    expect(screen.getByRole('heading', { level: 1, name: 'Painel de estudos' })).toBeInTheDocument()
+    expect(screen.queryByRole('navigation', { name: 'Seções' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { level: 2, name: 'Matérias' })).not.toBeInTheDocument()
+    expect(document.title).toBe('Painel de estudos')
+  })
+
+  it('mostra os destaques e o link para o código', () => {
+    montar('')
+    expect(screen.getAllByRole('listitem')).toHaveLength(3)
+    const codigo = screen.getByRole('link', { name: 'Ver o código no GitHub' })
+    expect(codigo).toHaveAttribute('href', 'https://github.com/Lakes777/painel-estudos')
+    expect(codigo).toHaveAttribute('target', '_blank')
+  })
+
+  it('as pranchas do fundo são só decoração', () => {
+    montar('')
+    const pranchas = document.querySelectorAll('.lobby__prancha')
+    // 3 faixas, cada uma com as 6 pranchas duas vezes (para emendar o loop).
+    expect(pranchas).toHaveLength(36)
+    for (const img of pranchas) {
+      expect(img).toHaveAttribute('alt', '')
+      expect(img).toHaveAttribute('aria-hidden', 'true')
+    }
+    expect(screen.queryAllByRole('img')).toHaveLength(0)
+  })
+
+  it('"Começar" leva para a lista de matérias, com o foco no título dela', async () => {
+    montar('')
+    await userEvent.click(screen.getByRole('link', { name: 'Começar' }))
+    expect(window.location.hash).toBe('#/materias')
+    expect(screen.getByRole('heading', { level: 2, name: 'Matérias' })).toHaveFocus()
+    expect(screen.getByRole('link', { name: 'Matérias' })).toHaveAttribute('aria-current', 'page')
+  })
+
+  it('as rotas de antes continuam abrindo as mesmas telas', () => {
+    const telas: [string, string][] = [
+      ['#/materias', 'Matérias'],
+      ['#/semana', 'Semana'],
+      ['#/agenda', 'Agenda'],
+      ['#/dados', 'Dados'],
+      ['#/nova-materia', 'Nova matéria'],
+      ['#/materia/nao-existe', 'Matéria não encontrada'],
+    ]
+    montar('')
+    for (const [hash, titulo] of telas) {
+      irPara(hash)
+      expect(screen.getByRole('heading', { level: 2, name: titulo }), hash).toBeInTheDocument()
+    }
+    irPara('#/')
+    expect(screen.getByRole('link', { name: 'Começar' })).toBeInTheDocument()
   })
 })

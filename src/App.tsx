@@ -3,12 +3,13 @@ import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 're
 import { Avisos } from './componentes/Avisos'
 import { AvisoDesfazer } from './componentes/AvisoDesfazer'
 import { ID_TITULO_TELA } from './componentes/CabecalhoTela'
-import { paraHash, type Rota } from './navegacao/rota'
+import { LOBBY, paraHash, type Rota } from './navegacao/rota'
 import { useRota } from './navegacao/useRota'
 import { SituacaoNuvem } from './nuvem/SituacaoNuvem'
 import { TelaAgenda } from './telas/TelaAgenda'
 import { TelaDados } from './telas/TelaDados'
 import { TelaEditarMateria } from './telas/TelaEditarMateria'
+import { TelaLobby } from './telas/TelaLobby'
 import { TelaMateria } from './telas/TelaMateria'
 import { TelaMaterias } from './telas/TelaMaterias'
 import { TelaNovaMateria } from './telas/TelaNovaMateria'
@@ -26,7 +27,10 @@ function abaDe(rota: Rota): (typeof ABAS)[number]['tela'] {
   return rota.tela === 'semana' || rota.tela === 'agenda' || rota.tela === 'dados' ? rota.tela : 'materias'
 }
 
-function Tela({ rota }: { rota: Rota }) {
+/** As telas do painel (o lobby fica fora: não tem o topo nem as abas). */
+type RotaDoPainel = Exclude<Rota, { tela: 'lobby' }>
+
+function Tela({ rota }: { rota: RotaDoPainel }) {
   switch (rota.tela) {
     case 'materias':
       return <TelaMaterias />
@@ -147,12 +151,13 @@ function useAlturaDoTopo() {
   return topo
 }
 
-function App() {
-  const rota = useRota()
+/**
+ * O painel em si: o topo com as abas e a tela aberta. Fica num componente à parte para
+ * montar do zero ao sair do lobby (a pílula das abas e a altura do topo são medidas ao montar).
+ */
+function Painel({ rota }: { rota: RotaDoPainel }) {
   const aba = abaDe(rota)
-  useFocoAoTrocarDeTela(rota)
   const { nav, pilula } = usePilulaDasAbas(aba)
-  useBrilhoNosCartoes()
   const topo = useAlturaDoTopo()
   return (
     <>
@@ -160,8 +165,11 @@ function App() {
         <div className="container topo__conteudo">
           <div className="topo__marca">
             <h1 className="topo__titulo">
-              <GraduationCap className="icone" size={26} />
-              Painel de estudos
+              {/* O nome leva de volta ao lobby (passa pelo aviso de sair do formulário, como as abas). */}
+              <a href={paraHash(LOBBY)} className="topo__link">
+                <GraduationCap className="icone" size={26} />
+                Painel de estudos
+              </a>
             </h1>
             <SituacaoNuvem />
           </div>
@@ -188,6 +196,17 @@ function App() {
           <Tela rota={rota} />
         </EntradaDaTela>
       </main>
+    </>
+  )
+}
+
+function App() {
+  const rota = useRota()
+  useFocoAoTrocarDeTela(rota)
+  useBrilhoNosCartoes()
+  return (
+    <>
+      {rota.tela === 'lobby' ? <TelaLobby /> : <Painel rota={rota} />}
       <AvisoDesfazer />
     </>
   )

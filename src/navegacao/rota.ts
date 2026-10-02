@@ -1,8 +1,10 @@
 // As telas ficam no "#" do endereço (#/materias, #/materia/<id>, #/materia/<id>/editar, #/semana, #/agenda). Assim
 // o botão "voltar" do navegador funciona e o GitHub Pages não precisa saber das
-// rotas (tudo depois do # nem chega ao servidor).
+// rotas (tudo depois do # nem chega ao servidor). O endereço raiz ("" ou "#/") é o lobby,
+// a página de entrada com o botão "Começar".
 
 export type Rota =
+  | { tela: 'lobby' }
   | { tela: 'materias' }
   | { tela: 'materia'; id: string }
   | { tela: 'editar-materia'; id: string }
@@ -11,12 +13,17 @@ export type Rota =
   | { tela: 'agenda' }
   | { tela: 'dados' }
 
+/** A página de entrada, no endereço raiz ("", "#" ou "#/"). */
+export const LOBBY: Rota = { tela: 'lobby' }
+
+/** A primeira tela do painel: o "Começar" do lobby leva para ela, e endereço desconhecido também. */
 export const INICIO: Rota = { tela: 'materias' }
 
 /** "#/materia/abc" -> { tela: 'materia', id: 'abc' }. Endereço desconhecido vai para o início. */
 export function lerRota(hash: string): Rota {
   const partes = hash.replace(/^#\/?/, '').split('/').filter(Boolean)
   const [tela, id, acao] = partes
+  if (partes.length === 0) return LOBBY
   if (partes.length === 1 && tela === 'materias') return { tela: 'materias' }
   if (partes.length === 1 && tela === 'semana') return { tela: 'semana' }
   if (partes.length === 1 && tela === 'agenda') return { tela: 'agenda' }
@@ -39,6 +46,8 @@ export function paraHash(rota: Rota): string {
       return `#/materia/${encodeURIComponent(rota.id)}`
     case 'editar-materia':
       return `#/materia/${encodeURIComponent(rota.id)}/editar`
+    case 'lobby':
+      return '#/'
     default:
       return `#/${rota.tela}`
   }

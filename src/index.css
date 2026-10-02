@@ -232,6 +232,20 @@ a {
   color: var(--destaque);
 }
 
+/* O nome do painel é o link de volta ao lobby: parece título, não link. */
+.topo__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  border-radius: 6px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.topo__link:hover {
+  color: #fff;
+}
+
 .conteudo {
   /* Espaço embaixo para o aviso de desfazer não tampar o fim da página. */
   padding-block: 24px 96px;
