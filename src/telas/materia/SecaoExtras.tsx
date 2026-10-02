@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react'
 import { useRef, useState, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { BotaoRemover } from '../../componentes/BotaoRemover'
@@ -188,7 +189,9 @@ function FormExtra({ ras, aoAdicionar }: PropsForm) {
         <label htmlFor="extra-data">Data (opcional)</label>
         <input id="extra-data" type="date" className="campo" value={data} onChange={(e) => setData(e.target.value)} />
       </div>
-      <button type="submit" className="botao botao--fantasma">
+      {/* A ação principal do cartão: botão cheio, como o "Adicionar" da agenda e o "Faltei hoje". */}
+      <button type="submit" className="botao botao--vivo">
+        <Plus className="icone" size={16} aria-hidden="true" />
         Adicionar
       </button>
       {erro && (

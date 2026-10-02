@@ -1,3 +1,4 @@
+import { Plus } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { BotaoRemover } from '../componentes/BotaoRemover'
@@ -284,6 +285,7 @@ function FormNovoEvento() {
         </select>
       </div>
       <button type="submit" className="botao botao--vivo">
+        <Plus className="icone" size={16} aria-hidden="true" />
         Adicionar
       </button>
       {/* Fica sempre na página: o leitor de tela só anuncia mudanças numa região que já existia. */}

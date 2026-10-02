@@ -74,7 +74,7 @@ export function SecaoFaltas({ materia, situacao }: Props) {
 
       <button
         type="button"
-        className="botao"
+        className="botao botao--vivo"
         // O mesmo "hoje" do texto do botão: o que está escrito é o que é lançado.
         onClick={() => adicionar({ id: novoId(), data: paraDataISO(hoje), quantidade: aulasHoje || 1 })}
         aria-describedby={aulasHoje === 0 ? 'faltas-sem-aula' : undefined}
