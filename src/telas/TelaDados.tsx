@@ -45,15 +45,17 @@ export function TelaDados() {
             'computador ou limpar o navegador.'}
       </p>
       <div className="dados">
-        {/* Uma coluna com as partes curtas, para não sobrar buraco ao lado do "Importar", que é alto. */}
+        {/* Duas colunas de altura parecida, para não sobrar buraco embaixo de nenhuma. */}
         <div className="dados__coluna">
           {/* Primeiro: é onde o aviso de conflito do topo leva. Fora do <ProvedorNuvem>, não aparece. */}
           <SecaoNuvem />
           <SecaoExportar />
           <SecaoRecomecar />
+        </div>
+        <div className="dados__coluna">
+          <SecaoImportar />
           <SecaoRegra />
         </div>
-        <SecaoImportar />
         <SecaoIA />
       </div>
     </CabecalhoTela>
@@ -159,7 +161,7 @@ function SecaoRecomecar() {
           <button
             ref={botaoApagar}
             type="button"
-            className="botao botao--fantasma"
+            className="botao botao--perigo"
             onClick={pedirConfirmacao}
             disabled={!podeSalvar}
           >

@@ -46,6 +46,13 @@
   font-size: 0.9rem;
 }
 
+/* O texto logo abaixo do título de cada cartão explica para que ele serve: é texto de
+   apoio, em cinza, como nos estados vazios e no "Remover matéria". Perguntas de
+   confirmação e avisos continuam na cor cheia. */
+.dados__subtitulo + .dados__texto {
+  color: var(--text-muted);
+}
+
 /* O campo de arquivo fica escondido; o rótulo é o botão, e o contorno de foco vai nele. */
 .dados__arquivo:focus-within {
   outline: 2px solid var(--destaque);
