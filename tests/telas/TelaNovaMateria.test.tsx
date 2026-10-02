@@ -404,7 +404,8 @@ describe('TelaNovaMateria', () => {
     expect(materia.id).toEqual(expect.any(String))
     expect(new Set([materia.ras[0].id, materia.ras[1].id]).size).toBe(2)
     expect(window.location.hash).toBe(`#/materia/${encodeURIComponent(materia.id)}`)
-  })
+    // O mais longo do arquivo (os 5 passos, ~2 s): com a máquina ocupada, os 5 s padrão às vezes não bastam.
+  }, 15_000)
 
   it('grava a regra própria', async () => {
     const nav = montar()
