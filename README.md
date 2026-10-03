@@ -16,11 +16,13 @@ mostra como ele fica em uso).
 
 ## Demonstração
 
+![Página de entrada do Coursebook, com o nome, os destaques e o botão Começar sobre faixas de desenhos de cadernos, calendários e grades](docs/lobby.png)
+
 ![Lista de matérias com o resumo do semestre, a situação de cada uma e os próximos prazos](docs/materias.png)
 
 ![Tela de uma matéria: notas por RA, faltas, pontos extras e regra](docs/materia.png)
 
-![Grade da semana com os horários de todas as matérias e o dia de hoje marcado](docs/semana.png)
+![Grade da semana com os horários de todas as matérias, o dia de hoje e a aula de agora marcados](docs/semana.png)
 
 <p>
   <img src="docs/agenda.png" alt="Agenda com provas atrasadas, de hoje e chegando" width="64%">
