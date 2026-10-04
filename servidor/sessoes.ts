@@ -13,7 +13,8 @@ export interface Usuario {
   email: string
 }
 
-function hashToken(token: string): string {
+/** SHA-256 (hex) de um token; o mesmo das chaves de acesso. */
+export function hashToken(token: string): string {
   return createHash('sha256').update(token).digest('hex')
 }
 

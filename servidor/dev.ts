@@ -6,10 +6,12 @@ import { comEsquema } from './banco'
 import { bancoPglite } from './banco-pglite'
 import type { Banco, Contexto, Rota } from './contexto'
 import { cadastro } from './rotas/cadastro'
+import { chaves } from './rotas/chaves'
 import { conta } from './rotas/conta'
 import { dados } from './rotas/dados'
 import { entrar } from './rotas/entrar'
 import { eu } from './rotas/eu'
+import { prazos } from './rotas/prazos'
 import { sair } from './rotas/sair'
 
 // A API no `npm run dev`: o plugin do vite.config.mts manda para cá os pedidos de
@@ -23,6 +25,8 @@ const ROTAS_DEV: Record<string, Rota> = {
   [ROTAS.eu]: eu,
   [ROTAS.conta]: conta,
   [ROTAS.dados]: dados,
+  [ROTAS.chaves]: chaves,
+  [ROTAS.prazos]: prazos,
 }
 
 // Um banco (com o esquema aplicado) por instância do PGlite, que o plugin mantém

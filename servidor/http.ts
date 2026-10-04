@@ -46,7 +46,16 @@ export function erro(status: number, codigo: CodigoErro, mensagem: string, extra
  * Monta a rota a partir de uma função por método. O resto dos métodos recebe 405
  * com Allow, e qualquer erro inesperado vira 500 sem detalhe (o detalhe vai para o log).
  */
-export function rota(metodos: Partial<Record<Metodo, Rota>>): Rota {
+export interface OpcoesRota {
+  /**
+   * Se a rota aceita o cabeçalho Authorization (chave de acesso). Só a dos prazos,
+   * que só lê. As outras recusam o pedido que tiver o cabeçalho, mesmo com o cookie
+   * junto: assim a chave do bot nunca serve para mudar dados, criar chaves ou apagar a conta.
+   */
+  aceitaChave?: boolean
+}
+
+export function rota(metodos: Partial<Record<Metodo, Rota>>, { aceitaChave = false }: OpcoesRota = {}): Rota {
   const permitidos = Object.keys(metodos).join(', ')
   return async (req, ctx: Contexto) => {
     const tratar = metodos[req.method as Metodo]
@@ -54,6 +63,13 @@ export function rota(metodos: Partial<Record<Metodo, Rota>>): Rota {
       return erro(405, 'metodo', 'Este endereço não aceita esse tipo de pedido.', { Allow: permitidos })
     }
     try {
+      if (!aceitaChave && req.headers.has('authorization')) {
+        throw new ErroHttp(
+          403,
+          'chave-recusada',
+          'Chaves de acesso só servem para ler os prazos (/api/prazos). Para o resto, entre pelo site.',
+        )
+      }
       if (req.method !== 'GET') conferirOrigem(req)
       return await tratar(req, ctx)
     } catch (e) {

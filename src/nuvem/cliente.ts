@@ -1,5 +1,6 @@
 import {
   ROTAS,
+  type ChaveAcesso,
   type ClienteNuvem,
   type CodigoErro,
   type RespostaConta,
@@ -36,6 +37,17 @@ const ehObjeto = (x: unknown): x is Record<string, unknown> => typeof x === 'obj
 
 const ehErro = (x: unknown): x is RespostaErro =>
   ehObjeto(x) && typeof x.codigo === 'string' && typeof x.erro === 'string'
+
+const ehTextoOuNull = (x: unknown): x is string | null => x === null || typeof x === 'string'
+
+function lerChave(x: unknown): ChaveAcesso | null {
+  if (!ehObjeto(x)) return null
+  const { id, nome, criadaEm, usadaEm } = x
+  if (typeof id !== 'string' || typeof nome !== 'string' || typeof criadaEm !== 'string' || !ehTextoOuNull(usadaEm)) {
+    return null
+  }
+  return { id, nome, criadaEm, usadaEm }
+}
 
 const ehRevisao = (x: unknown): x is number => typeof x === 'number' && Number.isInteger(x) && x >= 0
 
@@ -135,5 +147,18 @@ export function criarClienteNuvem(buscar: Buscar = (rota, init) => fetch(rota, i
       }
       return { ok: false, status: r.status, erro: conflito }
     },
+
+    listarChaves: () =>
+      chamar(ROTAS.chaves, 'GET', undefined, (json) => {
+        if (!ehObjeto(json) || !Array.isArray(json.chaves)) return null
+        const chaves = json.chaves.map(lerChave)
+        return chaves.every((c) => c !== null) ? { chaves: chaves as ChaveAcesso[] } : null
+      }),
+    criarChave: (pedido) =>
+      chamar(ROTAS.chaves, 'POST', pedido, (json) => {
+        const chave = ehObjeto(json) ? lerChave(json.chave) : null
+        return chave && ehObjeto(json) && typeof json.token === 'string' ? { chave, token: json.token } : null
+      }),
+    apagarChave: (id) => chamar(ROTAS.chaves + '?id=' + encodeURIComponent(id), 'DELETE', undefined, semCorpo),
   }
 }

@@ -1,5 +1,14 @@
 import { createContext, useContext } from 'react'
-import type { PedidoCadastro, PedidoEntrar, PedidoExcluirConta, RespostaErro } from '../api/contrato'
+import type {
+  PedidoCadastro,
+  PedidoCriarChave,
+  PedidoEntrar,
+  PedidoExcluirConta,
+  RespostaChaveCriada,
+  RespostaChaves,
+  RespostaErro,
+  Resposta,
+} from '../api/contrato'
 import type { EstadoNuvem } from './sincronizador'
 
 export interface Nuvem extends EstadoNuvem {
@@ -11,6 +20,10 @@ export interface Nuvem extends EstadoNuvem {
   excluirConta(pedido: PedidoExcluirConta): Promise<RespostaErro | null>
   /** Resposta à pergunta do conflito (ou da primeira vez). */
   resolver(escolha: 'nuvem' | 'aparelho'): void
+  // As chaves de acesso vão direto à API: não mexem nos dados nem na sincronização.
+  listarChaves(): Promise<Resposta<RespostaChaves>>
+  criarChave(pedido: PedidoCriarChave): Promise<Resposta<RespostaChaveCriada>>
+  apagarChave(id: string): Promise<Resposta<null>>
 }
 
 export const ContextoNuvem = createContext<Nuvem | null>(null)

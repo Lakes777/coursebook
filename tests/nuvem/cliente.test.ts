@@ -129,4 +129,33 @@ describe('criarClienteNuvem', () => {
     })
     expect(r).toMatchObject({ ok: false, erro: { codigo: 'dados-invalidos' } })
   })
+
+  describe('chaves de acesso', () => {
+    const chave = { id: 'k_1', nome: 'Bot', criadaEm: '2026-10-04T12:00:00.000Z', usadaEm: null }
+
+    it('lista com GET e confere o formato', async () => {
+      const { buscar, cliente } = servidor(200, { chaves: [chave] })
+      expect(await cliente.listarChaves()).toEqual({ ok: true, valor: { chaves: [chave] } })
+      expect(buscar.mock.calls[0][0]).toBe(ROTAS.chaves)
+      expect(buscar.mock.calls[0][1].method).toBe('GET')
+      const torta = await servidor(200, { chaves: [{ ...chave, usadaEm: 3 }] }).cliente.listarChaves()
+      expect(torta).toMatchObject({ ok: false, erro: { codigo: 'erro-interno' } })
+    })
+
+    it('cria com POST e o nome, e devolve o token', async () => {
+      const { buscar, cliente } = servidor(201, { chave, token: 'cb_abc' })
+      expect(await cliente.criarChave({ nome: 'Bot' })).toEqual({ ok: true, valor: { chave, token: 'cb_abc' } })
+      expect(buscar.mock.calls[0][1].method).toBe('POST')
+      expect(JSON.parse(buscar.mock.calls[0][1].body as string)).toEqual({ nome: 'Bot' })
+      const semToken = await servidor(201, { chave }).cliente.criarChave({ nome: 'Bot' })
+      expect(semToken).toMatchObject({ ok: false, erro: { codigo: 'erro-interno' } })
+    })
+
+    it('apaga com DELETE e o id no endereço', async () => {
+      const { buscar, cliente } = servidor(204)
+      expect(await cliente.apagarChave('k_1 2')).toEqual({ ok: true, valor: null })
+      expect(buscar.mock.calls[0][0]).toBe('/api/chaves?id=k_1%202')
+      expect(buscar.mock.calls[0][1].method).toBe('DELETE')
+    })
+  })
 })

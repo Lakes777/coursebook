@@ -37,7 +37,7 @@ export function prepararAmbiente(): Ambiente {
     await aplicarEsquema(banco)
   }, 60_000)
   beforeEach(async () => {
-    await pg.exec('TRUNCATE usuarios, sessoes, tentativas_login, paineis')
+    await pg.exec('TRUNCATE usuarios, sessoes, tentativas_login, paineis, chaves_acesso')
     agora = INICIO
     ambiente.ctx = { banco, agora: () => agora, convite: CONVITE, seguro: true }
   })

@@ -1,4 +1,5 @@
-import type { Dados } from '../logica/tipos'
+import type { Prazo } from '../logica/prazos'
+import type { Dados, DataISO } from '../logica/tipos'
 
 // O contrato entre o site e a API da nuvem (funções da Vercel em api/). Os dois
 // lados importam daqui: mudar uma rota ou um formato é mudar aqui, e o TypeScript
@@ -18,7 +19,20 @@ export const ROTAS = {
   conta: '/api/conta',
   /** GET -> 200 RespostaDados. PUT PedidoSalvar -> 200 RespostaSalvar, ou 409 RespostaConflito. */
   dados: '/api/dados',
+  /**
+   * Chaves de acesso da conta (só com a sessão do site). GET -> 200 RespostaChaves.
+   * POST PedidoCriarChave -> 201 RespostaChaveCriada. DELETE ?id=<id> -> 204.
+   */
+  chaves: '/api/chaves',
+  /**
+   * GET ?dias=N (1 a 60, padrão 7), só com "Authorization: Bearer cb_..." -> 200 RespostaPrazos.
+   * Só lê: é a única rota que aceita chave de acesso. Formato em docs/nuvem.md.
+   */
+  prazos: '/api/prazos',
 } as const
+
+/** Começo de toda chave de acesso ("cb" de Coursebook): fica fácil reconhecer uma colada no lugar errado. */
+export const PREFIXO_CHAVE = 'cb_'
 
 /** Nome do cookie da sessão (HttpOnly, SameSite=Lax, Secure fora do localhost, Path=/). */
 export const COOKIE_SESSAO = 'sessao'
@@ -35,6 +49,14 @@ export const LIMITES = {
   tentativasLogin: 5,
   /** ...por estes minutos (contados da primeira tentativa errada da janela). */
   minutosBloqueio: 15,
+  /** Chaves de acesso por conta. */
+  chavesPorConta: 5,
+  /** Tamanho máximo do nome de uma chave (ex.: "Bot do Telegram"). */
+  nomeChaveMaximo: 40,
+  /** Dias à frente que GET /api/prazos aceita (?dias=), e o padrão. */
+  diasPrazosMinimo: 1,
+  diasPrazosMaximo: 60,
+  diasPrazosPadrao: 7,
 } as const
 
 export interface PedidoCadastro {
@@ -82,6 +104,40 @@ export interface RespostaSalvar {
   revisao: number
 }
 
+/** Uma chave de acesso, como a lista mostra: o token não volta nunca depois de criado. */
+export interface ChaveAcesso {
+  /** "k_" + 32 caracteres hexadecimais. */
+  id: string
+  nome: string
+  /** Data e hora em ISO 8601 (UTC). */
+  criadaEm: string
+  /** Última vez que a chave abriu os prazos, ou null se nunca foi usada. */
+  usadaEm: string | null
+}
+
+export interface PedidoCriarChave {
+  nome: string
+}
+
+export interface RespostaChaves {
+  /** Da mais antiga para a mais nova. */
+  chaves: ChaveAcesso[]
+}
+
+export interface RespostaChaveCriada {
+  chave: ChaveAcesso
+  /** "cb_" + 43 caracteres. Só aparece aqui: o banco guarda o SHA-256 dele. */
+  token: string
+}
+
+/** GET /api/prazos: o que falta fazer do dia `hoje` (fuso de Brasília) até o dia `ate`. */
+export interface RespostaPrazos {
+  hoje: DataISO
+  ate: DataISO
+  dias: number
+  prazos: Prazo[]
+}
+
 /**
  * O que deu errado. `codigo` é para o programa decidir o que fazer; `erro` é a
  * mensagem em português, pronta para aparecer na tela.
@@ -101,6 +157,14 @@ export type CodigoErro =
   | 'bloqueado'
   /** 401: sem cookie, sessão expirada ou apagada. */
   | 'sem-sessao'
+  /** 401: chave de acesso que falta, fora do formato, inventada ou apagada (GET /api/prazos). */
+  | 'chave-invalida'
+  /** 403: chave de acesso numa rota que não é a dos prazos (as da conta só aceitam o site). */
+  | 'chave-recusada'
+  /** 409: a conta já tem LIMITES.chavesPorConta chaves. */
+  | 'limite-chaves'
+  /** 404: a chave a apagar não existe (ou é de outra conta). */
+  | 'nao-encontrada'
   /** 409: outro aparelho salvou antes (ver RespostaConflito). */
   | 'conflito'
   /** 413: pedido maior que LIMITES.corpoMaximo. */
@@ -141,6 +205,9 @@ export interface ClienteNuvem {
   baixar(): Promise<Resposta<RespostaDados>>
   /** No conflito, `erro` é uma RespostaConflito (conferir com ehConflito). */
   salvar(pedido: PedidoSalvar): Promise<Resposta<RespostaSalvar>>
+  listarChaves(): Promise<Resposta<RespostaChaves>>
+  criarChave(pedido: PedidoCriarChave): Promise<Resposta<RespostaChaveCriada>>
+  apagarChave(id: string): Promise<Resposta<null>>
 }
 
 export function ehConflito(erro: RespostaErro): erro is RespostaConflito {

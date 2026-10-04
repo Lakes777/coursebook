@@ -153,6 +153,9 @@ export function ProvedorNuvem({ cliente: clienteProp, armazenamento: armazenamen
         return null
       },
       resolver: (escolha) => void sinc.current?.resolver(escolha),
+      listarChaves: () => cliente.listarChaves(),
+      criarChave: (pedido) => cliente.criarChave(pedido),
+      apagarChave: (id) => cliente.apagarChave(id),
     }
   }, [conta, situacao, cliente, armazenamento])
 

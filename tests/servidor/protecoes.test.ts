@@ -5,10 +5,12 @@ import { dadosVazios } from '../../src/logica/armazenamento'
 import { aplicarEsquema, COMANDOS_ESQUEMA, comEsquema } from '../../servidor/banco'
 import type { Banco } from '../../servidor/contexto'
 import { cadastro } from '../../servidor/rotas/cadastro'
+import { chaves } from '../../servidor/rotas/chaves'
 import { conta } from '../../servidor/rotas/conta'
 import { dados } from '../../servidor/rotas/dados'
 import { entrar } from '../../servidor/rotas/entrar'
 import { eu } from '../../servidor/rotas/eu'
+import { prazos } from '../../servidor/rotas/prazos'
 import { sair } from '../../servidor/rotas/sair'
 import * as apiEu from '../../api/eu'
 import { cadastrar, chamar, erroDe, prepararAmbiente } from './ajuda'
@@ -27,6 +29,8 @@ describe('método errado', () => {
     [eu, 'POST', 'GET'],
     [conta, 'POST', 'DELETE'],
     [dados, 'DELETE', 'GET, PUT'],
+    [chaves, 'PUT', 'GET, POST, DELETE'],
+    [prazos, 'DELETE', 'GET'],
   ])('responde 405 metodo com Allow', async (rota, metodo, permitidos) => {
     const resposta = await chamar(rota, amb.ctx, '/api/x', { metodo })
     expect(resposta.status).toBe(405)
@@ -202,7 +206,7 @@ describe('esquema', () => {
     await Promise.all([banco.consultar('SELECT 2'), banco.consultar('SELECT 3')])
     await banco.consultar('SELECT 4')
     expect(comandos).toEqual([...COMANDOS_ESQUEMA, 'SELECT 2', 'SELECT 3', 'SELECT 4'])
-    expect(COMANDOS_ESQUEMA).toHaveLength(7)
+    expect(COMANDOS_ESQUEMA).toHaveLength(9)
   })
 })
 
