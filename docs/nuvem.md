@@ -88,6 +88,97 @@ primeira chamada: o `/api/eu` sem cookie responde sem tocar no banco), com
      Com `revisao` 0, `INSERT ... ON CONFLICT DO NOTHING RETURNING revisao`.
   3. Nada gravado = 409 `conflito` com os dados e a revisão que estão na nuvem.
 
+### Chaves de acesso e prazos (para o bot)
+
+Um programa da própria pessoa (o bot do Telegram) lê os prazos dos próximos dias
+sem guardar a senha: ela cria uma **chave de acesso** na tela Dados e cola no bot.
+
+- **Token**: `cb_` + 32 bytes aleatórios em base64url (46 caracteres no total). O
+  banco (`chaves_acesso`) guarda só o SHA-256 dele, numa coluna `UNIQUE`: a busca é
+  pelo hash, e quem ler o banco não consegue usar a chave. O token aparece uma vez
+  só, na resposta da criação.
+- **Rotas da conta** (`/api/chaves`, só com o cookie da sessão e a conferência de
+  Origin de sempre):
+  - `GET` -> `{ "chaves": [{ "id", "nome", "criadaEm", "usadaEm" }] }` (sem o token),
+    da mais antiga para a mais nova.
+  - `POST { "nome": "Bot do Telegram" }` -> 201 `{ "chave": {...}, "token": "cb_..." }`.
+    Nome de 1 a 40 caracteres (sem espaços nas pontas). No máximo **5 por conta**:
+    a sexta dá 409 `limite-chaves`. A conta e o limite vão num `INSERT ... SELECT ... WHERE (SELECT count(*) ...) < 5` só.
+  - `DELETE ?id=k_...` -> 204. Chave que não existe ou é de outra conta: 404
+    `nao-encontrada` (sem contar qual dos dois).
+  - Excluir a conta leva as chaves junto (`ON DELETE CASCADE`).
+- **A chave só lê**: a `rota()` de `servidor/http.ts` recusa com 403
+  `chave-recusada` qualquer pedido com o cabeçalho `Authorization`, mesmo com o
+  cookie junto, em todas as rotas menos a dos prazos (que é a única criada com
+  `aceitaChave: true`, e só tem GET). Assim a chave não salva dados, não cria nem
+  apaga chaves, não sai nem exclui a conta. E a rota dos prazos não aceita o cookie:
+  lá, só a chave vale.
+
+#### GET /api/prazos
+
+```
+GET https://painel-estudos-cyan.vercel.app/api/prazos?dias=7
+Authorization: Bearer cb_...
+```
+
+- `dias`: inteiro de 1 a 60; sem ele, 7. Fora disso, 400 `pedido-invalido`.
+- **Hoje** é o dia em Brasília (`America/Sao_Paulo`), não o do servidor (a Vercel
+  roda em UTC: às 22h daqui, lá já é amanhã).
+- Entram os prazos de `hoje` até `hoje + dias` (os dois dias entram), sem os atrasados:
+  - os eventos da **Agenda** (prova, trabalho, apresentação) não concluídos;
+  - as **avaliações** das matérias que têm data e ainda não têm nota (tipo
+    `avaliacao`), menos as que já têm um evento da agenda da mesma matéria no mesmo
+    dia (concluído ou não): aí vale a agenda, para não avisar duas vezes.
+- Ordem: data, depois matéria (sem matéria primeiro) e título.
+- O painel não guarda a hora das provas. `horaAula` é o início da primeira aula da
+  matéria naquele dia da semana (é quando a turma se encontra), ou `null`.
+- Conta sem painel na nuvem: `prazos: []`. A rota anota `usada_em` da chave (a tela
+  mostra "usada pela última vez em ...").
+- O cálculo é `prazos()` de `src/logica/prazos.ts`, que usa a `agenda()` e o `diasAte()`
+  do site.
+
+Resposta 200:
+
+```json
+{
+  "hoje": "2026-10-04",
+  "ate": "2026-10-11",
+  "dias": 7,
+  "prazos": [
+    {
+      "data": "2026-10-06",
+      "diasRestantes": 2,
+      "tipo": "prova",
+      "tipoNome": "Prova",
+      "titulo": "Prova do RA1",
+      "materia": "Física",
+      "horaAula": "19:00"
+    },
+    {
+      "data": "2026-10-08",
+      "diasRestantes": 4,
+      "tipo": "avaliacao",
+      "tipoNome": "Avaliação",
+      "titulo": "Lista 2 (RA1)",
+      "materia": "Cálculo",
+      "horaAula": null
+    }
+  ]
+}
+```
+
+`tipo` é `prova`, `trabalho`, `apresentacao` ou `avaliacao`; `materia` pode ser `null`
+(evento da agenda sem matéria).
+
+Erros (sempre `{ "codigo", "erro" }`, com a mensagem em português):
+
+| Status | `codigo` | Quando |
+| --- | --- | --- |
+| 401 | `chave-invalida` | Sem `Authorization`, fora do formato `Bearer cb_...`, chave inventada ou apagada (com `WWW-Authenticate: Bearer`). Ex.: `{"codigo":"chave-invalida","erro":"Chave de acesso inválida ou apagada."}` |
+| 400 | `pedido-invalido` | `dias` fora de 1 a 60. |
+| 405 | `metodo` | Qualquer método que não seja GET. |
+| 500 | `erro-interno` | Erro do servidor ou do banco. |
+
 ### Proteções de todas as rotas
 
 - Método errado: 405 `metodo` (com cabeçalho `Allow`).
@@ -99,6 +190,7 @@ primeira chamada: o `/api/eu` sem cookie responde sem tocar no banco), com
   é **403**, os dois com o código `pedido-invalido`. O Origin é conferido em todo
   método que não é GET (inclusive o sair, sem corpo) e vale se bater com o host da
   URL ou com o cabeçalho `Host`; `Origin: null` é recusado.
+- Cabeçalho `Authorization` em rota que não é a dos prazos: 403 `chave-recusada`.
 - Toda resposta com `Cache-Control: no-store`.
 - Erro inesperado: 500 `erro-interno` com mensagem genérica (o detalhe vai só
   para o `console.error`, que aparece nos logs da Vercel). Nunca devolver o hash,
@@ -115,6 +207,10 @@ aos eventos do navegador) e as telas (`SecaoNuvem.tsx`, `SituacaoNuvem.tsx`).
 
 - Na tela **Dados**, uma seção **Conta e nuvem**, a primeira da página: entrar, criar
   conta (com o campo do convite), sair, excluir conta. Logado, mostra o e-mail e a situação.
+- Logado (e com a sessão valendo), logo abaixo, a seção **Chaves de acesso**
+  (`SecaoChaves.tsx`): criar com um nome (o token aparece uma vez, com o botão
+  copiar e o aviso de que não aparece de novo), a lista com quando cada uma foi
+  criada e usada, e apagar em 2 passos.
 - No topo, ao lado do título, a situação da sincronização em texto curto (só para
   quem está logado): "Sincronizando..." (conferindo a nuvem), "Sincronizado",
   "Salvando...", "Sem conexão: salvo neste aparelho", "Entre de novo para
