@@ -19,6 +19,7 @@ import {
 } from '../logica/transferencia'
 import type { Resultado } from '../logica/validacao'
 import { useNuvem } from '../nuvem/contexto'
+import { SecaoChaves } from '../nuvem/SecaoChaves'
 import { SecaoNuvem } from '../nuvem/SecaoNuvem'
 import { plural } from '../tema/textos'
 import { CamposRegra } from './CamposRegra'
@@ -49,6 +50,8 @@ export function TelaDados() {
         <div className="dados__coluna">
           {/* Primeiro: é onde o aviso de conflito do topo leva. Fora do <ProvedorNuvem>, não aparece. */}
           <SecaoNuvem />
+          {/* Só com a conta conectada. */}
+          <SecaoChaves />
           <SecaoExportar />
           <SecaoRecomecar />
         </div>

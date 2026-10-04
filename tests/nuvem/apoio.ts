@@ -1,4 +1,5 @@
 import type {
+  ChaveAcesso,
   ClienteNuvem,
   PedidoSalvar,
   RespostaConflito,
@@ -55,6 +56,8 @@ export class NuvemFalsa implements ClienteNuvem {
   proximoErro: { status: number; erro: RespostaErro } | null = null
   chamadas: string[] = []
   salvos: PedidoSalvar[] = []
+  chaves: ChaveAcesso[] = []
+  private proximaChave = 1
   private esperando: (() => void)[] = []
   private segurando = false
 
@@ -161,6 +164,32 @@ export class NuvemFalsa implements ClienteNuvem {
       this.dados = structuredClone(pedido.dados)
       this.revisao += 1
       return { ok: true, valor: { revisao: this.revisao } }
+    })
+  }
+
+  listarChaves() {
+    return this.responder('listarChaves', () => ({ ok: true, valor: { chaves: structuredClone(this.chaves) } }))
+  }
+
+  criarChave(pedido: { nome: string }) {
+    return this.responder('criarChave', () => {
+      if (this.chaves.length >= 5) {
+        return { ok: false, status: 409, erro: { codigo: 'limite-chaves', erro: 'Limite de 5 chaves.' } }
+      }
+      const n = this.proximaChave++
+      const chave: ChaveAcesso = { id: `k_${n}`, nome: pedido.nome, criadaEm: '2026-10-04T15:00:00.000Z', usadaEm: null }
+      this.chaves.push(chave)
+      return { ok: true, valor: { chave: structuredClone(chave), token: `cb_token-falso-${n}` } }
+    })
+  }
+
+  apagarChave(id: string) {
+    return this.responder('apagarChave', () => {
+      if (!this.chaves.some((c) => c.id === id)) {
+        return { ok: false, status: 404, erro: { codigo: 'nao-encontrada', erro: 'Essa chave não existe mais.' } }
+      }
+      this.chaves = this.chaves.filter((c) => c.id !== id)
+      return { ok: true, valor: null }
     })
   }
 

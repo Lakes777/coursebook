@@ -97,3 +97,81 @@ a.situacao-nuvem {
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* ---------- Seção "Chaves de acesso" na tela Dados ---------- */
+
+/* A chave recém-criada: borda do bordô à esquerda, como um destaque, e o token em fonte fixa. */
+.chaves__nova {
+  display: grid;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--marca);
+  border-radius: var(--radius-pequeno);
+  background: var(--bg);
+}
+
+.chaves__nova:focus {
+  outline: none;
+}
+
+.chaves__nova-titulo {
+  margin: 0;
+  font-weight: 600;
+}
+
+.chaves__token {
+  display: block;
+  padding: 8px 10px;
+  border: 1px solid var(--borda-campo);
+  border-radius: var(--radius-pequeno);
+  background: var(--surface);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  /* 46 caracteres sem espaço: em 320 px quebra em vez de alargar a página. */
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+
+.chaves__lista {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chaves__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-pequeno);
+}
+
+.chaves__dados {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.chaves__nome {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.chaves__nome .icone {
+  color: var(--destaque);
+}
+
+.chaves__datas {
+  font-size: 0.85rem;
+}

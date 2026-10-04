@@ -39,4 +39,19 @@ CREATE TABLE IF NOT EXISTS paineis (
   revisao INTEGER NOT NULL,
   atualizado_em TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Chaves de acesso: para programas da própria pessoa (o bot do Telegram) lerem os
+-- prazos sem guardar a senha. Como nas sessões, o token fica só com quem criou.
+CREATE TABLE IF NOT EXISTS chaves_acesso (
+  -- "k_" + 32 caracteres hexadecimais (16 bytes aleatórios).
+  id TEXT PRIMARY KEY,
+  usuario_id TEXT NOT NULL REFERENCES usuarios (id) ON DELETE CASCADE,
+  nome TEXT NOT NULL,
+  -- SHA-256 (hex) do token "cb_...": a busca é pelo hash, no índice único.
+  token_hash TEXT NOT NULL UNIQUE,
+  criada_em TIMESTAMPTZ NOT NULL DEFAULT now(),
+  -- Última vez que abriu os prazos; null se nunca.
+  usada_em TIMESTAMPTZ
+);
+CREATE INDEX IF NOT EXISTS chaves_acesso_usuario ON chaves_acesso (usuario_id);
 `

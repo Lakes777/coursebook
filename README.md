@@ -74,6 +74,10 @@ carregar no painel vazio com "Ver com dados de exemplo".
   de convite). Com conta, cada mudança é enviada sozinha e aparece nos outros aparelhos; sem
   internet, fica guardada e vai quando a conexão voltar. Se o mesmo painel mudou em dois lugares,
   o site pergunta qual versão manter em vez de apagar uma delas.
+- **Chaves de acesso (para um bot):** com conta, a tela Dados cria chaves `cb_...` que só
+  leem os prazos dos próximos dias pela API (`GET /api/prazos?dias=7` com
+  `Authorization: Bearer cb_...`). É o que o meu bot do Telegram usa para avisar das provas e
+  entregas sem guardar a senha. Até 5 por conta, e apagar uma corta o acesso na hora.
 - **Acessível:** funciona só com o teclado e com leitor de tela (foco levado para o lugar certo,
   erros ligados aos campos, avisos anunciados). Situações têm sempre texto, não só cor.
 
@@ -108,7 +112,7 @@ funções da pasta `api/`, que a Vercel publica junto). Na Vercel, a API precisa
 ## Testes
 
 ```bash
-npx vitest run   # 722 testes (lógica, telas e API)
+npx vitest run   # 792 testes (lógica, telas e API)
 npx oxlint       # lint
 npx tsc -b       # tipos
 ```
@@ -126,6 +130,7 @@ src/
     faltas.ts      Limite e situação das faltas
     horarios.ts    Horários, aulas do dia
     eventos.ts     Agenda (atrasado, hoje, próximo...)
+    prazos.ts      Prazos dos próximos dias para a API do bot (fuso de Brasília)
     validacao.ts   Confere os dados salvos e os importados
     armazenamento.ts  localStorage, versão e migração
     transferencia.ts  Exportar, importar e juntar dados
@@ -138,7 +143,7 @@ src/
   tema/          Cores das situações, ícones e textos
   api/           Contrato da API (rotas, tipos, erros), usado pelo site e pelo servidor
   nuvem/         Cliente da API, sincronização e a seção "Conta e nuvem"
-api/             Uma função da Vercel por rota (cadastro, entrar, sair, eu, conta, dados)
+api/             Uma função da Vercel por rota (cadastro, entrar, sair, eu, conta, dados, chaves, prazos)
 servidor/        A API de verdade: rotas, contas, sessões, esquema do banco (Neon ou PGlite)
 tests/           Espelha o src/ (logica, estado, telas, navegacao, tema, nuvem) e o servidor/
 ```
@@ -183,6 +188,12 @@ tests/           Espelha o src/ (logica, estado, telas, navegacao, tema, nuvem) 
   guardando só o SHA-256 do token; limite de tentativas de login e de código de convite, reservadas
   antes de conferir (contar primeiro deixava 20 pedidos simultâneos passarem); e os mesmos
   conferidores do localStorage validam o que chega na API. Detalhes em [docs/nuvem.md](docs/nuvem.md).
+- **Chave de acesso que só lê:** o bot não guarda a senha, e sim uma chave `cb_...` (32 bytes
+  aleatórios) de que o banco guarda só o SHA-256, numa coluna `UNIQUE`. A única rota que aceita
+  a chave é a dos prazos, que só tem GET e não aceita o cookie; todas as outras recusam qualquer
+  pedido com o cabeçalho `Authorization` (403), então a chave não muda dados, não cria outras
+  chaves nem apaga a conta. Os prazos são calculados no servidor com as mesmas funções da agenda
+  do site, e o "hoje" é o de Brasília (a Vercel roda em UTC). Formato em [docs/nuvem.md](docs/nuvem.md).
 - **Visual:** tema escuro grafite com o bordô da PUC-PR (Pantone 201) só atrás de texto branco;
   em texto, um tom claro dele, para ter contraste.
 - **Feito com o Claude Code:** o formulário de nova matéria, a agenda, a grade da semana e a
@@ -201,3 +212,4 @@ tests/           Espelha o src/ (logica, estado, telas, navegacao, tema, nuvem) 
 - [x] Marcar na grade da semana a aula que está acontecendo agora
 - [x] Guardar os dados na nuvem, para usar em mais de um aparelho
 - [x] Página de entrada com as pranchas passando no fundo
+- [x] Chaves de acesso para um bot ler os prazos sem a senha
