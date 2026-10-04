@@ -34,6 +34,11 @@ function paraChave(linha: Linha): ChaveAcesso {
 export function conferirNomeChave(nome: string): string {
   const limpo = nome.trim()
   if (limpo === '') throw new ErroHttp(400, 'pedido-invalido', 'Dê um nome à chave (ex.: "Bot do Telegram").')
+  // Quebra de linha, tab, \u0000 (que o Postgres nem aceita num TEXT)...: um nome não tem isso.
+  // oxlint-disable-next-line no-control-regex -- os caracteres de controle são justamente o que se procura.
+  if (/[\u0000-\u001f\u007f]/.test(limpo)) {
+    throw new ErroHttp(400, 'pedido-invalido', 'O nome não pode ter quebras de linha nem caracteres de controle.')
+  }
   if (limpo.length > LIMITES.nomeChaveMaximo) {
     throw new ErroHttp(400, 'pedido-invalido', `O nome pode ter no máximo ${LIMITES.nomeChaveMaximo} caracteres.`)
   }

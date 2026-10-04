@@ -105,6 +105,19 @@ describe('criar chave', () => {
     expect((await criar(sessao, 'x'.repeat(40))).status).toBe(201)
   })
 
+  it('recusa caracteres de controle no nome', async () => {
+    const sessao = await cadastrar(amb.ctx)
+    for (const nome of ['Bot\u0000', 'Bot\ndo Telegram', 'Bot\tA', 'Bot\u007f']) {
+      const resposta = await criar(sessao, nome)
+      expect(resposta.status, JSON.stringify(nome)).toBe(400)
+      expect(await erroDe(resposta)).toEqual({
+        codigo: 'pedido-invalido',
+        erro: 'O nome não pode ter quebras de linha nem caracteres de controle.',
+      })
+    }
+    expect(await listar(sessao)).toEqual({ chaves: [] })
+  })
+
   it('aceita no máximo 5 por conta, e apagar uma libera o lugar', async () => {
     const sessao = await cadastrar(amb.ctx)
     const criadas = []
