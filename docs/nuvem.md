@@ -127,8 +127,8 @@ Authorization: Bearer cb_...
 - Entram os prazos de `hoje` até `hoje + dias` (os dois dias entram), sem os atrasados:
   - os eventos da **Agenda** (prova, trabalho, apresentação) não concluídos;
   - as **avaliações** das matérias que têm data e ainda não têm nota (tipo
-    `avaliacao`), menos as que já têm um evento da agenda da mesma matéria no mesmo
-    dia (concluído ou não): aí vale a agenda, para não avisar duas vezes.
+    `avaliacao`), menos as que já têm um evento da agenda **não concluído** da mesma
+    matéria no mesmo dia: aí o aviso vem pela agenda, para não avisar duas vezes.
 - Ordem: data, depois matéria (sem matéria primeiro) e título.
 - O painel não guarda a hora das provas. `horaAula` é o início da primeira aula da
   matéria naquele dia da semana (é quando a turma se encontra), ou `null`.

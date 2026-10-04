@@ -104,7 +104,7 @@ describe('prazos', () => {
     ])
   })
 
-  it('inclui as avaliações com data e sem nota, menos as que já estão na agenda no mesmo dia', () => {
+  it('inclui as avaliações com data e sem nota, menos as que já estão pendentes na agenda no mesmo dia', () => {
     const fisica = materia('fis', 'Física', {
       ras: [
         {
@@ -123,8 +123,18 @@ describe('prazos', () => {
         },
       ],
     })
-    const dados = painel([fisica], [evento('Prova 2 de Física', '2026-10-08', { materiaId: 'fis', concluido: true })])
-    expect(prazos(dados, HOJE, 7)).toEqual([
+    const dados = painel([fisica], [evento('Prova 2 de Física', '2026-10-08', { materiaId: 'fis' })])
+    expect(prazos(dados, HOJE, 7).map((p) => [p.tipo, p.titulo])).toEqual([
+      ['avaliacao', 'Prova 1 (RA1)'],
+      ['prova', 'Prova 2 de Física'],
+    ])
+    // A mesma prova com o evento já concluído: o evento sai, e a avaliação sem nota volta.
+    dados.eventos[0].concluido = true
+    expect(prazos(dados, HOJE, 7).map((p) => [p.tipo, p.titulo])).toEqual([
+      ['avaliacao', 'Prova 1 (RA1)'],
+      ['avaliacao', 'Na agenda (RA1)'],
+    ])
+    expect(prazos(dados, HOJE, 7)[0]).toEqual(
       {
         data: '2026-10-05',
         diasRestantes: 1,
@@ -134,7 +144,7 @@ describe('prazos', () => {
         materia: 'Física',
         horaAula: null,
       },
-    ])
+    )
   })
 
   it('painel vazio não tem prazos', () => {

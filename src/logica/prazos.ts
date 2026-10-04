@@ -57,8 +57,8 @@ export function somarDias(data: DataISO, dias: number): DataISO {
  * O que falta fazer de `hoje` até `hoje + dias` (os dois dias entram), em ordem de
  * data, depois matéria e título. Entram:
  * - os eventos da agenda (provas, trabalhos, apresentações) não concluídos;
- * - as avaliações das matérias com data e sem nota, menos as que já têm um evento da
- *   mesma matéria no mesmo dia (concluído ou não): aí a agenda é quem manda.
+ * - as avaliações das matérias com data e sem nota, menos as que já têm um evento não
+ *   concluído da mesma matéria no mesmo dia: aí o aviso vem pela agenda, uma vez só.
  * Atrasados (antes de hoje) ficam de fora: o aviso é do que vem pela frente.
  */
 export function prazos(dados: Dados, hoje: DataISO, dias: number): Prazo[] {
@@ -82,7 +82,8 @@ export function prazos(dados: Dados, hoje: DataISO, dias: number): Prazo[] {
     })
   }
 
-  const naAgenda = new Set(dados.eventos.map((e) => `${e.materiaId ?? ''}|${e.data}`))
+  // Só o que ainda falta fazer esconde a avaliação: evento concluído não avisa, e a prova sem nota ainda vem.
+  const naAgenda = new Set(dados.eventos.filter((e) => !e.concluido).map((e) => `${e.materiaId ?? ''}|${e.data}`))
   for (const materia of dados.materias) {
     for (const ra of materia.ras) {
       for (const avaliacao of ra.avaliacoes) {
