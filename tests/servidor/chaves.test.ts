@@ -4,13 +4,15 @@ import { describe, expect, it } from 'vitest'
 import type { RespostaChaveCriada, RespostaChaves, RespostaPrazos } from '../../src/api/contrato'
 import { dadosVazios } from '../../src/logica/armazenamento'
 import type { Dados } from '../../src/logica/tipos'
+import { cadastro } from '../../servidor/rotas/cadastro'
 import { chaves } from '../../servidor/rotas/chaves'
 import { conta } from '../../servidor/rotas/conta'
 import { dados } from '../../servidor/rotas/dados'
+import { entrar } from '../../servidor/rotas/entrar'
 import { eu } from '../../servidor/rotas/eu'
 import { prazos } from '../../servidor/rotas/prazos'
 import { sair } from '../../servidor/rotas/sair'
-import { cadastrar, chamar, erroDe, prepararAmbiente } from './ajuda'
+import { cadastrar, chamar, CONVITE, erroDe, prepararAmbiente } from './ajuda'
 
 const amb = prepararAmbiente()
 // O relógio dos testes (ajuda.ts): 28/09/2026 às 15h30 UTC, 12h30 em Brasília (segunda-feira).
@@ -322,6 +324,12 @@ describe('a chave não serve para mais nada', () => {
       [chaves, '/api/chaves?id=x', { metodo: 'DELETE' }],
       [conta, '/api/conta', { metodo: 'DELETE', corpo: { senha: 'senha-boa-123' } }],
       [sair, '/api/sair', { metodo: 'POST' }],
+      [entrar, '/api/entrar', { metodo: 'POST', corpo: { email: 'ana@exemplo.com', senha: 'senha-boa-123' } }],
+      [
+        cadastro,
+        '/api/cadastro',
+        { metodo: 'POST', corpo: { email: 'bia@exemplo.com', senha: 'senha-boa-123', convite: CONVITE } },
+      ],
     ] as const
     for (const [rota, caminho, opcoes] of pedidos) {
       for (const cookie of [null, sessao]) {

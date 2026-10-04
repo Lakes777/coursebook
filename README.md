@@ -112,7 +112,7 @@ funções da pasta `api/`, que a Vercel publica junto). Na Vercel, a API precisa
 ## Testes
 
 ```bash
-npx vitest run   # 791 testes (lógica, telas e API)
+npx vitest run   # 792 testes (lógica, telas e API)
 npx oxlint       # lint
 npx tsc -b       # tipos
 ```
