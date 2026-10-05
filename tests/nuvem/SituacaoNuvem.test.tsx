@@ -1,6 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it } from 'vitest'
+import type { UserEvent } from '@testing-library/user-event'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import App from '../../src/App'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
 import { dadosVazios } from '../../src/logica/armazenamento'
@@ -8,6 +8,7 @@ import type { Dados } from '../../src/logica/tipos'
 import { CHAVE_NUVEM, type ContaGuardada } from '../../src/nuvem/conta'
 import { ProvedorNuvem } from '../../src/nuvem/ProvedorNuvem'
 import { comMaterias, navegador, NuvemFalsa } from './apoio'
+import { criarUsuario } from '../usuario'
 
 function montar(nuvem: NuvemFalsa, conta?: ContaGuardada, dados: Dados = dadosVazios()) {
   const nav = navegador(conta ? { [CHAVE_NUVEM]: JSON.stringify(conta) } : {})
@@ -39,6 +40,11 @@ function nuvemCom(dados: Dados | null, revisao: number) {
 
 afterEach(() => {
   window.location.hash = ''
+})
+
+let user: UserEvent
+beforeEach(() => {
+  user = criarUsuario()
 })
 
 describe('situação da nuvem no topo', () => {
@@ -75,7 +81,7 @@ describe('situação da nuvem no topo', () => {
     const link = await screen.findByRole('link', { name: 'Conflito: escolha qual versão manter' })
     expect(link).toHaveAttribute('href', '#/dados')
     // Já na tela Dados, o clique leva o foco até a seção da conta, onde está a pergunta.
-    await userEvent.click(link)
+    await user.click(link)
     expect(screen.getByRole('heading', { name: 'Conta e nuvem' })).toHaveFocus()
     expect(screen.getByRole('button', { name: 'Usar a da nuvem' })).toBeInTheDocument()
   })

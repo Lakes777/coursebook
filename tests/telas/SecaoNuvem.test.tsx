@@ -1,5 +1,5 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import type { UserEvent } from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { AvisoDesfazer } from '../../src/componentes/AvisoDesfazer'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
@@ -9,6 +9,7 @@ import { CHAVE_NUVEM, lerConta, type ContaGuardada } from '../../src/nuvem/conta
 import { ProvedorNuvem } from '../../src/nuvem/ProvedorNuvem'
 import { TelaDados } from '../../src/telas/TelaDados'
 import { comMaterias, navegador, NuvemFalsa } from '../nuvem/apoio'
+import { criarUsuario } from '../usuario'
 
 interface Montagem {
   dados?: Dados
@@ -26,7 +27,7 @@ function montar({ dados = dadosVazios(), conta, nuvem = new NuvemFalsa() }: Mont
       </ProvedorNuvem>
     </ProvedorPainel>,
   )
-  return { nav, nuvem, user: userEvent.setup() }
+  return { nav, nuvem, user: criarUsuario() }
 }
 
 const secao = () => screen.getByRole('region', { name: 'Conta e nuvem' })
@@ -46,7 +47,7 @@ function nuvemCom(dados: Dados | null, revisao: number) {
   return nuvem
 }
 
-async function preencher(user: ReturnType<typeof userEvent.setup>, campos: Record<string, string>) {
+async function preencher(user: UserEvent, campos: Record<string, string>) {
   for (const [rotulo, valor] of Object.entries(campos)) {
     const campo = naSecao().getByLabelText(rotulo)
     await user.clear(campo)

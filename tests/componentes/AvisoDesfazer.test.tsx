@@ -1,11 +1,12 @@
 import { act, fireEvent, render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { UserEvent } from '@testing-library/user-event'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '../../src/App'
 import { TEMPO_DESFAZER_MS } from '../../src/componentes/AvisoDesfazer'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
 import { CHAVE, dadosVazios } from '../../src/logica/armazenamento'
 import type { Evento } from '../../src/logica/tipos'
+import { criarUsuario } from '../usuario'
 
 function navegador() {
   const itens = new Map<string, string>()
@@ -49,6 +50,11 @@ afterEach(() => {
   window.location.hash = ''
 })
 
+let user: UserEvent
+beforeEach(() => {
+  user = criarUsuario()
+})
+
 describe('AvisoDesfazer', () => {
   it('depois de remover, oferece desfazer e volta o item (na tela e no que foi salvo)', async () => {
     const nav = montar()
@@ -57,7 +63,7 @@ describe('AvisoDesfazer', () => {
     expect(screen.getByText('"Quiz" removido da agenda.')).toBeInTheDocument()
     expect(salvos(nav)).toEqual(['Lista'])
 
-    await userEvent.click(screen.getByRole('button', { name: 'Desfazer' }))
+    await user.click(screen.getByRole('button', { name: 'Desfazer' }))
     expect(screen.getByText('Quiz')).toBeInTheDocument()
     expect(salvos(nav)).toEqual(['Quiz', 'Lista'])
     expect(screen.queryByRole('button', { name: 'Desfazer' })).not.toBeInTheDocument()
@@ -69,7 +75,7 @@ describe('AvisoDesfazer', () => {
     remover('Quiz')
     remover('Lista')
     expect(screen.getByText('"Lista" removido da agenda.')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Desfazer' }))
+    await user.click(screen.getByRole('button', { name: 'Desfazer' }))
     expect(screen.getByText('Lista')).toBeInTheDocument()
     expect(screen.queryByText('Quiz')).not.toBeInTheDocument()
   })
@@ -77,7 +83,7 @@ describe('AvisoDesfazer', () => {
   it('fechar some com o aviso sem voltar nada', async () => {
     montar()
     remover('Quiz')
-    await userEvent.click(screen.getByRole('button', { name: 'Fechar aviso' }))
+    await user.click(screen.getByRole('button', { name: 'Fechar aviso' }))
     expect(screen.queryByRole('button', { name: 'Desfazer' })).not.toBeInTheDocument()
     expect(screen.queryByText('Quiz')).not.toBeInTheDocument()
   })
@@ -98,8 +104,8 @@ describe('AvisoDesfazer', () => {
   it('Ctrl+Z desfaz, menos dentro de um campo (lá é o do próprio campo)', async () => {
     montar()
     remover('Quiz')
-    await userEvent.click(screen.getAllByRole('textbox')[0])
-    await userEvent.keyboard('{Control>}z{/Control}')
+    await user.click(screen.getAllByRole('textbox')[0])
+    await user.keyboard('{Control>}z{/Control}')
     expect(screen.queryByText('Quiz')).not.toBeInTheDocument()
     fireEvent.keyDown(document.body, { key: 'z', ctrlKey: true })
     expect(screen.getByText('Quiz')).toBeInTheDocument()

@@ -1,10 +1,11 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import type { UserEvent } from '@testing-library/user-event'
 import { useState } from 'react'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { REGRA_PUCPR } from '../../src/logica/tipos'
 import { CamposRegra } from '../../src/telas/CamposRegra'
 import { idsRegra, regraParaForm, type ErroCampo, type RegraForm } from '../../src/telas/novaMateriaUtil'
+import { criarUsuario } from '../usuario'
 
 const IDS = idsRegra('teste')
 
@@ -30,6 +31,11 @@ function montar(erro: ErroCampo | null = null) {
   return mudar
 }
 
+let user: UserEvent
+beforeEach(() => {
+  user = criarUsuario()
+})
+
 describe('CamposRegra', () => {
   it('mostra a regra preenchida, com os ids pedidos', () => {
     montar()
@@ -46,9 +52,9 @@ describe('CamposRegra', () => {
   it('manda cada mudança com o id do campo, e esconde a recuperação ao desmarcar', async () => {
     const mudar = montar()
     const media = screen.getByLabelText('Média mínima')
-    await userEvent.clear(media)
-    await userEvent.type(media, '6,5')
-    await userEvent.click(screen.getByLabelText('Tem recuperação no fim do semestre'))
+    await user.clear(media)
+    await user.type(media, '6,5')
+    await user.click(screen.getByLabelText('Tem recuperação no fim do semestre'))
     expect(media).toHaveValue('6,5')
     expect(mudar).toHaveBeenLastCalledWith({ temRecuperacao: false }, undefined)
     expect(mudar).toHaveBeenCalledWith({ mediaMinima: '6,5' }, IDS.media)

@@ -1,10 +1,11 @@
 import { act, fireEvent, render, screen, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import type { UserEvent } from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
 import { dadosVazios } from '../../src/logica/armazenamento'
 import type { Evento, Materia } from '../../src/logica/tipos'
 import { TelaAgenda } from '../../src/telas/TelaAgenda'
+import { criarUsuario } from '../usuario'
 
 /** localStorage falso: os testes não mexem no do jsdom. */
 function navegador() {
@@ -69,6 +70,11 @@ afterEach(() => {
   vi.useRealTimers()
 })
 
+let user: UserEvent
+beforeEach(() => {
+  user = criarUsuario()
+})
+
 describe('TelaAgenda', () => {
   it('mostra o título da tela', () => {
     montar()
@@ -131,7 +137,7 @@ describe('TelaAgenda', () => {
     const nav = montar()
     const caixa = screen.getByRole('checkbox', { name: 'Marcar Prova do RA2 como feito' })
     expect(caixa).not.toBeChecked()
-    await userEvent.click(caixa)
+    await user.click(caixa)
     expect(titulos('A fazer')).not.toContain('Prova do RA2')
     expect(titulos('Concluídos')).toEqual(['Prova do RA2', 'Prova do RA1'])
     const marcada = screen.getByRole('checkbox', { name: 'Marcar Prova do RA2 como feito' })
@@ -144,24 +150,24 @@ describe('TelaAgenda', () => {
 
   it('desmarcar devolve o item para "A fazer"', async () => {
     montar()
-    await userEvent.click(screen.getByRole('checkbox', { name: 'Marcar Prova do RA1 como feito' }))
+    await user.click(screen.getByRole('checkbox', { name: 'Marcar Prova do RA1 como feito' }))
     expect(titulos('A fazer')[0]).toBe('Prova do RA1')
     expect(screen.queryByRole('list', { name: 'Concluídos' })).not.toBeInTheDocument()
   })
 
   it('remove em dois passos, e dá para desistir', async () => {
     montar()
-    await userEvent.click(screen.getByRole('button', { name: 'Remover Quiz' }))
+    await user.click(screen.getByRole('button', { name: 'Remover Quiz' }))
     // Primeiro passo: nada saiu ainda, e o foco vai para o "Cancelar".
     expect(screen.getByText('Quiz')).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Remover Quiz' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Cancelar remoção de Quiz' })).toHaveFocus()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Cancelar remoção de Quiz' }))
+    await user.click(screen.getByRole('button', { name: 'Cancelar remoção de Quiz' }))
     expect(screen.getByRole('button', { name: 'Remover Quiz' })).toHaveFocus()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Remover Quiz' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Confirmar remoção de Quiz' }))
+    await user.click(screen.getByRole('button', { name: 'Remover Quiz' }))
+    await user.click(screen.getByRole('button', { name: 'Confirmar remoção de Quiz' }))
     expect(screen.queryByText('Quiz')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 3, name: 'A fazer' })).toHaveFocus()
   })
@@ -169,20 +175,20 @@ describe('TelaAgenda', () => {
   it('remover um concluído deixa o foco em "Concluídos", se ainda houver algum', async () => {
     const outroFeito: Evento = { id: 'feito2', titulo: 'Resumo', tipo: 'trabalho', data: '2026-09-05', concluido: true }
     montar([...EVENTOS, outroFeito])
-    await userEvent.click(screen.getByRole('button', { name: 'Remover Prova do RA1' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Confirmar remoção de Prova do RA1' }))
+    await user.click(screen.getByRole('button', { name: 'Remover Prova do RA1' }))
+    await user.click(screen.getByRole('button', { name: 'Confirmar remoção de Prova do RA1' }))
     expect(screen.getByRole('heading', { level: 3, name: 'Concluídos' })).toHaveFocus()
     // Sem mais concluídos, a parte some e o foco vai para "A fazer".
-    await userEvent.click(screen.getByRole('button', { name: 'Remover Resumo' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Confirmar remoção de Resumo' }))
+    await user.click(screen.getByRole('button', { name: 'Remover Resumo' }))
+    await user.click(screen.getByRole('button', { name: 'Confirmar remoção de Resumo' }))
     expect(screen.queryByRole('heading', { name: 'Concluídos' })).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 3, name: 'A fazer' })).toHaveFocus()
   })
 
   it('remover o último evento leva o foco para o título da tela', async () => {
     montar([EVENTOS[0]])
-    await userEvent.click(screen.getByRole('button', { name: 'Remover Seminário final' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Confirmar remoção de Seminário final' }))
+    await user.click(screen.getByRole('button', { name: 'Remover Seminário final' }))
+    await user.click(screen.getByRole('button', { name: 'Confirmar remoção de Seminário final' }))
     expect(screen.getByText(/Nada na agenda ainda/)).toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 2, name: 'Agenda' })).toHaveFocus()
   })
@@ -207,23 +213,23 @@ describe('TelaAgenda', () => {
   it('não adiciona sem título e mostra o erro ligado ao campo', async () => {
     const nav = montar()
     const titulo = screen.getByLabelText('Título')
-    await userEvent.type(titulo, '   ')
-    await userEvent.click(screen.getByRole('button', { name: 'Adicionar' }))
+    await user.type(titulo, '   ')
+    await user.click(screen.getByRole('button', { name: 'Adicionar' }))
     expect(titulo).toHaveAttribute('aria-invalid', 'true')
     expect(titulo).toHaveAccessibleDescription('Dê um título (ex.: "Prova do RA1").')
     expect(titulo).toHaveFocus()
     expect(nav.itens.size).toBe(0)
     // Ao corrigir o campo, a mensagem sai.
-    await userEvent.type(titulo, 'A')
+    await user.type(titulo, 'A')
     expect(titulo).not.toHaveAttribute('aria-invalid')
   })
 
   it('não adiciona sem data', async () => {
     const nav = montar()
-    await userEvent.type(screen.getByLabelText('Título'), 'Prova do RA3')
+    await user.type(screen.getByLabelText('Título'), 'Prova do RA3')
     const data = screen.getByLabelText('Data')
     fireEvent.change(data, { target: { value: '' } })
-    await userEvent.click(screen.getByRole('button', { name: 'Adicionar' }))
+    await user.click(screen.getByRole('button', { name: 'Adicionar' }))
     expect(data).toHaveAttribute('aria-invalid', 'true')
     expect(data).toHaveAccessibleDescription('Informe uma data válida.')
     expect(screen.getByLabelText('Título')).not.toHaveAttribute('aria-invalid')
@@ -235,11 +241,11 @@ describe('TelaAgenda', () => {
     const titulo = screen.getByLabelText('Título')
     // A data começa em hoje.
     expect(screen.getByLabelText('Data')).toHaveValue('2026-10-01')
-    await userEvent.type(titulo, '  Apresentação do projeto  ')
-    await userEvent.selectOptions(screen.getByLabelText('Tipo'), 'Apresentação')
+    await user.type(titulo, '  Apresentação do projeto  ')
+    await user.selectOptions(screen.getByLabelText('Tipo'), 'Apresentação')
     fireEvent.change(screen.getByLabelText('Data'), { target: { value: '2026-10-06' } })
-    await userEvent.selectOptions(screen.getByLabelText('Matéria'), 'Algoritmos')
-    await userEvent.click(screen.getByRole('button', { name: 'Adicionar' }))
+    await user.selectOptions(screen.getByLabelText('Matéria'), 'Algoritmos')
+    await user.click(screen.getByRole('button', { name: 'Adicionar' }))
 
     const novo = item('Apresentação do projeto')
     expect(novo.querySelector('.item-agenda__data')).toHaveTextContent(/^06\/10\/2026$/)
@@ -251,7 +257,7 @@ describe('TelaAgenda', () => {
     expect(titulo).toHaveFocus()
     expect(screen.getByRole('status')).toHaveTextContent('Adicionado à agenda: Apresentação do projeto.')
     // Ao digitar o próximo, o aviso antigo sai (e um título igual volta a ser anunciado).
-    await userEvent.type(titulo, 'P')
+    await user.type(titulo, 'P')
     expect(screen.getByRole('status')).toBeEmptyDOMElement()
 
     const salvo = JSON.parse([...nav.itens.values()][0]).eventos.at(-1)
@@ -267,8 +273,8 @@ describe('TelaAgenda', () => {
 
   it('sem matéria escolhida, o evento fica sem materiaId', async () => {
     const nav = montar([])
-    await userEvent.type(screen.getByLabelText('Título'), 'Trabalho em grupo')
-    await userEvent.click(screen.getByRole('button', { name: 'Adicionar' }))
+    await user.type(screen.getByLabelText('Título'), 'Trabalho em grupo')
+    await user.click(screen.getByRole('button', { name: 'Adicionar' }))
     const salvo = JSON.parse([...nav.itens.values()][0]).eventos[0]
     expect(salvo).not.toHaveProperty('materiaId')
     expect(within(lista('A fazer')).getByText('Trabalho em grupo')).toBeInTheDocument()

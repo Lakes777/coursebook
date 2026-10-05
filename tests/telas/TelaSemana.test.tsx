@@ -1,10 +1,11 @@
 import { act, render, screen, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import type { UserEvent } from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
 import { dadosVazios } from '../../src/logica/armazenamento'
 import type { Horario, Materia } from '../../src/logica/tipos'
 import { TelaSemana } from '../../src/telas/TelaSemana'
+import { criarUsuario } from '../usuario'
 
 function materia(id: string, nome: string, horarios: Horario[]): Materia {
   return { id, nome, professor: '', horarios, cargaHoraria: 80, ras: [], pontosExtras: [], faltas: [] }
@@ -49,6 +50,11 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.useRealTimers()
+})
+
+let user: UserEvent
+beforeEach(() => {
+  user = criarUsuario()
 })
 
 describe('TelaSemana', () => {
@@ -174,7 +180,7 @@ describe('TelaSemana', () => {
   it('sem matérias, leva para o cadastro e mostra o exemplo', async () => {
     montar([], true)
     expect(screen.getByRole('link', { name: 'Cadastrar a primeira matéria' })).toHaveAttribute('href', '#/nova-materia')
-    await userEvent.click(screen.getByRole('button', { name: 'Ver com dados de exemplo' }))
+    await user.click(screen.getByRole('button', { name: 'Ver com dados de exemplo' }))
     // O exemplo tem horários (nas aulas da tabela da PUC-PR): a grade aparece, sem nada de fora.
     expect(screen.getByRole('table')).toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Fora da grade da PUC-PR' })).not.toBeInTheDocument()

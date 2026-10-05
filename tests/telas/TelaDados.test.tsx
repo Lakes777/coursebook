@@ -1,12 +1,13 @@
 import { render, screen, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import type { UserEvent } from '@testing-library/user-event'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
 import { CHAVE, dadosVazios } from '../../src/logica/armazenamento'
 import { EXEMPLO_IA, INSTRUCOES_IA } from '../../src/logica/instrucoesIA'
 import { REGRA_PUCPR, type Dados, type Materia, type RegraAprovacao } from '../../src/logica/tipos'
 import { TAMANHO_MAXIMO_IMPORTACAO, textoExportacao } from '../../src/logica/transferencia'
 import { TelaDados } from '../../src/telas/TelaDados'
+import { criarUsuario } from '../usuario'
 
 /** localStorage falso: os testes não mexem no do jsdom. */
 function navegador() {
@@ -48,16 +49,19 @@ const anuncioImportar = () => within(importar()).getByRole('status')
 
 /** Cola o texto (sem digitar tecla por tecla: "{" é especial no userEvent) e confere. */
 async function colar(texto: string) {
-  const user = userEvent.setup()
   const campo = screen.getByLabelText('Ou cole o JSON aqui')
   await user.click(campo)
   await user.paste(texto)
   await user.click(screen.getByRole('button', { name: 'Conferir' }))
-  return user
 }
 
 afterEach(() => {
   vi.restoreAllMocks()
+})
+
+let user: UserEvent
+beforeEach(() => {
+  user = criarUsuario()
 })
 
 describe('TelaDados', () => {
@@ -68,7 +72,7 @@ describe('TelaDados', () => {
     montar()
     expect(screen.getByText(/Hoje o painel tem 1 matéria e 0 eventos na agenda/)).toBeInTheDocument()
 
-    await userEvent.click(screen.getByRole('button', { name: 'Baixar backup (JSON)' }))
+    await user.click(screen.getByRole('button', { name: 'Baixar backup (JSON)' }))
 
     expect(clique).toHaveBeenCalledOnce()
     const blob = criar.mock.calls[0][0] as Blob
@@ -83,7 +87,7 @@ describe('TelaDados', () => {
     // Anunciado ao leitor de tela, e não só mostrado na prévia.
     expect(anuncioImportar()).toHaveTextContent('Encontrado: 1 matéria e 2 eventos na agenda.')
     expect(within(importar()).getByText('Estruturas de Dados')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Adicionar ao painel' }))
+    await user.click(screen.getByRole('button', { name: 'Adicionar ao painel' }))
 
     const dados = salvos(nav)
     expect(dados.materias.map((m) => m.nome)).toEqual(['POO', 'Estruturas de Dados'])
@@ -102,7 +106,7 @@ describe('TelaDados', () => {
   it('pede confirmação antes de substituir o que já existe', async () => {
     const nav = montar()
     const backup: Dados = { ...dadosVazios(), materias: [{ ...POO, id: 'filo', nome: 'Filosofia' }] }
-    const user = await colar(textoExportacao(backup))
+    await colar(textoExportacao(backup))
 
     await user.click(screen.getByRole('button', { name: 'Substituir tudo' }))
     expect(screen.getByText(/Isto apaga 1 matéria e 0 eventos na agenda/)).toBeInTheDocument()
@@ -119,7 +123,7 @@ describe('TelaDados', () => {
 
   it('substitui sem perguntar quando o painel está vazio', async () => {
     const nav = montar([])
-    const user = await colar(textoExportacao({ ...dadosVazios(), materias: [POO] }))
+    await colar(textoExportacao({ ...dadosVazios(), materias: [POO] }))
     await user.click(screen.getByRole('button', { name: 'Substituir tudo' }))
     expect(salvos(nav).materias).toHaveLength(1)
   })
@@ -128,7 +132,7 @@ describe('TelaDados', () => {
     montar()
     const backup = textoExportacao({ ...dadosVazios(), materias: [POO, { ...POO, id: 'b', nome: 'B' }] })
     const arquivo = new File([backup], 'backup.json', { type: 'application/json' })
-    await userEvent.upload(screen.getByLabelText('Escolher arquivo'), arquivo)
+    await user.upload(screen.getByLabelText('Escolher arquivo'), arquivo)
     await waitFor(() => expect(anuncioImportar()).toHaveTextContent('Encontrado: 2 matérias e 0 eventos'))
   })
 
@@ -137,7 +141,9 @@ describe('TelaDados', () => {
     const grande = new File(['x'], 'video.mp4')
     Object.defineProperty(grande, 'size', { value: TAMANHO_MAXIMO_IMPORTACAO + 1 })
     const ler = vi.spyOn(grande, 'text')
-    await userEvent.upload(screen.getByLabelText('Escolher arquivo'), grande, { applyAccept: false })
+    // applyAccept é opção do setup: com ela ligada, o arquivo nem chegaria ao campo.
+    const semFiltro = criarUsuario({ applyAccept: false })
+    await semFiltro.upload(screen.getByLabelText('Escolher arquivo'), grande)
     expect(screen.getByRole('alert')).toHaveTextContent('"video.mp4" é grande demais')
     expect(ler).not.toHaveBeenCalled()
   })
@@ -162,7 +168,7 @@ describe('TelaDados', () => {
   it('avisa que a regra padrão também muda ao substituir por um backup com outra regra', async () => {
     montar()
     const outra = { mediaMinima: 6, frequenciaMinima: 0.75, arredondarUmaCasa: false }
-    const user = await colar(textoExportacao({ ...dadosVazios(), regraPadrao: outra, materias: [POO] }))
+    await colar(textoExportacao({ ...dadosVazios(), regraPadrao: outra, materias: [POO] }))
     await user.click(screen.getByRole('button', { name: 'Substituir tudo' }))
     expect(screen.getByText(/A regra padrão de aprovação também passa a ser a do arquivo/)).toBeInTheDocument()
   })
@@ -179,7 +185,7 @@ describe('TelaDados', () => {
 
   it('adiciona o exemplo sem apagar o que já existe', async () => {
     const nav = montar()
-    await userEvent.click(screen.getByRole('button', { name: 'Adicionar dados de exemplo' }))
+    await user.click(screen.getByRole('button', { name: 'Adicionar dados de exemplo' }))
     expect(salvos(nav).materias.map((m) => m.nome)).toEqual([
       'POO',
       'Estruturas de Dados',
@@ -196,7 +202,6 @@ describe('TelaDados', () => {
   })
 
   it('cancelar o "Apagar tudo" não apaga nada e devolve o foco', async () => {
-    const user = userEvent.setup()
     const nav = montar()
     const secao = screen.getByRole('region', { name: 'Exemplo e recomeço' })
     await user.click(within(secao).getByRole('button', { name: 'Apagar tudo' }))
@@ -207,7 +212,6 @@ describe('TelaDados', () => {
   })
 
   it('apaga tudo depois de confirmar, mantendo a regra padrão', async () => {
-    const user = userEvent.setup()
     const nav = navegador()
     const regra = { mediaMinima: 6, frequenciaMinima: 0.75, arredondarUmaCasa: false }
     render(
@@ -232,7 +236,6 @@ describe('TelaDados', () => {
   })
 
   it('copia as instruções para a IA', async () => {
-    const user = userEvent.setup()
     montar()
     await user.click(screen.getByRole('button', { name: 'Copiar instruções para uma IA' }))
     expect(await navigator.clipboard.readText()).toBe(INSTRUCOES_IA)
@@ -240,11 +243,11 @@ describe('TelaDados', () => {
   })
 
   it('sem acesso à área de transferência, abre o texto para copiar à mão', async () => {
-    const user = userEvent.setup()
     montar()
     vi.spyOn(navigator.clipboard, 'writeText').mockRejectedValue(new Error('bloqueado'))
     await user.click(screen.getByRole('button', { name: 'Copiar instruções para uma IA' }))
-    expect(screen.getByText(/Não deu para copiar sozinho/)).toBeInTheDocument()
+    // A recusa da área de transferência chega depois do clique (é uma promessa).
+    expect(await screen.findByText(/Não deu para copiar sozinho/)).toBeInTheDocument()
     expect(screen.getByText('Ver as instruções').closest('details')).toHaveAttribute('open')
   })
 })
@@ -269,7 +272,7 @@ describe('TelaDados: regra padrão', () => {
 
   const secao = () => screen.getByRole('region', { name: 'Regra padrão de aprovação' })
   const botao = (nome: string | RegExp) => within(secao()).getByRole('button', { name: nome })
-  const editar = () => userEvent.click(botao('Editar regra padrão'))
+  const editar = () => user.click(botao('Editar regra padrão'))
 
   it('mostra a regra atual e para quantas matérias ela vale', () => {
     const materias = [
@@ -307,10 +310,10 @@ describe('TelaDados: regra padrão', () => {
     const media = within(secao()).getByLabelText('Média mínima')
     expect(media).toHaveValue('7')
     expect(media).toHaveFocus()
-    await userEvent.clear(media)
-    await userEvent.type(media, '6,5')
-    await userEvent.click(within(secao()).getByLabelText('Tem recuperação no fim do semestre'))
-    await userEvent.click(botao('Salvar'))
+    await user.clear(media)
+    await user.type(media, '6,5')
+    await user.click(within(secao()).getByLabelText('Tem recuperação no fim do semestre'))
+    await user.click(botao('Salvar'))
 
     expect(salvos(nav).regraPadrao).toEqual({ mediaMinima: 6.5, frequenciaMinima: 0.75, arredondarUmaCasa: false })
     expect(within(secao()).queryByLabelText('Média mínima')).not.toBeInTheDocument()
@@ -324,9 +327,9 @@ describe('TelaDados: regra padrão', () => {
     const nav = montarRegra()
     await editar()
     const frequencia = within(secao()).getByLabelText('Frequência mínima (%)')
-    await userEvent.clear(frequencia)
-    await userEvent.type(frequencia, '120')
-    await userEvent.click(botao('Salvar'))
+    await user.clear(frequencia)
+    await user.type(frequencia, '120')
+    await user.click(botao('Salvar'))
 
     expect(frequencia).toHaveFocus()
     expect(frequencia).toHaveAttribute('aria-invalid', 'true')
@@ -334,10 +337,10 @@ describe('TelaDados: regra padrão', () => {
     expect(nav.itens.has(CHAVE)).toBe(false)
 
     // Corrigir o campo tira o erro.
-    await userEvent.clear(frequencia)
-    await userEvent.type(frequencia, '80')
+    await user.clear(frequencia)
+    await user.type(frequencia, '80')
     expect(frequencia).not.toHaveAttribute('aria-invalid')
-    await userEvent.click(botao('Salvar'))
+    await user.click(botao('Salvar'))
     expect(salvos(nav).regraPadrao.frequenciaMinima).toBe(0.8)
   })
 
@@ -345,9 +348,9 @@ describe('TelaDados: regra padrão', () => {
     const nav = montarRegra()
     await editar()
     const media = within(secao()).getByLabelText('Média mínima')
-    await userEvent.clear(media)
-    await userEvent.type(media, '5')
-    await userEvent.click(botao('Cancelar'))
+    await user.clear(media)
+    await user.type(media, '5')
+    await user.click(botao('Cancelar'))
 
     expect(nav.itens.has(CHAVE)).toBe(false)
     expect(secao()).toHaveTextContent('Média mínima 7,0')
@@ -361,15 +364,15 @@ describe('TelaDados: regra padrão', () => {
   it('volta para a regra da PUC-PR depois de confirmar', async () => {
     const nav = montarRegra({ regraPadrao: SEIS })
     expect(secao()).toHaveTextContent('Regra personalizada')
-    await userEvent.click(botao('Voltar para a regra da PUC-PR'))
+    await user.click(botao('Voltar para a regra da PUC-PR'))
     expect(botao('Cancelar')).toHaveFocus()
     expect(nav.itens.has(CHAVE)).toBe(false)
 
-    await userEvent.click(botao('Cancelar'))
+    await user.click(botao('Cancelar'))
     expect(botao('Voltar para a regra da PUC-PR')).toHaveFocus()
 
-    await userEvent.click(botao('Voltar para a regra da PUC-PR'))
-    await userEvent.click(botao('Confirmar'))
+    await user.click(botao('Voltar para a regra da PUC-PR'))
+    await user.click(botao('Confirmar'))
     expect(salvos(nav).regraPadrao).toEqual(REGRA_PUCPR)
     expect(secao()).toHaveTextContent('Regra da PUC-PR')
     expect(within(secao()).queryByRole('button', { name: /Voltar para a regra/ })).not.toBeInTheDocument()
@@ -386,7 +389,7 @@ describe('TelaDados: regra padrão', () => {
   it('não mexe na regra própria das matérias', async () => {
     const nav = montarRegra({ materias: [{ ...POO, regra: PROPRIA }] })
     await editar()
-    await userEvent.click(botao('Salvar'))
+    await user.click(botao('Salvar'))
     expect(salvos(nav).materias[0].regra).toEqual(PROPRIA)
   })
 })

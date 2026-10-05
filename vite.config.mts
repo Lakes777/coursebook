@@ -47,5 +47,10 @@ export default defineConfig({
     setupFiles: ['./tests/setup.ts'],
     // Só a pasta tests/: os worktrees dos subagentes (.claude/worktrees) têm cópias dos testes.
     include: ['tests/**/*.test.{ts,tsx}'],
+    // Folga para máquina ocupada (CI, duas suítes juntas): os testes de tela mais
+    // pesados levam ~1 s sozinhos, mas chegaram a 4 s com a CPU disputada, e o
+    // primeiro teste de cada arquivo ainda paga o aquecimento do jsdom. 5 s (o padrão)
+    // dava falhas aleatórias; 15 s só pega teste travado de verdade.
+    testTimeout: 15_000,
   },
 })

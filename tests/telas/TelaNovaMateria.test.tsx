@@ -1,11 +1,12 @@
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it } from 'vitest'
+import type { UserEvent } from '@testing-library/user-event'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import App from '../../src/App'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
 import { dadosVazios } from '../../src/logica/armazenamento'
 import type { Materia, RegraAprovacao } from '../../src/logica/tipos'
 import { TelaNovaMateria } from '../../src/telas/TelaNovaMateria'
+import { criarUsuario } from '../usuario'
 
 /** localStorage falso: os testes não mexem no do jsdom. */
 function navegador() {
@@ -40,12 +41,12 @@ function materiaSalva(nav: ReturnType<typeof navegador>): Materia {
 
 const tituloPasso = () => screen.getByRole('heading', { level: 3 })
 const grupo = (nome: string) => screen.getByRole('group', { name: nome })
-const continuar = () => userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
-const voltar = () => userEvent.click(screen.getByRole('button', { name: 'Voltar' }))
+const continuar = () => user.click(screen.getByRole('button', { name: 'Continuar' }))
+const voltar = () => user.click(screen.getByRole('button', { name: 'Voltar' }))
 
 async function digitar(campo: HTMLElement, texto: string) {
-  await userEvent.clear(campo)
-  await userEvent.type(campo, texto)
+  await user.clear(campo)
+  await user.type(campo, texto)
 }
 
 /** Passo 1 com o mínimo: nome e carga horária. */
@@ -53,6 +54,11 @@ async function preencherMateria(nome = 'POO') {
   await digitar(screen.getByLabelText('Nome da matéria'), nome)
   await digitar(screen.getByLabelText('Carga horária (aulas de 45 min)'), '80')
 }
+
+let user: UserEvent
+beforeEach(() => {
+  user = criarUsuario()
+})
 
 afterEach(() => {
   window.location.hash = ''
@@ -82,7 +88,7 @@ describe('TelaNovaMateria', () => {
     expect(nome).toHaveFocus()
     expect(tituloPasso()).toHaveTextContent('Passo 1 de 5')
     // Corrigir o campo tira a mensagem.
-    await userEvent.type(nome, 'P')
+    await user.type(nome, 'P')
     expect(nome).not.toHaveAttribute('aria-invalid')
 
     // O próximo erro é o da carga horária, que ainda está vazia.
@@ -100,7 +106,7 @@ describe('TelaNovaMateria', () => {
   it('adiciona e remove horários, e confere a hora', async () => {
     montar()
     await preencherMateria()
-    await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+    await user.click(screen.getByRole('button', { name: 'Adicionar horário' }))
     const horario = grupo('Horário 1')
     expect(within(horario).getByLabelText('Dia')).toHaveFocus()
     expect(screen.getByRole('status')).toHaveTextContent('Horário 1 adicionado.')
@@ -111,7 +117,7 @@ describe('TelaNovaMateria', () => {
     expect(primeira).toHaveFocus()
     expect(primeira).toHaveAccessibleDescription(/Escolha a primeira aula\./)
 
-    await userEvent.click(screen.getByRole('button', { name: 'Remover horário 1' }))
+    await user.click(screen.getByRole('button', { name: 'Remover horário 1' }))
     expect(screen.queryByRole('group', { name: 'Horário 1' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Adicionar horário' })).toHaveFocus()
     await continuar()
@@ -125,7 +131,7 @@ describe('TelaNovaMateria', () => {
     await digitar(within(grupo('RA 1')).getByLabelText('Peso na nota final'), '1')
     // Um RA só não pode ser removido.
     expect(screen.queryByRole('button', { name: 'Remover RA 1' })).not.toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Adicionar RA' }))
+    await user.click(screen.getByRole('button', { name: 'Adicionar RA' }))
     const nomeRA2 = within(grupo('RA 2')).getByLabelText('Nome')
     expect(nomeRA2).toHaveValue('RA2')
     expect(nomeRA2).toHaveFocus()
@@ -138,7 +144,7 @@ describe('TelaNovaMateria', () => {
     )
     expect(screen.getByText(/Soma dos pesos/)).toHaveTextContent('Soma dos pesos: 4')
 
-    await userEvent.click(screen.getByRole('button', { name: 'Remover RA 2' }))
+    await user.click(screen.getByRole('button', { name: 'Remover RA 2' }))
     expect(screen.queryByRole('group', { name: 'RA 2' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Adicionar RA' })).toHaveFocus()
   })
@@ -177,7 +183,7 @@ describe('TelaNovaMateria', () => {
     await digitar(within(grupo('RA 1')).getByLabelText('Peso na nota final'), '100')
     await continuar()
     expect(tituloPasso()).toHaveTextContent('Passo 3 de 5: Avaliações')
-    await userEvent.click(screen.getByRole('button', { name: 'Remover avaliação 1 do RA1' }))
+    await user.click(screen.getByRole('button', { name: 'Remover avaliação 1 do RA1' }))
     expect(screen.getByRole('button', { name: 'Adicionar avaliação ao RA1' })).toHaveFocus()
     expect(screen.getByText(/Sem avaliações: a nota do RA1 fica pendente/)).toBeInTheDocument()
     await continuar()
@@ -197,19 +203,19 @@ describe('TelaNovaMateria', () => {
         horarios: [{ dia: 2, inicio: '09:40', fim: '12:40', aulas: 4 }],
       }
       montar(undefined, [outra])
-      await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+      await user.click(screen.getByRole('button', { name: 'Adicionar horário' }))
       const horario = grupo('Horário 1')
-      await userEvent.selectOptions(within(horario).getByLabelText('Dia'), 'Terça-feira')
+      await user.selectOptions(within(horario).getByLabelText('Dia'), 'Terça-feira')
       const primeira = within(horario).getByLabelText('Da aula')
       expect(within(primeira).getByRole('option', { name: '4ª aula (09:40) · POO' })).toBeDisabled()
       expect(within(primeira).getByRole('option', { name: '2ª aula (07:50)' })).toBeEnabled()
       // Da 2ª aula dá para ir até a 3ª, mas não passar por cima da POO.
-      await userEvent.selectOptions(primeira, '2ª aula (07:50)')
+      await user.selectOptions(primeira, '2ª aula (07:50)')
       const ultima = within(horario).getByLabelText('Até a aula')
       expect(within(ultima).getByRole('option', { name: '3ª aula (até 09:20)' })).toBeEnabled()
       expect(within(ultima).getByRole('option', { name: '8ª aula (até 13:25)' })).toBeDisabled()
       // Em outro dia, nada ocupado.
-      await userEvent.selectOptions(within(horario).getByLabelText('Dia'), 'Quarta-feira')
+      await user.selectOptions(within(horario).getByLabelText('Dia'), 'Quarta-feira')
       expect(within(horario).getByRole('option', { name: '4ª aula (09:40)' })).toBeEnabled()
     })
 
@@ -226,9 +232,9 @@ describe('TelaNovaMateria', () => {
       }
       montar(undefined, [outra])
       await preencherMateria()
-      await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+      await user.click(screen.getByRole('button', { name: 'Adicionar horário' }))
       const horario = grupo('Horário 1')
-      await userEvent.click(within(horario).getByRole('button', { name: 'Informar o horário 1 em horas' }))
+      await user.click(within(horario).getByRole('button', { name: 'Informar o horário 1 em horas' }))
       fireEvent.change(within(horario).getByLabelText('Começa às'), { target: { value: '11:00' } })
       fireEvent.change(within(horario).getByLabelText('Termina às'), { target: { value: '12:00' } })
       await continuar()
@@ -240,26 +246,26 @@ describe('TelaNovaMateria', () => {
 
     it('escolher a primeira puxa a última junto, e a última só oferece aulas depois da primeira', async () => {
       montar()
-      await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+      await user.click(screen.getByRole('button', { name: 'Adicionar horário' }))
       const horario = grupo('Horário 1')
-      await userEvent.selectOptions(within(horario).getByLabelText('Da aula'), '4ª aula (09:40)')
+      await user.selectOptions(within(horario).getByLabelText('Da aula'), '4ª aula (09:40)')
       const ultima = within(horario).getByLabelText('Até a aula')
       expect(ultima).toHaveDisplayValue('4ª aula (até 10:25)')
       expect(within(ultima).queryByRole('option', { name: '3ª aula (até 09:20)' })).not.toBeInTheDocument()
       // Da 4ª até a 7ª, passando pelo intervalo que não existe entre elas.
-      await userEvent.selectOptions(ultima, '7ª aula (até 12:40)')
+      await user.selectOptions(ultima, '7ª aula (até 12:40)')
       expect(within(horario).getByText('09:40 às 12:40 · 4 aulas')).toBeInTheDocument()
     })
 
     it('dá para trocar para horas digitadas, e voltar sem perder nada', async () => {
       montar()
       await preencherMateria()
-      await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+      await user.click(screen.getByRole('button', { name: 'Adicionar horário' }))
       const horario = grupo('Horário 1')
-      await userEvent.selectOptions(within(horario).getByLabelText('Da aula'), '16ª aula (19:00)')
-      await userEvent.selectOptions(within(horario).getByLabelText('Até a aula'), '19ª aula (até 22:15)')
+      await user.selectOptions(within(horario).getByLabelText('Da aula'), '16ª aula (19:00)')
+      await user.selectOptions(within(horario).getByLabelText('Até a aula'), '19ª aula (até 22:15)')
 
-      await userEvent.click(within(horario).getByRole('button', { name: 'Informar o horário 1 em horas' }))
+      await user.click(within(horario).getByRole('button', { name: 'Informar o horário 1 em horas' }))
       expect(screen.getByRole('status')).toHaveTextContent('Horário 1: informe o início, o fim e as aulas.')
       // As horas escolhidas continuam, agora nos campos de hora.
       expect(within(horario).getByLabelText('Começa às')).toHaveValue('19:00')
@@ -271,39 +277,39 @@ describe('TelaNovaMateria', () => {
 
       // Fora da tabela: nas aulas aparece "Escolha", mas voltar para horas mostra o que estava.
       fireEvent.change(within(horario).getByLabelText('Começa às'), { target: { value: '13:30' } })
-      await userEvent.click(within(horario).getByRole('button', { name: 'Escolher o horário 1 pelas aulas' }))
+      await user.click(within(horario).getByRole('button', { name: 'Escolher o horário 1 pelas aulas' }))
       expect(within(horario).getByLabelText('Da aula')).toHaveDisplayValue('Escolha')
-      await userEvent.click(within(horario).getByRole('button', { name: 'Informar o horário 1 em horas' }))
+      await user.click(within(horario).getByRole('button', { name: 'Informar o horário 1 em horas' }))
       expect(within(horario).getByLabelText('Começa às')).toHaveValue('13:30')
     })
 
     it('trocar de modo com um erro aberto tira o erro', async () => {
       montar()
       await preencherMateria()
-      await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+      await user.click(screen.getByRole('button', { name: 'Adicionar horário' }))
       await continuar()
       const horario = grupo('Horário 1')
       expect(within(horario).getByLabelText('Da aula')).toHaveAttribute('aria-invalid', 'true')
-      await userEvent.click(within(horario).getByRole('button', { name: 'Informar o horário 1 em horas' }))
+      await user.click(within(horario).getByRole('button', { name: 'Informar o horário 1 em horas' }))
       expect(within(horario).getByLabelText('Começa às')).not.toHaveAttribute('aria-invalid', 'true')
     })
 
     it('trocar a primeira aula depois de escolher a última mantém a última', async () => {
       montar()
-      await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+      await user.click(screen.getByRole('button', { name: 'Adicionar horário' }))
       const horario = grupo('Horário 1')
-      await userEvent.selectOptions(within(horario).getByLabelText('Da aula'), '2ª aula (07:50)')
-      await userEvent.selectOptions(within(horario).getByLabelText('Até a aula'), '5ª aula (até 11:10)')
-      await userEvent.selectOptions(within(horario).getByLabelText('Da aula'), '3ª aula (08:35)')
+      await user.selectOptions(within(horario).getByLabelText('Da aula'), '2ª aula (07:50)')
+      await user.selectOptions(within(horario).getByLabelText('Até a aula'), '5ª aula (até 11:10)')
+      await user.selectOptions(within(horario).getByLabelText('Da aula'), '3ª aula (08:35)')
       expect(within(horario).getByLabelText('Até a aula')).toHaveDisplayValue('5ª aula (até 11:10)')
       expect(within(horario).getByText('08:35 às 11:10 · 3 aulas')).toBeInTheDocument()
     })
 
     it('não deixa escolher mais de 12 aulas seguidas', async () => {
       montar()
-      await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+      await user.click(screen.getByRole('button', { name: 'Adicionar horário' }))
       const horario = grupo('Horário 1')
-      await userEvent.selectOptions(within(horario).getByLabelText('Da aula'), '1ª aula (07:05)')
+      await user.selectOptions(within(horario).getByLabelText('Da aula'), '1ª aula (07:05)')
       const ultima = within(horario).getByLabelText('Até a aula')
       expect(within(ultima).getByRole('option', { name: '12ª aula (até 16:45)' })).toBeInTheDocument()
       expect(within(ultima).queryByRole('option', { name: '13ª aula (até 17:30)' })).not.toBeInTheDocument()
@@ -312,10 +318,10 @@ describe('TelaNovaMateria', () => {
     it('sem a última aula, o erro vai para o seletor dela', async () => {
       montar()
       await preencherMateria()
-      await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+      await user.click(screen.getByRole('button', { name: 'Adicionar horário' }))
       const horario = grupo('Horário 1')
-      await userEvent.selectOptions(within(horario).getByLabelText('Da aula'), '2ª aula (07:50)')
-      await userEvent.selectOptions(within(horario).getByLabelText('Até a aula'), 'Escolha')
+      await user.selectOptions(within(horario).getByLabelText('Da aula'), '2ª aula (07:50)')
+      await user.selectOptions(within(horario).getByLabelText('Até a aula'), 'Escolha')
       await continuar()
       expect(within(horario).getByLabelText('Até a aula')).toHaveAccessibleDescription(/Escolha a última aula\./)
     })
@@ -327,17 +333,17 @@ describe('TelaNovaMateria', () => {
     await digitar(screen.getByLabelText('Nome da matéria'), '  Programação Orientada a Objetos ')
     await digitar(screen.getByLabelText('Professor (opcional)'), 'Ana Souza')
     await digitar(screen.getByLabelText('Carga horária (aulas de 45 min)'), '80')
-    await userEvent.click(screen.getByRole('button', { name: 'Adicionar horário' }))
-    await userEvent.selectOptions(within(grupo('Horário 1')).getByLabelText('Dia'), 'Terça-feira')
-    await userEvent.selectOptions(within(grupo('Horário 1')).getByLabelText('Da aula'), '2ª aula (07:50)')
-    await userEvent.selectOptions(within(grupo('Horário 1')).getByLabelText('Até a aula'), '3ª aula (até 09:20)')
+    await user.click(screen.getByRole('button', { name: 'Adicionar horário' }))
+    await user.selectOptions(within(grupo('Horário 1')).getByLabelText('Dia'), 'Terça-feira')
+    await user.selectOptions(within(grupo('Horário 1')).getByLabelText('Da aula'), '2ª aula (07:50)')
+    await user.selectOptions(within(grupo('Horário 1')).getByLabelText('Até a aula'), '3ª aula (até 09:20)')
     expect(within(grupo('Horário 1')).getByText('07:50 às 09:20 · 2 aulas')).toBeInTheDocument()
     await continuar()
 
     // Passo 2
     await digitar(within(grupo('RA 1')).getByLabelText('Peso na nota final'), '40')
-    await userEvent.click(within(grupo('RA 1')).getByLabelText('Tem recuperação durante o semestre'))
-    await userEvent.click(screen.getByRole('button', { name: 'Adicionar RA' }))
+    await user.click(within(grupo('RA 1')).getByLabelText('Tem recuperação durante o semestre'))
+    await user.click(screen.getByRole('button', { name: 'Adicionar RA' }))
     await digitar(within(grupo('RA 2')).getByLabelText('Peso na nota final'), '60')
     await continuar()
 
@@ -347,7 +353,7 @@ describe('TelaNovaMateria', () => {
     await digitar(within(av1).getByLabelText('Vale até'), '3,0')
     fireEvent.change(within(av1).getByLabelText('Data (opcional)'), { target: { value: '2026-10-05' } })
     await digitar(within(grupo('Avaliação 1 do RA2')).getByLabelText('Nome'), 'Projeto')
-    await userEvent.click(screen.getByRole('button', { name: 'Adicionar avaliação ao RA2' }))
+    await user.click(screen.getByRole('button', { name: 'Adicionar avaliação ao RA2' }))
     const av2 = grupo('Avaliação 2 do RA2')
     expect(within(av2).getByLabelText('Nome')).toHaveFocus()
     await digitar(within(av2).getByLabelText('Nome'), 'Apresentação')
@@ -369,7 +375,7 @@ describe('TelaNovaMateria', () => {
     expect(screen.getByText(/Prova 1: vale 3,0, peso 1, em 05\/10\/2026/)).toBeInTheDocument()
     expect(screen.getByText('Regra padrão do painel')).toBeInTheDocument()
     expect(nav.itens.size).toBe(0)
-    await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
+    await user.click(screen.getByRole('button', { name: 'Salvar matéria' }))
 
     const materia = materiaSalva(nav)
     expect(materia).toMatchObject({
@@ -416,7 +422,7 @@ describe('TelaNovaMateria', () => {
     await digitar(within(grupo('Avaliação 1 do RA1')).getByLabelText('Nome'), 'Prova')
     await continuar()
 
-    await userEvent.click(screen.getByLabelText('Regra própria desta matéria'))
+    await user.click(screen.getByLabelText('Regra própria desta matéria'))
     const media = screen.getByLabelText('Média mínima')
     // Começa com os valores da regra padrão.
     expect(media).toHaveValue('7')
@@ -427,13 +433,13 @@ describe('TelaNovaMateria', () => {
     expect(media).toHaveFocus()
     await digitar(media, '6,0')
     await digitar(screen.getByLabelText('Frequência mínima (%)'), '70')
-    await userEvent.click(screen.getByLabelText('Tem recuperação no fim do semestre'))
+    await user.click(screen.getByLabelText('Tem recuperação no fim do semestre'))
     expect(screen.queryByLabelText('Nota máxima da recuperação')).not.toBeInTheDocument()
-    await userEvent.click(screen.getByLabelText(/Arredondar a nota final/))
+    await user.click(screen.getByLabelText(/Arredondar a nota final/))
     await continuar()
     expect(screen.getByText('Regra própria')).toBeInTheDocument()
     expect(screen.getByText('Sem recuperação.')).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
+    await user.click(screen.getByRole('button', { name: 'Salvar matéria' }))
 
     expect(materiaSalva(nav).regra).toEqual({ mediaMinima: 6, frequenciaMinima: 0.7, arredondarUmaCasa: true })
   })
@@ -459,12 +465,12 @@ describe('TelaNovaMateria', () => {
     await digitar(within(grupo('Avaliação 1 do RA1')).getByLabelText('Nome'), 'Prova')
     await continuar()
     await continuar()
-    await userEvent.click(screen.getByRole('button', { name: 'Alterar matéria' }))
+    await user.click(screen.getByRole('button', { name: 'Alterar matéria' }))
     expect(tituloPasso()).toHaveTextContent('Passo 1 de 5')
     expect(tituloPasso()).toHaveFocus()
     await digitar(screen.getByLabelText('Nome da matéria'), 'POO 2')
     for (let i = 0; i < 4; i++) await continuar()
-    await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
+    await user.click(screen.getByRole('button', { name: 'Salvar matéria' }))
     expect(materiaSalva(nav).nome).toBe('POO 2')
   })
 
@@ -477,13 +483,13 @@ describe('TelaNovaMateria', () => {
     it('pergunta antes de apagar o que foi preenchido', async () => {
       montar()
       await digitar(screen.getByLabelText('Nome da matéria'), 'Cálculo')
-      await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
+      await user.click(screen.getByRole('button', { name: 'Cancelar' }))
 
       expect(screen.getByText(/será apagado/)).toBeInTheDocument()
       // O foco vai para a opção que não apaga nada.
       expect(screen.getByRole('button', { name: 'Continuar preenchendo' })).toHaveFocus()
 
-      await userEvent.click(screen.getByRole('button', { name: 'Continuar preenchendo' }))
+      await user.click(screen.getByRole('button', { name: 'Continuar preenchendo' }))
       expect(screen.queryByText(/será apagado/)).not.toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Cancelar' })).toHaveFocus()
       expect(screen.getByLabelText('Nome da matéria')).toHaveValue('Cálculo')
@@ -507,8 +513,8 @@ describe('TelaNovaMateria', () => {
     it('"Sair sem salvar" volta para a lista de matérias', async () => {
       montar()
       await digitar(screen.getByLabelText('Nome da matéria'), 'Cálculo')
-      await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }))
-      await userEvent.click(screen.getByRole('button', { name: 'Sair sem salvar' }))
+      await user.click(screen.getByRole('button', { name: 'Cancelar' }))
+      await user.click(screen.getByRole('button', { name: 'Sair sem salvar' }))
       expect(window.location.hash).toBe('#/materias')
     })
 
@@ -516,9 +522,9 @@ describe('TelaNovaMateria', () => {
       montar()
       await digitar(screen.getByLabelText('Nome da matéria'), 'Cálculo')
       const cancelar = screen.getByRole('button', { name: 'Cancelar' })
-      await userEvent.click(cancelar)
+      await user.click(cancelar)
       expect(cancelar).toHaveAttribute('aria-expanded', 'true')
-      await userEvent.click(cancelar)
+      await user.click(cancelar)
       expect(cancelar).toHaveAttribute('aria-expanded', 'false')
       expect(screen.queryByText(/será apagado/)).not.toBeInTheDocument()
     })
@@ -536,7 +542,7 @@ describe('TelaNovaMateria', () => {
 
     it('sem nada preenchido, a aba troca de tela direto', async () => {
       montarApp()
-      await userEvent.click(screen.getByRole('link', { name: 'Agenda' }))
+      await user.click(screen.getByRole('link', { name: 'Agenda' }))
       act(() => void window.dispatchEvent(new HashChangeEvent('hashchange')))
       expect(window.location.hash).toBe('#/agenda')
       expect(screen.queryByLabelText('Nome da matéria')).not.toBeInTheDocument()
@@ -545,14 +551,14 @@ describe('TelaNovaMateria', () => {
     it('com algo preenchido, a aba pergunta antes e "Sair sem salvar" vai para onde a pessoa clicou', async () => {
       montarApp()
       await digitar(screen.getByLabelText('Nome da matéria'), 'Cálculo')
-      await userEvent.click(screen.getByRole('link', { name: 'Agenda' }))
+      await user.click(screen.getByRole('link', { name: 'Agenda' }))
 
       expect(window.location.hash).toBe('#/nova-materia')
       expect(screen.getByText(/será apagado/)).toBeInTheDocument()
       expect(screen.getByRole('button', { name: 'Continuar preenchendo' })).toHaveFocus()
       expect(screen.getByLabelText('Nome da matéria')).toHaveValue('Cálculo')
 
-      await userEvent.click(screen.getByRole('button', { name: 'Sair sem salvar' }))
+      await user.click(screen.getByRole('button', { name: 'Sair sem salvar' }))
       act(() => void window.dispatchEvent(new HashChangeEvent('hashchange')))
       expect(window.location.hash).toBe('#/agenda')
       expect(screen.getByRole('heading', { level: 2, name: 'Agenda' })).toBeInTheDocument()
@@ -561,12 +567,12 @@ describe('TelaNovaMateria', () => {
     it('o nome do painel no topo (volta ao lobby) também pergunta antes', async () => {
       montarApp()
       await digitar(screen.getByLabelText('Nome da matéria'), 'Cálculo')
-      await userEvent.click(screen.getByRole('link', { name: 'Coursebook' }))
+      await user.click(screen.getByRole('link', { name: 'Coursebook' }))
 
       expect(window.location.hash).toBe('#/nova-materia')
       expect(screen.getByText(/será apagado/)).toBeInTheDocument()
 
-      await userEvent.click(screen.getByRole('button', { name: 'Sair sem salvar' }))
+      await user.click(screen.getByRole('button', { name: 'Sair sem salvar' }))
       act(() => void window.dispatchEvent(new HashChangeEvent('hashchange')))
       expect(window.location.hash).toBe('#/')
       expect(screen.getByRole('link', { name: 'Começar' })).toBeInTheDocument()
@@ -594,7 +600,7 @@ describe('TelaNovaMateria', () => {
       // Nenhuma entrada do histórico foi reescrita nem criada.
       expect(history.length).toBe(entradas)
 
-      await userEvent.click(screen.getByRole('button', { name: 'Continuar preenchendo' }))
+      await user.click(screen.getByRole('button', { name: 'Continuar preenchendo' }))
       expect(screen.getByLabelText('Nome da matéria')).toHaveValue('Cálculo')
     })
 
@@ -603,8 +609,11 @@ describe('TelaNovaMateria', () => {
       const entradas = history.length
       act(() => history.back())
       // O hash já era #/nova-materia antes do voltar: esperar por ele não espera o voltar
-      // ser tratado. Quem diz que foi tratado é a pergunta aparecer.
-      await userEvent.click(await screen.findByRole('button', { name: 'Sair sem salvar' }))
+      // ser tratado. Quem diz que foi tratado é a pergunta aparecer; depois, o endereço
+      // voltar para o formulário diz que o history.go(1) também terminou.
+      const sair = await screen.findByRole('button', { name: 'Sair sem salvar' })
+      await waitFor(() => expect(window.location.hash).toBe('#/nova-materia'))
+      await user.click(sair)
       await waitFor(() => expect(window.location.hash).toBe('#/materias'))
       await waitFor(() => expect(screen.queryByLabelText('Nome da matéria')).not.toBeInTheDocument())
       expect(history.length).toBe(entradas)
@@ -619,7 +628,7 @@ describe('TelaNovaMateria', () => {
       await digitar(within(grupo('Avaliação 1 do RA1')).getByLabelText('Nome'), 'Prova')
       await continuar()
       await continuar()
-      await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
+      await user.click(screen.getByRole('button', { name: 'Salvar matéria' }))
       act(() => void window.dispatchEvent(new HashChangeEvent('hashchange')))
       expect(window.location.hash).toMatch(/^#\/materia\//)
       expect(screen.queryByText(/será apagado/)).not.toBeInTheDocument()

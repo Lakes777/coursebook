@@ -1,5 +1,4 @@
 import { render, screen, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { describe, expect, it, vi } from 'vitest'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
 import { dadosVazios } from '../../src/logica/armazenamento'
@@ -7,6 +6,7 @@ import { CHAVE_NUVEM, type ContaGuardada } from '../../src/nuvem/conta'
 import { ProvedorNuvem } from '../../src/nuvem/ProvedorNuvem'
 import { TelaDados } from '../../src/telas/TelaDados'
 import { navegador, NuvemFalsa } from '../nuvem/apoio'
+import { criarUsuario } from '../usuario'
 
 const CONTA: ContaGuardada = { email: 'andre@exemplo.com', revisao: 0, pendente: false }
 
@@ -19,7 +19,7 @@ function montar({ nuvem = new NuvemFalsa(), conta = CONTA as ContaGuardada | nul
       </ProvedorNuvem>
     </ProvedorPainel>,
   )
-  return { nuvem, user: userEvent.setup() }
+  return { nuvem, user: criarUsuario() }
 }
 
 const secao = () => screen.getByRole('region', { name: 'Chaves de acesso' })

@@ -1,12 +1,13 @@
 import { act, render, renderHook, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import type { UserEvent } from '@testing-library/user-event'
 import type { ReactNode } from 'react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import App from '../../src/App'
 import { usePainel } from '../../src/estado/contexto'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
 import { CHAVE, dadosVazios, type Carregamento } from '../../src/logica/armazenamento'
 import type { Materia } from '../../src/logica/tipos'
+import { criarUsuario } from '../usuario'
 
 /** localStorage falso que conta as gravações; `falhar` pode ser ligado e desligado. */
 function navegador(falhar = false) {
@@ -65,6 +66,11 @@ function renderApp(inicial: Partial<Carregamento>, nav = navegador()) {
     </ProvedorPainel>,
   )
 }
+
+let user: UserEvent
+beforeEach(() => {
+  user = criarUsuario()
+})
 
 describe('ProvedorPainel', () => {
   it('começa com os dados carregados e não grava à toa', () => {
@@ -196,14 +202,14 @@ describe('App com o provedor', () => {
   it('mostra o aviso do carregamento até a pessoa fechar', async () => {
     renderApp({ aviso: 'Não deu para ler os dados salvos.' })
     expect(screen.getByRole('alert')).toHaveTextContent('Não deu para ler os dados salvos.')
-    await userEvent.click(screen.getByRole('button', { name: 'Entendi' }))
+    await user.click(screen.getByRole('button', { name: 'Entendi' }))
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(screen.queryByText(/Nada está sendo salvo|alterado em outra aba/)).not.toBeInTheDocument()
   })
 
   it('continua dizendo que nada é salvo depois que o aviso é fechado', async () => {
     renderApp({ aviso: 'O navegador não deixou ler os dados salvos.', podeSalvar: false })
-    await userEvent.click(screen.getByRole('button', { name: 'Entendi' }))
+    await user.click(screen.getByRole('button', { name: 'Entendi' }))
     expect(screen.getByText(/Nada está sendo salvo neste navegador\./).closest('[role=status]')).toBeInTheDocument()
   })
 

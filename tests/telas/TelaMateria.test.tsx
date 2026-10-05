@@ -1,10 +1,10 @@
 import { render, screen, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
 import { CHAVE, dadosVazios } from '../../src/logica/armazenamento'
 import type { Dados, Evento, Materia } from '../../src/logica/tipos'
 import { TelaMateria } from '../../src/telas/TelaMateria'
+import { criarUsuario } from '../usuario'
 
 /** localStorage falso: os testes não mexem no do jsdom. */
 function navegador() {
@@ -110,7 +110,7 @@ describe('TelaMateria', () => {
   })
 
   it('salva a nota ao apertar Enter e recalcula a situação', async () => {
-    const user = userEvent.setup()
+    const user = criarUsuario()
     const nav = montar()
     const campo = screen.getByRole('textbox', { name: 'Nota de Prova 2' })
     await user.type(campo, '3{Enter}')
@@ -131,7 +131,7 @@ describe('TelaMateria', () => {
   })
 
   it('avisa o erro da nota mesmo saindo do campo com Tab', async () => {
-    const user = userEvent.setup()
+    const user = criarUsuario()
     montar()
     await user.type(screen.getByRole('textbox', { name: 'Nota de Prova 2' }), '12')
     await user.tab()
@@ -139,7 +139,7 @@ describe('TelaMateria', () => {
   })
 
   it('salva ao sair do campo, e apagar a nota volta para "sem nota"', async () => {
-    const user = userEvent.setup()
+    const user = criarUsuario()
     const nav = montar()
     const campo = screen.getByRole('textbox', { name: 'Nota de Prova 1' })
     await user.clear(campo)
@@ -149,7 +149,7 @@ describe('TelaMateria', () => {
   })
 
   it('não salva nota acima do valor da avaliação e liga o erro ao campo', async () => {
-    const user = userEvent.setup()
+    const user = criarUsuario()
     const nav = montar()
     const campo = screen.getByRole('textbox', { name: 'Nota de Prova 2' })
     await user.type(campo, '3,5{Enter}')
@@ -165,7 +165,7 @@ describe('TelaMateria', () => {
   })
 
   it('mostra a recuperação do RA que o plano prevê e salva a nota dela', async () => {
-    const user = userEvent.setup()
+    const user = criarUsuario()
     const nav = montar()
     expect(within(cartaoRA('RA1')).queryByRole('textbox', { name: /Recuperação/ })).not.toBeInTheDocument()
     const campo = within(cartaoRA('RA2')).getByRole('textbox', { name: 'Recuperação de RA2' })
@@ -174,7 +174,7 @@ describe('TelaMateria', () => {
   })
 
   it('"Faltei hoje" lança as aulas do dia pelos horários e mostra a frequência', async () => {
-    const user = userEvent.setup()
+    const user = criarUsuario()
     // 01/10/2026 é quinta: a matéria tem 4 aulas às quintas.
     const nav = montar({ ...POO, horarios: [...POO.horarios, { dia: 4, inicio: '19:00', fim: '22:30', aulas: 4 }] })
     const faltas = screen.getByRole('region', { name: 'Faltas' })
@@ -192,7 +192,7 @@ describe('TelaMateria', () => {
   })
 
   it('em dia sem aula da matéria, "Faltei hoje" lança 1 aula e explica', async () => {
-    const user = userEvent.setup()
+    const user = criarUsuario()
     // A POO só tem aula às terças; hoje é quinta.
     const nav = montar()
     const faltas = screen.getByRole('region', { name: 'Faltas' })
@@ -202,7 +202,7 @@ describe('TelaMateria', () => {
   })
 
   it('recusa quantidade de aulas inválida no formulário de falta', async () => {
-    const user = userEvent.setup()
+    const user = criarUsuario()
     montar()
     const quantidade = screen.getByRole('textbox', { name: 'Aulas' })
     await user.clear(quantidade)
@@ -213,7 +213,7 @@ describe('TelaMateria', () => {
   })
 
   it('remove uma falta em 2 passos e põe o foco no título da seção', async () => {
-    const user = userEvent.setup()
+    const user = criarUsuario()
     const nav = montar()
     await user.click(screen.getByRole('button', { name: 'Remover a falta de 02/09/2026, 2 aulas' }))
     await user.click(screen.getByRole('button', { name: 'Confirmar remoção de a falta de 02/09/2026, 2 aulas' }))
@@ -222,7 +222,7 @@ describe('TelaMateria', () => {
   })
 
   it('pontos extras na nota final: pedem comentário e entram na conta', async () => {
-    const user = userEvent.setup()
+    const user = criarUsuario()
     const nav = montar()
     const extras = screen.getByRole('region', { name: 'Pontos extras' })
     await user.selectOptions(within(extras).getByRole('combobox', { name: 'Vale para' }), 'Nota final')
@@ -246,7 +246,7 @@ describe('TelaMateria', () => {
   })
 
   it('pontos extras num RA ficam na escala dele e aumentam a nota do RA', async () => {
-    const user = userEvent.setup()
+    const user = criarUsuario()
     const nav = montar()
     const extras = screen.getByRole('region', { name: 'Pontos extras' })
     // O RA vem escolhido primeiro; o RA1 da POO vale 3,0.
@@ -266,7 +266,7 @@ describe('TelaMateria', () => {
   })
 
   it('extra num RA sem nota já conta na nota final', async () => {
-    const user = userEvent.setup()
+    const user = criarUsuario()
     montar()
     const extras = screen.getByRole('region', { name: 'Pontos extras' })
     await user.selectOptions(within(extras).getByRole('combobox', { name: 'Vale para' }), 'RA2')
@@ -279,7 +279,7 @@ describe('TelaMateria', () => {
   })
 
   it('não aceita mais pontos extras do que o RA vale', async () => {
-    const user = userEvent.setup()
+    const user = criarUsuario()
     const nav = montar()
     const extras = screen.getByRole('region', { name: 'Pontos extras' })
     const pontos = within(extras).getByRole('textbox', { name: 'Pontos' })
@@ -292,7 +292,7 @@ describe('TelaMateria', () => {
   })
 
   it('volta para a regra padrão quando a matéria tem regra própria', async () => {
-    const user = userEvent.setup()
+    const user = criarUsuario()
     const nav = montar({ ...POO, regra: { mediaMinima: 6, frequenciaMinima: 0.75, arredondarUmaCasa: false } })
     expect(screen.getByText('Regra própria desta matéria.')).toBeInTheDocument()
     expect(screen.getByText('Sem recuperação')).toBeInTheDocument()
@@ -302,7 +302,7 @@ describe('TelaMateria', () => {
   })
 
   it('remove a matéria com os eventos dela e volta para a lista', async () => {
-    const user = userEvent.setup()
+    const user = criarUsuario()
     const nav = montar()
     expect(screen.getByText(/e 1 evento dela na agenda/)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Remover matéria POO' }))

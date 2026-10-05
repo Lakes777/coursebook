@@ -1,10 +1,11 @@
 import { act, render, screen, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
+import type { UserEvent } from '@testing-library/user-event'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { ProvedorPainel } from '../../src/estado/ProvedorPainel'
 import { CHAVE, dadosVazios } from '../../src/logica/armazenamento'
 import type { Dados, Materia } from '../../src/logica/tipos'
 import { TelaEditarMateria } from '../../src/telas/TelaEditarMateria'
+import { criarUsuario } from '../usuario'
 
 /** localStorage falso: os testes não mexem no do jsdom. */
 function navegador() {
@@ -53,7 +54,7 @@ function montar(materias: Materia[] = [POO]) {
 }
 
 const salva = (nav: ReturnType<typeof navegador>): Materia => (JSON.parse(nav.itens.get(CHAVE)!) as Dados).materias[0]
-const continuar = () => userEvent.click(screen.getByRole('button', { name: 'Continuar' }))
+const continuar = () => user.click(screen.getByRole('button', { name: 'Continuar' }))
 const grupo = (nome: string) => screen.getByRole('group', { name: nome })
 const tituloPasso = () => screen.getByRole('heading', { level: 3 })
 
@@ -68,6 +69,11 @@ const FILO_5A: Materia = {
 
 beforeEach(() => {
   window.location.hash = '#/materia/poo/editar'
+})
+
+let user: UserEvent
+beforeEach(() => {
+  user = criarUsuario()
 })
 
 describe('TelaEditarMateria', () => {
@@ -89,7 +95,6 @@ describe('TelaEditarMateria', () => {
   })
 
   it('salva a mudança mantendo notas, faltas e pontos extras, e volta para a matéria', async () => {
-    const user = userEvent.setup()
     const nav = montar()
     const nome = screen.getByLabelText('Nome da matéria')
     await user.clear(nome)
@@ -106,7 +111,6 @@ describe('TelaEditarMateria', () => {
   })
 
   it('não deixa a avaliação valer menos que a nota dela', async () => {
-    const user = userEvent.setup()
     const nav = montar()
     await continuar()
     await continuar()
@@ -121,7 +125,6 @@ describe('TelaEditarMateria', () => {
   })
 
   it('avisa na revisão as notas que serão apagadas', async () => {
-    const user = userEvent.setup()
     const nav = montar()
     await continuar()
     await continuar()
@@ -147,7 +150,7 @@ describe('TelaEditarMateria', () => {
     expect(within(horario).getByLabelText('Da aula')).toHaveDisplayValue('4ª aula (09:40)')
     expect(within(horario).getByRole('option', { name: '2ª aula (07:50) · Filosofia' })).toBeDisabled()
     for (let i = 0; i < 4; i++) await continuar()
-    await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
+    await user.click(screen.getByRole('button', { name: 'Salvar matéria' }))
     expect((JSON.parse(nav.itens.get(CHAVE)!) as Dados).materias[0].horarios).toEqual(comHorario.horarios)
   })
 
@@ -159,25 +162,25 @@ describe('TelaEditarMateria', () => {
     expect(ultima).toHaveDisplayValue('7ª aula (até 12:40)')
     expect(within(ultima).getByRole('option', { name: '7ª aula (até 12:40)' })).toBeDisabled()
     // Mudar só o nome: o horário é o mesmo de antes, então passa.
-    await userEvent.clear(screen.getByLabelText('Nome da matéria'))
-    await userEvent.type(screen.getByLabelText('Nome da matéria'), 'POO 2')
+    await user.clear(screen.getByLabelText('Nome da matéria'))
+    await user.type(screen.getByLabelText('Nome da matéria'), 'POO 2')
     await continuar()
     expect(tituloPasso()).toHaveTextContent('Passo 2 de 5')
     for (let i = 0; i < 3; i++) await continuar()
-    await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
+    await user.click(screen.getByRole('button', { name: 'Salvar matéria' }))
     expect(salva(nav)).toMatchObject({ nome: 'POO 2', horarios: POO_TERCA.horarios })
   })
 
   it('choque que já estava nos dados: trocar para outra aula em cima da Filosofia avisa, sem travar', async () => {
     montar([POO_TERCA, FILO_5A])
     const horario = grupo('Horário 1')
-    await userEvent.selectOptions(within(horario).getByLabelText('Da aula'), '3ª aula (08:35)')
+    await user.selectOptions(within(horario).getByLabelText('Da aula'), '3ª aula (08:35)')
     await continuar()
     const primeira = within(horario).getByLabelText('Da aula')
     expect(primeira).toHaveAccessibleDescription(/Choca com Filosofia \(terça-feira, 10:25 às 11:10\)/)
     expect(primeira).toHaveFocus()
     expect(tituloPasso()).toHaveTextContent('Passo 1 de 5')
-    await userEvent.selectOptions(within(horario).getByLabelText('Até a aula'), '4ª aula (até 10:25)')
+    await user.selectOptions(within(horario).getByLabelText('Até a aula'), '4ª aula (até 10:25)')
     await continuar()
     expect(tituloPasso()).toHaveTextContent('Passo 2 de 5')
   })
@@ -190,14 +193,14 @@ describe('TelaEditarMateria', () => {
 
     it('removida: o formulário continua, avisa, e salvar coloca a matéria de volta', async () => {
       const nav = montar()
-      await userEvent.clear(screen.getByLabelText('Nome da matéria'))
-      await userEvent.type(screen.getByLabelText('Nome da matéria'), 'POO 2')
+      await user.clear(screen.getByLabelText('Nome da matéria'))
+      await user.type(screen.getByLabelText('Nome da matéria'), 'POO 2')
       outraAbaSalvou(nav, dadosVazios())
 
       expect(screen.getByRole('alert')).toHaveTextContent('removida em outra aba')
       expect(screen.getByLabelText('Nome da matéria')).toHaveValue('POO 2')
       for (let i = 0; i < 4; i++) await continuar()
-      await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
+      await user.click(screen.getByRole('button', { name: 'Salvar matéria' }))
       expect(salva(nav).nome).toBe('POO 2')
       expect(salva(nav).faltas).toEqual(POO.faltas)
     })
@@ -211,7 +214,7 @@ describe('TelaEditarMateria', () => {
       outraAbaSalvou(nav, { ...dadosVazios(), materias: [comNota] })
       expect(screen.getByRole('alert')).toHaveTextContent('alterada em outra aba')
       for (let i = 0; i < 4; i++) await continuar()
-      await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
+      await user.click(screen.getByRole('button', { name: 'Salvar matéria' }))
       expect(salva(nav).ras[0].avaliacoes[0].nota).toBe(10)
     })
 
@@ -220,11 +223,11 @@ describe('TelaEditarMateria', () => {
       // choque que já estava nos dados. Na prática só acontece com importação na outra aba,
       // já que o formulário de lá barraria o choque.
       const nav = montar([POO_TERCA])
-      await userEvent.clear(screen.getByLabelText('Nome da matéria'))
-      await userEvent.type(screen.getByLabelText('Nome da matéria'), 'POO 2')
+      await user.clear(screen.getByLabelText('Nome da matéria'))
+      await user.type(screen.getByLabelText('Nome da matéria'), 'POO 2')
       for (let i = 0; i < 4; i++) await continuar()
       outraAbaSalvou(nav, { ...dadosVazios(), materias: [POO_TERCA, FILO_5A] })
-      await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
+      await user.click(screen.getByRole('button', { name: 'Salvar matéria' }))
       const dados = JSON.parse(nav.itens.get(CHAVE)!) as Dados
       expect(dados.materias.map((m) => m.nome)).toEqual(['POO 2', 'Filosofia'])
       expect(dados.materias[0].horarios).toEqual(POO_TERCA.horarios)
@@ -233,11 +236,11 @@ describe('TelaEditarMateria', () => {
     it('outra matéria passou a ocupar o horário novo: salvar no revisar volta ao passo 1 com o erro', async () => {
       const nav = montar([POO_TERCA])
       // Muda o horário (4ª à 6ª): deixa de ser o que estava salvo.
-      await userEvent.selectOptions(within(grupo('Horário 1')).getByLabelText('Até a aula'), '6ª aula (até 11:55)')
+      await user.selectOptions(within(grupo('Horário 1')).getByLabelText('Até a aula'), '6ª aula (até 11:55)')
       for (let i = 0; i < 4; i++) await continuar()
       expect(tituloPasso()).toHaveTextContent('Passo 5 de 5')
       outraAbaSalvou(nav, { ...dadosVazios(), materias: [POO_TERCA, FILO_5A] })
-      await userEvent.click(screen.getByRole('button', { name: 'Salvar matéria' }))
+      await user.click(screen.getByRole('button', { name: 'Salvar matéria' }))
       expect(tituloPasso()).toHaveTextContent('Passo 1 de 5')
       const primeira = within(grupo('Horário 1')).getByLabelText('Da aula')
       expect(primeira).toHaveAccessibleDescription(/Choca com Filosofia/)
