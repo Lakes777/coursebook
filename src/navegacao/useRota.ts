@@ -39,6 +39,8 @@ function aoMudarHash() {
   if (bloqueio && destino !== liberado) {
     // Limitação: um hash digitado na barra de endereço não tem entrada seguinte, então
     // o go(1) não faz nada; o endereço fica diferente da tela até a pessoa decidir.
+    // E um "Sair sem salvar" clicado antes de o go(1) terminar (milissegundos) reabre
+    // o formulário quando ele termina; nenhuma pessoa clica tão rápido.
     destinoDoHistorico = destino
     history.go(1)
     bloqueio(destino)
