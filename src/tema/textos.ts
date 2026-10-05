@@ -99,6 +99,8 @@ export function plural(n: number, um: string, varios: string): string {
 /**
  * Texto do selo de cada item. O que está longe (futuro) não ganha selo: a data e o
  * "em 20 dias" ao lado já dizem tudo, e um selo em cada linha tiraria a força dos outros.
+ * Anda junto com textoPrazoAoLado: se o selo de hoje/próximo deixar de dizer o prazo,
+ * o texto ao lado tem de voltar.
  */
 export function textoSelo(item: Pick<EventoNaAgenda, 'destaque' | 'dias'>): string | null {
   switch (item.destaque) {

@@ -137,11 +137,14 @@ describe('textoPrazoAoLado', () => {
     expect(textoPrazoAoLado({ destaque: 'hoje', dias: 0 })).toBeNull()
     expect(textoPrazoAoLado({ destaque: 'proximo', dias: 1 })).toBeNull()
     expect(textoPrazoAoLado({ destaque: 'proximo', dias: 5 })).toBeNull()
+    expect(textoPrazoAoLado({ destaque: 'proximo', dias: 7 })).toBeNull()
   })
 
   it('fica quando o selo diz outra coisa ou não existe', () => {
     expect(textoPrazoAoLado({ destaque: 'atrasado', dias: -2 })).toBe('há 2 dias')
     expect(textoPrazoAoLado({ destaque: 'concluido', dias: -1 })).toBe('ontem')
     expect(textoPrazoAoLado({ destaque: 'futuro', dias: 30 })).toBe('em 30 dias')
+    expect(textoPrazoAoLado({ destaque: 'futuro', dias: 8 })).toBe('em 8 dias')
+    expect(textoPrazoAoLado({ destaque: 'concluido', dias: 3 })).toBe('em 3 dias')
   })
 })
