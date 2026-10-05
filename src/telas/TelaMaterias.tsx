@@ -5,11 +5,11 @@ import { useHoje } from '../componentes/useHoje'
 import { useVerExemplo } from '../componentes/useVerExemplo'
 import { usePainel } from '../estado/contexto'
 import { formatarData } from '../logica/datas'
-import { agenda, NOMES_TIPO, textoPrazo } from '../logica/eventos'
+import { agenda, NOMES_TIPO } from '../logica/eventos'
 import { paraHash } from '../navegacao/rota'
 import { ICONE_TIPO_EVENTO } from '../tema/icones'
 import { tomFaltas, tomNota, tomPrazo } from '../tema/tons'
-import { resumoMateria, resumoSemestre, textoFaltas, textoNota, textoSelo } from '../tema/textos'
+import { resumoMateria, resumoSemestre, textoFaltas, textoNota, textoPrazoAoLado, textoSelo } from '../tema/textos'
 import './materias.css'
 
 const NOVA_MATERIA = paraHash({ tela: 'nova-materia' })
@@ -113,6 +113,7 @@ function ProximosPrazos() {
         {pendentes.slice(0, PRAZOS_NA_LISTA).map((evento) => {
           const Icone = ICONE_TIPO_EVENTO[evento.tipo]
           const selo = textoSelo(evento)
+          const prazo = textoPrazoAoLado(evento)
           const materia = evento.materiaId ? nomeMateria.get(evento.materiaId) : undefined
           return (
             <li key={evento.id} className="prazos__item">
@@ -125,7 +126,8 @@ function ProximosPrazos() {
                 </span>
                 <span className="muted prazos__detalhe">
                   {materia && `${materia} · `}
-                  <time dateTime={evento.data}>{formatarData(evento.data)}</time> · {textoPrazo(evento.dias)}
+                  <time dateTime={evento.data}>{formatarData(evento.data)}</time>
+                  {prazo && ` · ${prazo}`}
                 </span>
               </span>
               {selo && <Selo tom={tomPrazo(evento.destaque)}>{selo}</Selo>}

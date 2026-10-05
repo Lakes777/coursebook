@@ -7,11 +7,11 @@ import { Selo } from '../componentes/Selo'
 import { useHoje } from '../componentes/useHoje'
 import { usePainel } from '../estado/contexto'
 import { formatarData, paraDataISO } from '../logica/datas'
-import { agenda, NOMES_TIPO, textoPrazo, TIPOS_EVENTO, type EventoNaAgenda } from '../logica/eventos'
+import { agenda, NOMES_TIPO, TIPOS_EVENTO, type EventoNaAgenda } from '../logica/eventos'
 import { novoId } from '../logica/ids'
 import type { Evento, TipoEvento } from '../logica/tipos'
 import { ICONE_TIPO_EVENTO } from '../tema/icones'
-import { textoSelo } from '../tema/textos'
+import { textoPrazoAoLado, textoSelo } from '../tema/textos'
 import { tomPrazo } from '../tema/tons'
 import { erroDoFormulario, type CampoEvento } from './agendaUtil'
 import './agenda.css'
@@ -116,6 +116,7 @@ function ItemAgenda({ evento, materia, tomarFoco, aoMarcar, aoRemover }: PropsIt
   const caixa = useRef<HTMLInputElement>(null)
   const Icone = ICONE_TIPO_EVENTO[evento.tipo]
   const selo = textoSelo(evento)
+  const prazo = textoPrazoAoLado(evento)
 
   useEffect(() => {
     if (tomarFoco(evento.id)) caixa.current?.focus()
@@ -133,7 +134,8 @@ function ItemAgenda({ evento, materia, tomarFoco, aoMarcar, aoRemover }: PropsIt
         <p className="item-agenda__titulo">{evento.titulo}</p>
         {materia && <p className="item-agenda__materia muted">{materia}</p>}
         <p className="item-agenda__data">
-          <time dateTime={evento.data}>{formatarData(evento.data)}</time> · {textoPrazo(evento.dias)}
+          <time dateTime={evento.data}>{formatarData(evento.data)}</time>
+          {prazo && ` · ${prazo}`}
         </p>
         {selo && <Selo tom={tomPrazo(evento.destaque)}>{selo}</Selo>}
       </div>

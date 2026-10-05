@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { REGRA_PUCPR, type Materia } from '../../src/logica/tipos'
-import { plural, resumoMateria, resumoSemestre, textoFaltas, textoNota, textoSelo } from '../../src/tema/textos'
+import { plural, resumoMateria, resumoSemestre, textoFaltas, textoNota, textoPrazoAoLado, textoSelo } from '../../src/tema/textos'
 
 function materia(parcial: Partial<Materia> = {}): Materia {
   return {
@@ -129,5 +129,19 @@ describe('resumoSemestre', () => {
     const regra = { ...REGRA_PUCPR, mediaMinima: 6 }
     expect(resumoSemestre([resumo(nota(6.8))])).toEqual(['1 matéria', '1 pede atenção'])
     expect(resumoSemestre([resumo({ ...nota(6.8), regra })])).toEqual(['1 matéria', '1 aprovada'])
+  })
+})
+
+describe('textoPrazoAoLado', () => {
+  it('some quando o selo já diz o prazo (hoje, amanhã, em N dias)', () => {
+    expect(textoPrazoAoLado({ destaque: 'hoje', dias: 0 })).toBeNull()
+    expect(textoPrazoAoLado({ destaque: 'proximo', dias: 1 })).toBeNull()
+    expect(textoPrazoAoLado({ destaque: 'proximo', dias: 5 })).toBeNull()
+  })
+
+  it('fica quando o selo diz outra coisa ou não existe', () => {
+    expect(textoPrazoAoLado({ destaque: 'atrasado', dias: -2 })).toBe('há 2 dias')
+    expect(textoPrazoAoLado({ destaque: 'concluido', dias: -1 })).toBe('ontem')
+    expect(textoPrazoAoLado({ destaque: 'futuro', dias: 30 })).toBe('em 30 dias')
   })
 })

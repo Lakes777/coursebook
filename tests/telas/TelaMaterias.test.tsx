@@ -164,7 +164,14 @@ describe('TelaMaterias', () => {
         'Prova: Prova do RA2',
       ])
       expect(within(itens[0]).getByText('Atrasado')).toHaveClass('selo--perigo')
-      expect(itens[2]).toHaveTextContent('POO · 07/10/2026 · em 5 dias')
+      // O prazo vai depois da data só quando o selo não diz o mesmo: aparece uma vez em cada item.
+      const detalhe = (i: number) => itens[i].querySelector('.prazos__detalhe')
+      expect(detalhe(0)).toHaveTextContent(/^30\/09\/2026 · há 2 dias$/)
+      expect(detalhe(1)).toHaveTextContent(/^02\/10\/2026$/)
+      expect(within(itens[1]).getByText('Hoje')).toHaveClass('selo--atencao')
+      expect(detalhe(2)).toHaveTextContent(/^POO · 07\/10\/2026$/)
+      expect(within(itens[2]).getAllByText(/em 5 dias/i)).toHaveLength(1)
+      expect(within(itens[2]).getByText('Em 5 dias')).toHaveClass('selo--destaque')
       expect(screen.getByRole('link', { name: 'Ver a agenda (mais 1)' })).toHaveAttribute('href', '#/agenda')
     })
 

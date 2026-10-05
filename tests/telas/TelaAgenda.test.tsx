@@ -105,12 +105,26 @@ describe('TelaAgenda', () => {
     // Só o trecho do tipo: o título "Prova do RA2" já tem a palavra "Prova".
     expect(prova.querySelector('.item-agenda__tipo')).toHaveTextContent('Prova')
     expect(item('Relatório').querySelector('.item-agenda__tipo')).toHaveTextContent('Trabalho')
-    expect(prova).toHaveTextContent('04/10/2026 · em 3 dias')
     expect(within(prova).getByText('Algoritmos')).toBeInTheDocument()
-    expect(item('Relatório')).toHaveTextContent('28/09/2026 · há 3 dias')
+    // O prazo vem depois da data só quando o selo não diz o mesmo (atrasado, concluído, longe).
+    const data = (titulo: string) => item(titulo).querySelector('.item-agenda__data')
+    expect(data('Relatório')).toHaveTextContent(/^28\/09\/2026 · há 3 dias$/)
+    expect(data('Prova do RA1')).toHaveTextContent(/^10\/09\/2026 · há 21 dias$/)
+    expect(data('Seminário final')).toHaveTextContent(/^20\/11\/2026 · em 50 dias$/)
     expect(item('Seminário final')).toHaveTextContent('Apresentação')
     // O ícone é enfeite: o nome do tipo está escrito ao lado.
     expect(prova.querySelector('.item-agenda__tipo svg')).toHaveAttribute('aria-hidden', 'true')
+  })
+
+  it('não repete no mesmo item o prazo que o selo já diz', () => {
+    montar()
+    const data = (titulo: string) => item(titulo).querySelector('.item-agenda__data')
+    expect(data('Lista de exercícios')).toHaveTextContent(/^01\/10\/2026$/)
+    expect(data('Quiz')).toHaveTextContent(/^02\/10\/2026$/)
+    expect(data('Prova do RA2')).toHaveTextContent(/^04\/10\/2026$/)
+    expect(within(item('Prova do RA2')).getAllByText(/em 3 dias/i)).toHaveLength(1)
+    expect(within(item('Quiz')).getAllByText(/amanhã/i)).toHaveLength(1)
+    expect(within(item('Lista de exercícios')).getAllByText(/hoje/i)).toHaveLength(1)
   })
 
   it('marcar como feito leva o item para os concluídos e salva', async () => {
@@ -228,9 +242,11 @@ describe('TelaAgenda', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Adicionar' }))
 
     const novo = item('Apresentação do projeto')
-    expect(novo).toHaveTextContent('06/10/2026 · em 5 dias')
+    expect(novo.querySelector('.item-agenda__data')).toHaveTextContent(/^06\/10\/2026$/)
     expect(within(novo).getByText('Algoritmos')).toBeInTheDocument()
-    expect(within(novo).getByText('Em 5 dias')).toBeInTheDocument()
+    // O prazo aparece uma vez só, no selo.
+    expect(within(novo).getAllByText(/em 5 dias/i)).toHaveLength(1)
+    expect(within(novo).getByText('Em 5 dias')).toHaveClass('selo')
     expect(titulo).toHaveValue('')
     expect(titulo).toHaveFocus()
     expect(screen.getByRole('status')).toHaveTextContent('Adicionado à agenda: Apresentação do projeto.')

@@ -1,4 +1,4 @@
-import type { EventoNaAgenda } from '../logica/eventos'
+import { textoPrazo, type EventoNaAgenda } from '../logica/eventos'
 import type { SituacaoFaltas } from '../logica/faltas'
 import { situacaoFaltas } from '../logica/faltas'
 import type { SituacaoNota } from '../logica/notas'
@@ -113,4 +113,13 @@ export function textoSelo(item: Pick<EventoNaAgenda, 'destaque' | 'dias'>): stri
     case 'futuro':
       return null
   }
+}
+
+/**
+ * O prazo escrito depois da data ("em 20 dias", "há 3 dias"), ou null quando o selo
+ * do item já diz o mesmo (hoje, amanhã, em 5 dias): sem isso o prazo aparecia duas
+ * vezes no mesmo item, na Agenda e em Próximos prazos.
+ */
+export function textoPrazoAoLado(item: Pick<EventoNaAgenda, 'destaque' | 'dias'>): string | null {
+  return item.destaque === 'hoje' || item.destaque === 'proximo' ? null : textoPrazo(item.dias)
 }
