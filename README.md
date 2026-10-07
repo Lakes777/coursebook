@@ -11,7 +11,7 @@ seguindo a regra de aprovação da PUC-PR (configurável por matéria).
 Funciona sem conta, com os dados só no navegador (localStorage). Quem cria uma conta passa a ter
 os dados guardados também na nuvem (Postgres) e sincronizados entre aparelhos, como o PC e o celular.
 
-**No ar:** https://painel-estudos-cyan.vercel.app (o painel abre vazio; "Ver com dados de exemplo"
+**No ar:** https://coursebookalp.vercel.app (o painel abre vazio; "Ver com dados de exemplo"
 mostra como ele fica em uso).
 
 ## Demonstração

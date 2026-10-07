@@ -117,7 +117,7 @@ sem guardar a senha: ela cria uma **chave de acesso** na tela Dados e cola no bo
 #### GET /api/prazos
 
 ```
-GET https://painel-estudos-cyan.vercel.app/api/prazos?dias=7
+GET https://coursebookalp.vercel.app/api/prazos?dias=7
 Authorization: Bearer cb_...
 ```
 
