@@ -2,7 +2,7 @@
 
 Coursebook · painel de estudos da faculdade: acompanhe matérias, notas, faltas e agenda do semestre.
 
-[![Testes](https://github.com/Lakes777/painel-estudos/actions/workflows/testes.yml/badge.svg)](https://github.com/Lakes777/painel-estudos/actions/workflows/testes.yml)
+[![Testes](https://github.com/Lakes777/coursebook/actions/workflows/testes.yml/badge.svg)](https://github.com/Lakes777/coursebook/actions/workflows/testes.yml)
 
 Painel para acompanhar o semestre da faculdade: notas por RA, faltas, pontos extras e a agenda
 de provas e trabalhos, num lugar só. Ele calcula quanto falta para passar em cada matéria,
@@ -95,8 +95,8 @@ carregar no painel vazio com "Ver com dados de exemplo".
 Precisa do [Node.js](https://nodejs.org/) 22.12 ou mais novo (testado no 22 e no 24).
 
 ```bash
-git clone https://github.com/Lakes777/painel-estudos.git
-cd painel-estudos
+git clone https://github.com/Lakes777/coursebook.git
+cd coursebook
 npm install
 npm run dev
 ```

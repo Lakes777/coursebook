@@ -4,7 +4,7 @@ import { ID_TITULO_TELA } from '../componentes/CabecalhoTela'
 import { INICIO, paraHash } from '../navegacao/rota'
 import './lobby.css'
 
-const GITHUB = 'https://github.com/Lakes777/painel-estudos'
+const GITHUB = 'https://github.com/Lakes777/coursebook'
 
 /** As pranchas do fundo (desenhos próprios em public/pranchas/), na ordem da 1ª faixa. */
 const PRANCHAS = ['grade-semanal', 'caderno', 'calendario', 'livros', 'boletim', 'relogio-cronograma']

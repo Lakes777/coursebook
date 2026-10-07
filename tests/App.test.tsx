@@ -140,7 +140,7 @@ describe('lobby', () => {
     montar('')
     expect(screen.getAllByRole('listitem')).toHaveLength(3)
     const codigo = screen.getByRole('link', { name: 'Ver o código no GitHub' })
-    expect(codigo).toHaveAttribute('href', 'https://github.com/Lakes777/painel-estudos')
+    expect(codigo).toHaveAttribute('href', 'https://github.com/Lakes777/coursebook')
     expect(codigo).toHaveAttribute('target', '_blank')
   })
 
