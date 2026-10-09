@@ -43,7 +43,7 @@
   width: 24px;
   height: 24px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pequeno);
   font-size: 0.8rem;
 }
 

@@ -1,33 +1,36 @@
-/* Fundo cinza-grafite (o mesmo dos outros projetos) com o bordô da PUCPR.
+/* Identidade "Grade": quadro de horários. Fundo quase preto, linhas retas, cantos quase
+   sem arredondar, títulos em Archivo largo e em caixa alta, e o bordô da PUCPR.
    O bordô da marca é o Pantone 201 (#9d2235). Sobre o fundo escuro ele tem pouco
-   contraste (2,3:1), então aparece cheio só atrás de texto branco (botões, faixa
-   do topo); em texto e ícones vai o tom claro dele, --destaque (6,3:1). */
+   contraste, então aparece cheio só atrás de texto branco (botões, faixa do topo);
+   em texto e ícones vai o tom claro dele, --destaque. A letra larga fica só em títulos,
+   marca, números e botões: no texto corrido ela cansaria. */
 :root {
   color-scheme: dark;
 
-  --bg: #0d0e10;
-  --surface: #16171a;
-  --surface-hover: #1e1f23;
-  --border: #2a2c31;
-  --topo: #121315;
+  --bg: #0e0e10;
+  --surface: #151518;
+  --surface-hover: #1d1d21;
+  --border: #26262b;
+  --topo: #0e0e10;
 
-  --text: #e4e5e7;
-  --text-muted: #8e9199;
+  --text: #ecebee;
+  --text-muted: #8f8e97;
 
   --marca: #9d2235;
   --marca-escura: #7a1a29;
-  --destaque: #e07a8c;
+  --destaque: #ea8798;
   /* Situações: verde, amarelo e vermelho, que todo mundo reconhece. */
-  --ok: #81c784;
-  --atencao: #ffd54f;
+  --ok: #86c99a;
+  --atencao: #f0cf6a;
   --perigo: #ef9a9a;
   /* Borda dos campos: precisa de 3:1 sobre o fundo para o campo não sumir. */
   --borda-campo: #62656d;
 
-  --font: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --mono: 'Fira Code', ui-monospace, monospace;
-  --radius: 14px;
-  --radius-pequeno: 10px;
+  --font: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+  /* Cantos quase retos, como as células de uma grade */
+  --radius: 3px;
+  --radius-pequeno: 2px;
   /* As mesmas curvas do portfólio */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-texto: cubic-bezier(0, -0.02, 0.49, 0.99);
@@ -90,6 +93,14 @@ a {
   outline: none;
 }
 
+/* Títulos das telas: Archivo largo (font-stretch), pesado e em caixa alta */
+.titulo-tela {
+  font-stretch: 125%;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+}
+
 /* Quem prefere menos animação (ex.: "Efeitos de animação" desligado no Windows) não vê
    nada se mexer; só a troca de tela mantém um fade simples (no fim do arquivo). */
 @media (prefers-reduced-motion: reduce) {
@@ -113,7 +124,7 @@ a {
 /* ---------- Topo ---------- */
 .topo {
   background: var(--topo);
-  border-bottom: 3px solid var(--marca);
+  border-bottom: 2px solid var(--marca);
 }
 
 /* No computador o topo acompanha a rolagem (no celular ele ocupa 2 linhas e roubaria espaço). */
@@ -127,7 +138,7 @@ a {
     position: sticky;
     top: 0;
     z-index: 5;
-    background: rgb(18 19 21 / 0.9);
+    background: rgb(14 14 16 / 0.92);
     backdrop-filter: blur(10px);
   }
 }
@@ -184,7 +195,7 @@ a {
 }
 
 .abas__item:not([aria-current='page']):hover {
-  background: rgb(228 229 231 / 0.04);
+  background: rgb(236 235 238 / 0.04);
 }
 
 .abas__item[aria-current='page'] {
@@ -224,12 +235,16 @@ a {
   align-items: center;
   gap: 10px;
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.2rem;
+  font-stretch: 125%;
   font-weight: 800;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
 }
 
+/* O logo (grade) fica na cor do texto; só a célula da "aula de agora" é bordô */
 .topo__titulo .icone {
-  color: var(--destaque);
+  color: var(--text);
 }
 
 /* O nome do painel é o link de volta ao lobby: parece título, não link. */
@@ -342,15 +357,19 @@ a {
 }
 
 /* ---------- Selos de situação ---------- */
+/* Etiqueta reta, em letra de máquina e caixa alta, como a marcação de uma célula da grade */
 .selo {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 2px 10px;
+  padding: 2px 8px;
   border: 1px solid currentColor;
-  border-radius: 999px;
-  font-size: 0.8rem;
-  font-weight: 600;
+  border-radius: var(--radius-pequeno);
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
   max-width: 100%;
 }
 
@@ -410,7 +429,9 @@ a {
   color: #fff;
   cursor: pointer;
   font: inherit;
-  font-weight: 600;
+  font-stretch: 112%;
+  font-weight: 700;
+  letter-spacing: 0.03em;
   padding: 10px 18px;
   text-decoration: none;
   transition:

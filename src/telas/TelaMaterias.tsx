@@ -65,7 +65,7 @@ export function TelaMaterias() {
           </div>
           <ul className="grade-materias" aria-labelledby={ID_TITULO_TELA}>
             {resumos.map(({ materia, nota, faltas }) => (
-              <li key={materia.id} className="cartao cartao-materia spot">
+              <li key={materia.id} className={`cartao cartao-materia cartao-materia--${tomNota(nota)} spot`}>
                 <h3 className="cartao-materia__nome">
                   {/* O link cobre o cartão inteiro (pelo CSS), mas o nome é o texto dele. */}
                   <a href={paraHash({ tela: 'materia', id: materia.id })}>{materia.nome}</a>

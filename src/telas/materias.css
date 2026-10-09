@@ -49,9 +49,20 @@
   outline-offset: 2px;
 }
 
+/* Faixa no alto do cartão com a cor da situação da nota (o texto do selo diz o mesmo) */
+.cartao-materia {
+  border-top: 3px solid var(--border);
+}
+
+.cartao-materia--ok { border-top-color: var(--ok); }
+.cartao-materia--atencao { border-top-color: var(--atencao); }
+.cartao-materia--perigo { border-top-color: var(--perigo); }
+.cartao-materia--destaque { border-top-color: var(--marca); }
+
 .cartao-materia__nome {
   margin: 0;
   font-size: 1.1rem;
+  font-weight: 700;
   overflow-wrap: anywhere;
 }
 

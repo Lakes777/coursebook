@@ -1,4 +1,5 @@
-import { CalendarDays, CalendarRange, DatabaseBackup, GraduationCap, House, LibraryBig } from 'lucide-react'
+import { CalendarDays, CalendarRange, DatabaseBackup, House, LibraryBig } from 'lucide-react'
+import { LogoGrade } from './componentes/LogoGrade'
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { Avisos } from './componentes/Avisos'
 import { AvisoDesfazer } from './componentes/AvisoDesfazer'
@@ -35,7 +36,7 @@ function abaDe(rota: Rota): Aba {
 function Tela({ rota }: { rota: Rota }) {
   switch (rota.tela) {
     case 'lobby':
-      // O lobby desenha os avisos dele por cima do fundo das pranchas.
+      // O lobby desenha os avisos dele por cima da grade de fundo.
       return <TelaLobby avisos={<Avisos />} />
     case 'materias':
       return <TelaMaterias />
@@ -174,7 +175,7 @@ function App() {
             <Marca className="topo__titulo">
               {/* O nome leva de volta ao lobby (passa pelo aviso de sair do formulário, como as abas). */}
               <a href={paraHash(LOBBY)} className="topo__link">
-                <GraduationCap className="icone" size={26} />
+                <LogoGrade />
                 Coursebook
               </a>
             </Marca>

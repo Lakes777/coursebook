@@ -158,7 +158,7 @@
 .semana__hoje {
   padding: 0 8px;
   border: 1px solid var(--destaque);
-  border-radius: 999px;
+  border-radius: var(--radius-pequeno);
   color: var(--destaque);
   font-size: 0.75rem;
   font-weight: 600;
