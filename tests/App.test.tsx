@@ -1,9 +1,10 @@
 import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import App from '../src/App'
 import { ProvedorPainel } from '../src/estado/ProvedorPainel'
 import { dadosVazios } from '../src/logica/armazenamento'
+import { dadosDeExemplo } from '../src/logica/exemplo'
 
 /** Monta o App no endereço dado; o padrão é a lista de matérias (a raiz é o lobby). */
 function montar(hash = '#/materias') {
@@ -32,7 +33,7 @@ describe('App', () => {
     montar()
     const titulo = screen.getByRole('heading', { level: 1 })
     expect(titulo).toHaveTextContent('Coursebook')
-    // O ícone do capelo não entra no nome do título.
+    // O logo (a grade) não entra no nome do título.
     expect(titulo.querySelector('svg')).toHaveAttribute('aria-hidden', 'true')
   })
 
@@ -155,39 +156,60 @@ describe('lobby', () => {
     expect(screen.getByText(/Nada está sendo salvo neste navegador/)).toBeInTheDocument()
   })
 
-  it('em tela muito larga, cada metade do trilho repete as pranchas até passar da largura', () => {
-    // O jsdom não mede nada: cada prancha "ocupa" 400 px (360 + o espaço entre elas).
-    const larguraAntes = window.innerWidth
-    const medida = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'scrollWidth')
-    Object.defineProperty(HTMLElement.prototype, 'scrollWidth', {
-      configurable: true,
-      get(this: HTMLElement) {
-        return this.classList.contains('lobby__trilho') ? this.children.length * 400 : 0
-      },
-    })
+  it('matérias sem nenhum horário na tabela: o fundo continua com a grade do exemplo', () => {
+    window.location.hash = ''
+    const dados = dadosVazios()
+    const exemplo = dadosDeExemplo().materias[0]
+    dados.materias = [{ ...exemplo, id: 'sem-horario', nome: 'Matéria sem horário', horarios: [] }]
+    render(
+      <ProvedorPainel inicial={{ dados, aviso: null, podeSalvar: false }}>
+        <App />
+      </ProvedorPainel>,
+    )
+    expect(document.querySelector('.lobby__grade')).toHaveTextContent('Estruturas de Dados')
+  })
+
+  it('o fundo é a grade da semana; sem matérias, a do exemplo', () => {
+    montar('')
+    const grade = document.querySelector('.lobby__grade')!
+    // É decoração: a grade acessível fica na aba Semana.
+    expect(grade).toHaveAttribute('aria-hidden', 'true')
+    expect(grade).toHaveTextContent('Estruturas de Dados')
+    expect(grade.querySelectorAll('.lobby__celula--dia')).toHaveLength(5)
+    expect(screen.queryAllByRole('img')).toHaveLength(0)
+  })
+
+  it('acende a aula de agora e marca hoje e o próximo dia para o celular', () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    // Segunda, 19:10: no exemplo, Estruturas de Dados tem aula na segunda às 19:00.
+    vi.setSystemTime(new Date(2026, 9, 5, 19, 10))
     try {
-      window.innerWidth = 5000 // um conjunto (6 x 400 = 2400 px) não cobre: precisa de 3
       montar('')
-      const trilhos = document.querySelectorAll('.lobby__trilho')
-      for (const trilho of trilhos) expect(trilho.children).toHaveLength(6 * 3 * 2)
-      // A velocidade não muda: o caminho ficou 3 vezes maior, e o tempo também.
-      expect((trilhos[0] as HTMLElement).style.animationDuration).toBe(`${64 * 3}s`)
+      const acesa = document.querySelector('.lobby__aula--agora')
+      expect(acesa).toHaveTextContent('Estruturas de Dados · agora')
+      const dias = [...document.querySelectorAll('.lobby__celula--dia')]
+      expect(dias.filter((d) => d.classList.contains('lobby__celula--perto')).map((d) => d.textContent)).toEqual([
+        'Seg',
+        'Ter',
+      ])
+      expect(document.querySelector('.lobby__celula--hoje')).toHaveTextContent('Seg')
+      // A aula acesa está na metade esquerda: o nome e a tarja vão para a direita.
+      expect(document.querySelector('.lobby')).toHaveClass('lobby--direita')
     } finally {
-      window.innerWidth = larguraAntes
-      if (medida) Object.defineProperty(HTMLElement.prototype, 'scrollWidth', medida)
+      vi.useRealTimers()
     }
   })
 
-  it('as pranchas do fundo são só decoração', () => {
-    montar('')
-    const pranchas = document.querySelectorAll('.lobby__prancha')
-    // 3 faixas, cada uma com as 6 pranchas duas vezes (para emendar o loop).
-    expect(pranchas).toHaveLength(36)
-    for (const img of pranchas) {
-      expect(img).toHaveAttribute('alt', '')
-      expect(img).toHaveAttribute('aria-hidden', 'true')
+  it('na sexta (metade direita da grade), o texto fica à esquerda', () => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date(2026, 9, 9, 8, 0))
+    try {
+      montar('')
+      expect(document.querySelector('.lobby')).toHaveClass('lobby--esquerda')
+      expect(document.querySelector('.lobby__aula--agora')).toHaveTextContent('Cálculo Numérico · agora')
+    } finally {
+      vi.useRealTimers()
     }
-    expect(screen.queryAllByRole('img')).toHaveLength(0)
   })
 
   it('"Começar" leva para a lista de matérias, com o foco no título dela', async () => {

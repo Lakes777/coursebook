@@ -16,7 +16,7 @@ mostra como ele fica em uso).
 
 ## Demonstração
 
-![Página de entrada do Coursebook, com o nome, os destaques e o botão Começar sobre faixas de desenhos de cadernos, calendários e grades](docs/lobby.png)
+![Página de entrada do Coursebook: a grade da semana ocupa o fundo, com a aula de agora acesa, e o nome enorme em letra larga por cima, com os destaques e o botão Começar](docs/lobby.png)
 
 ![Lista de matérias com o resumo do semestre, a situação de cada uma e os próximos prazos](docs/materias.png)
 
@@ -194,8 +194,11 @@ tests/           Espelha o src/ (logica, estado, telas, navegacao, tema, nuvem) 
   pedido com o cabeçalho `Authorization` (403), então a chave não muda dados, não cria outras
   chaves nem apaga a conta. Os prazos são calculados no servidor com as mesmas funções da agenda
   do site, e o "hoje" é o de Brasília (a Vercel roda em UTC). Formato em [docs/nuvem.md](docs/nuvem.md).
-- **Visual:** tema escuro grafite com o bordô da PUC-PR (Pantone 201) só atrás de texto branco;
-  em texto, um tom claro dele, para ter contraste.
+- **Visual ("Grade", de quadro de horários):** fundo quase preto, linhas retas e cantos quase sem
+  arredondar; títulos em Archivo largo e em caixa alta (o texto corrido fica na largura normal, para
+  não cansar), etiquetas em IBM Plex Mono e o bordô da PUC-PR (Pantone 201) só atrás de texto
+  branco; em texto, um tom claro dele, para ter contraste. A página de entrada é a própria grade
+  da semana, com a aula de agora acesa e o nome do lado oposto ao dela.
 - **Feito com o Claude Code:** o formulário de nova matéria, a agenda, a grade da semana e a
   edição da regra padrão foram feitos por subagentes em `git worktree` separados, ao mesmo tempo que outras telas, e um agente revisor
   confere cada mudança antes do commit.
@@ -211,5 +214,6 @@ tests/           Espelha o src/ (logica, estado, telas, navegacao, tema, nuvem) 
 - [x] Não deixar duas matérias ocuparem o mesmo horário
 - [x] Marcar na grade da semana a aula que está acontecendo agora
 - [x] Guardar os dados na nuvem, para usar em mais de um aparelho
-- [x] Página de entrada com as pranchas passando no fundo
+- [x] Página de entrada (lobby)
+- [x] Identidade visual própria ("Grade") e página de entrada com a grade da semana no fundo
 - [x] Chaves de acesso para um bot ler os prazos sem a senha
