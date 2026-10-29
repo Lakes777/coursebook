@@ -65,7 +65,7 @@ export function textoFaltas(situacao: SituacaoFaltas): string {
 }
 
 /** As matérias que pedem atenção: nota ou faltas em amarelo ou vermelho. */
-function pedeAtencao({ nota, faltas }: Resumo): boolean {
+export function pedeAtencao({ nota, faltas }: Resumo): boolean {
   const tons = [tomNota(nota), tomFaltas(faltas.nivel)]
   return tons.includes('atencao') || tons.includes('perigo')
 }

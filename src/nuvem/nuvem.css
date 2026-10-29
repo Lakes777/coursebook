@@ -1,13 +1,4 @@
-/* ---------- Situação da nuvem no topo ---------- */
-
-/* Título e situação juntos: em tela estreita a situação desce para baixo do título, e as abas vêm depois. */
-.topo__marca {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 4px 16px;
-  min-width: 0;
-}
+/* ---------- Situação da nuvem, no pé da barra lateral ---------- */
 
 .situacao-nuvem {
   display: inline-flex;

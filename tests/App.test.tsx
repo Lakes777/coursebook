@@ -6,7 +6,7 @@ import { ProvedorPainel } from '../src/estado/ProvedorPainel'
 import { dadosVazios } from '../src/logica/armazenamento'
 import { dadosDeExemplo } from '../src/logica/exemplo'
 
-/** Monta o App no endereço dado; o padrão é a lista de matérias (a raiz é o lobby). */
+/** Monta o App no endereço dado; o padrão é a lista de matérias (a raiz é o Início). */
 function montar(hash = '#/materias') {
   window.location.hash = hash
   render(
@@ -94,22 +94,22 @@ describe('App', () => {
     expect(screen.getByRole('link', { name: 'Voltar para as matérias' })).toHaveAttribute('href', '#/materias')
   })
 
-  it('o nome no topo leva de volta ao lobby', async () => {
+  it('o nome na barra lateral leva de volta ao Início', async () => {
     montar()
     const nome = screen.getByRole('link', { name: 'Coursebook' })
     expect(nome).toHaveAttribute('href', '#/')
     await userEvent.click(nome)
-    expect(screen.getByRole('heading', { level: 1, name: 'Coursebook' })).toHaveFocus()
+    expect(screen.getByRole('heading', { level: 1, name: /Notas, faltas e prazos/ })).toHaveFocus()
     expect(screen.getByRole('link', { name: 'Início' })).toHaveAttribute('aria-current', 'page')
   })
 
-  it('a aba "Início" leva ao lobby', async () => {
+  it('a aba "Início" leva ao Início', async () => {
     montar('#/agenda')
     const inicio = screen.getByRole('link', { name: 'Início' })
     expect(inicio).toHaveAttribute('href', '#/')
     await userEvent.click(inicio)
-    expect(screen.getByRole('link', { name: 'Começar' })).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 1, name: 'Coursebook' })).toHaveFocus()
+    expect(screen.getByRole('link', { name: /Cadastrar a primeira matéria/ })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: /Notas, faltas e prazos/ })).toHaveFocus()
   })
 
   it('endereço desconhecido continua indo para a lista de matérias', () => {
@@ -122,13 +122,29 @@ describe('App', () => {
   })
 })
 
-describe('lobby', () => {
-  it.each(['', '#', '#/'])('aparece no endereço raiz (%j), com o topo e a aba "Início" marcada', (hash) => {
+/** Monta o App com os dados de exemplo, num momento fixo. */
+function montarComExemplo(hash: string, agora: Date) {
+  vi.useFakeTimers({ toFake: ['Date'] })
+  vi.setSystemTime(agora)
+  window.location.hash = hash
+  render(
+    <ProvedorPainel inicial={{ dados: dadosDeExemplo(agora), aviso: null, podeSalvar: true }}>
+      <App />
+    </ProvedorPainel>,
+  )
+}
+
+describe('Início', () => {
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it.each(['', '#', '#/'])('aparece no endereço raiz (%j), com a barra e a aba "Início" marcada', (hash) => {
     montar(hash)
-    // Um h1 só: o título grande do lobby (o nome no topo vira texto comum aqui).
+    // Um h1 só: a frase do Início (o nome na barra vira texto comum aqui).
     const titulos = screen.getAllByRole('heading', { level: 1 })
     expect(titulos).toHaveLength(1)
-    expect(titulos[0]).toHaveClass('lobby__titulo')
+    expect(titulos[0]).toHaveClass('inicio__frase')
     expect(screen.getByRole('banner')).toHaveTextContent('Coursebook')
     const nav = screen.getByRole('navigation', { name: 'Seções' })
     expect(within(nav).getByRole('link', { name: 'Início' })).toHaveAttribute('aria-current', 'page')
@@ -137,87 +153,54 @@ describe('lobby', () => {
     expect(document.title).toBe('Coursebook')
   })
 
-  it('mostra os destaques e o link para o código', () => {
+  it('vazio: mostra os destaques, os dois jeitos de começar e o link para o código', () => {
     montar('')
     expect(screen.getAllByRole('listitem')).toHaveLength(3)
+    expect(screen.getByRole('link', { name: /Cadastrar a primeira matéria/ })).toHaveAttribute('href', '#/nova-materia')
+    expect(screen.getByRole('button', { name: /Ver com dados de exemplo/ })).toBeInTheDocument()
     const codigo = screen.getByRole('link', { name: 'Ver o código no GitHub' })
     expect(codigo).toHaveAttribute('href', 'https://github.com/Lakes777/coursebook')
     expect(codigo).toHaveAttribute('target', '_blank')
   })
 
-  it('mostra os avisos do armazenamento acima do título, e eles continuam depois de "Começar"', async () => {
+  it('mostra os avisos do armazenamento acima da frase', () => {
     // montar() usa podeSalvar: false, como um navegador que não deixa gravar.
     montar('')
     const aviso = screen.getByText(/Nada está sendo salvo neste navegador/)
-    const titulo = screen.getByRole('heading', { level: 1, name: 'Coursebook' })
-    expect(aviso.closest('.lobby__avisos')).not.toBeNull()
+    const titulo = screen.getByRole('heading', { level: 1 })
     expect(aviso.compareDocumentPosition(titulo) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    await userEvent.click(screen.getByRole('link', { name: 'Começar' }))
-    expect(screen.getByText(/Nada está sendo salvo neste navegador/)).toBeInTheDocument()
   })
 
-  it('matérias sem nenhum horário na tabela: o fundo continua com a grade do exemplo', () => {
-    window.location.hash = ''
-    const dados = dadosVazios()
-    const exemplo = dadosDeExemplo().materias[0]
-    dados.materias = [{ ...exemplo, id: 'sem-horario', nome: 'Matéria sem horário', horarios: [] }]
-    render(
-      <ProvedorPainel inicial={{ dados, aviso: null, podeSalvar: false }}>
-        <App />
-      </ProvedorPainel>,
+  it('com dados: a frase do dia, o semestre, a régua de hoje, o atrasado e os próximos prazos', () => {
+    // Quinta, 19:40: no exemplo, POO tem aula das 19:00 às 22:15.
+    montarComExemplo('#/', new Date(2026, 9, 29, 19, 40))
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent(
+      'Quinta, 29 de outubro. Programação Orientada a Objetos agora, Entrega do relatório final hoje e uma matéria pedindo atenção.',
     )
-    expect(document.querySelector('.lobby__grade')).toHaveTextContent('Estruturas de Dados')
+    const semestre = screen.getByRole('region', { name: 'Semestre' })
+    expect(semestre).toHaveTextContent('1 de 3')
+    expect(semestre).toHaveTextContent('Faltas · Cálculo Numérico12 de 15')
+    expect(semestre).toHaveTextContent('Próxima prova5 dias')
+    const hoje = screen.getByRole('region', { name: /^Hoje/ })
+    const aula = within(hoje).getByRole('listitem')
+    expect(aula).toHaveAttribute('aria-current', 'time')
+    expect(aula).toHaveTextContent('19:00 – 22:15 · 4 aulas')
+    expect(within(aula).getByRole('link', { name: 'Programação Orientada a Objetos' })).toHaveAttribute(
+      'href',
+      '#/materia/exemplo-poo',
+    )
+    expect(hoje).toHaveTextContent('Para hoje: Entrega do relatório final · Estruturas de Dados')
+    expect(screen.getByRole('region', { name: 'Atrasado' })).toHaveTextContent('Lista de exercícios 5')
+    const prazos = screen.getByRole('region', { name: 'Próximos prazos' })
+    expect(within(prazos).getAllByRole('listitem')).toHaveLength(3)
+    expect(prazos).toHaveTextContent('em 5 diasProva: Prova do RA2 · Programação Orientada a Objetos')
   })
 
-  it('o fundo é a grade da semana; sem matérias, a do exemplo', () => {
-    montar('')
-    const grade = document.querySelector('.lobby__grade')!
-    // É decoração: a grade acessível fica na aba Semana.
-    expect(grade).toHaveAttribute('aria-hidden', 'true')
-    expect(grade).toHaveTextContent('Estruturas de Dados')
-    expect(grade.querySelectorAll('.lobby__celula--dia')).toHaveLength(5)
-    expect(screen.queryAllByRole('img')).toHaveLength(0)
-  })
-
-  it('acende a aula de agora e marca hoje e o próximo dia para o celular', () => {
-    vi.useFakeTimers({ toFake: ['Date'] })
-    // Segunda, 19:10: no exemplo, Estruturas de Dados tem aula na segunda às 19:00.
-    vi.setSystemTime(new Date(2026, 9, 5, 19, 10))
-    try {
-      montar('')
-      const acesa = document.querySelector('.lobby__aula--agora')
-      expect(acesa).toHaveTextContent('Estruturas de Dados · agora')
-      const dias = [...document.querySelectorAll('.lobby__celula--dia')]
-      expect(dias.filter((d) => d.classList.contains('lobby__celula--perto')).map((d) => d.textContent)).toEqual([
-        'Seg',
-        'Ter',
-      ])
-      expect(document.querySelector('.lobby__celula--hoje')).toHaveTextContent('Seg')
-      // A aula acesa está na metade esquerda: o nome e a tarja vão para a direita.
-      expect(document.querySelector('.lobby')).toHaveClass('lobby--direita')
-    } finally {
-      vi.useRealTimers()
-    }
-  })
-
-  it('na sexta (metade direita da grade), o texto fica à esquerda', () => {
-    vi.useFakeTimers({ toFake: ['Date'] })
-    vi.setSystemTime(new Date(2026, 9, 9, 8, 0))
-    try {
-      montar('')
-      expect(document.querySelector('.lobby')).toHaveClass('lobby--esquerda')
-      expect(document.querySelector('.lobby__aula--agora')).toHaveTextContent('Cálculo Numérico · agora')
-    } finally {
-      vi.useRealTimers()
-    }
-  })
-
-  it('"Começar" leva para a lista de matérias, com o foco no título dela', async () => {
-    montar('')
-    await userEvent.click(screen.getByRole('link', { name: 'Começar' }))
-    expect(window.location.hash).toBe('#/materias')
-    expect(screen.getByRole('heading', { level: 2, name: 'Matérias' })).toHaveFocus()
-    expect(screen.getByRole('link', { name: 'Matérias' })).toHaveAttribute('aria-current', 'page')
+  it('num dia sem aulas, a régua some', () => {
+    // Sábado: o exemplo não tem aula.
+    montarComExemplo('#/', new Date(2026, 9, 31, 10, 0))
+    expect(screen.getByRole('region', { name: /^Hoje/ })).toHaveTextContent('Sem aulas hoje.')
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Sem aulas hoje')
   })
 
   it('as rotas de antes continuam abrindo as mesmas telas', () => {
@@ -235,6 +218,6 @@ describe('lobby', () => {
       expect(screen.getByRole('heading', { level: 2, name: titulo }), hash).toBeInTheDocument()
     }
     irPara('#/')
-    expect(screen.getByRole('link', { name: 'Começar' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Cadastrar a primeira matéria/ })).toBeInTheDocument()
   })
 })
