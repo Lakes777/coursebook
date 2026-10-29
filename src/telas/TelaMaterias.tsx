@@ -1,4 +1,4 @@
-import { ArrowRight, Eye, Plus } from 'lucide-react'
+import { ArrowRight, CalendarClock, Eye, Plus } from 'lucide-react'
 import { CabecalhoTela, ID_TITULO_TELA } from '../componentes/CabecalhoTela'
 import { Selo } from '../componentes/Selo'
 import { useHoje } from '../componentes/useHoje'
@@ -10,6 +10,7 @@ import { paraHash } from '../navegacao/rota'
 import { ICONE_TIPO_EVENTO } from '../tema/icones'
 import { tomFaltas, tomNota, tomPrazo } from '../tema/tons'
 import { resumoMateria, resumoSemestre, textoFaltas, textoNota, textoPrazoAoLado, textoSelo } from '../tema/textos'
+import { BarraFaltas } from './materia/BarraFaltas'
 import './materias.css'
 
 const NOVA_MATERIA = paraHash({ tela: 'nova-materia' })
@@ -26,10 +27,10 @@ export function TelaMaterias() {
   return (
     <CabecalhoTela titulo="Matérias">
       {materias.length === 0 ? (
-        <div className="cartao vazio">
+        <div className="cartao spot vazio materias-vazio">
           <p>
-            Cadastre as matérias do semestre com os RAs e as avaliações de cada uma, como estão no plano de
-            ensino. O painel calcula quanto falta para passar e acompanha as faltas.
+            Cadastre as matérias do semestre com os RAs e as avaliações de cada uma, como estão no plano de ensino. O
+            painel calcula quanto falta para passar e acompanha as faltas.
           </p>
           <div className="vazio__botoes">
             <a className="botao botao--vivo" href={NOVA_MATERIA}>
@@ -43,8 +44,8 @@ export function TelaMaterias() {
           </div>
           <p className="vazio__alternativa">
             Tem um backup, ou quer que uma IA leia o plano de ensino?{' '}
-            <a href={paraHash({ tela: 'dados' })}>Importe em Dados</a>. O exemplo pode ser apagado depois,
-            também em Dados.
+            <a href={paraHash({ tela: 'dados' })}>Importe em Dados</a>. O exemplo pode ser apagado depois, também em
+            Dados.
           </p>
         </div>
       ) : (
@@ -65,7 +66,8 @@ export function TelaMaterias() {
           </div>
           <ul className="grade-materias" aria-labelledby={ID_TITULO_TELA}>
             {resumos.map(({ materia, nota, faltas }) => (
-              <li key={materia.id} className={`cartao cartao-materia cartao-materia--${tomNota(nota)} spot`}>
+              // A situação fica nos selos (texto e cor juntos), não numa faixa de cor no cartão.
+              <li key={materia.id} className="vidro spot cartao-materia">
                 <h3 className="cartao-materia__nome">
                   {/* O link cobre o cartão inteiro (pelo CSS), mas o nome é o texto dele. */}
                   <a href={paraHash({ tela: 'materia', id: materia.id })}>{materia.nome}</a>
@@ -75,6 +77,7 @@ export function TelaMaterias() {
                   <Selo tom={tomNota(nota)}>{textoNota(nota)}</Selo>
                   <Selo tom={tomFaltas(faltas.nivel)}>{textoFaltas(faltas)}</Selo>
                 </div>
+                <BarraFaltas situacao={faltas} />
               </li>
             ))}
           </ul>
@@ -99,9 +102,10 @@ function ProximosPrazos() {
   const mais = pendentes.length - PRAZOS_NA_LISTA
 
   return (
-    <section className="cartao prazos" aria-labelledby={ID_PRAZOS}>
+    <section className="cartao spot prazos" aria-labelledby={ID_PRAZOS}>
       <div className="prazos__topo">
         <h3 id={ID_PRAZOS} className="prazos__titulo">
+          <CalendarClock className="icone" size={15} aria-hidden="true" />
           Próximos prazos
         </h3>
         <a className="link-icone prazos__agenda" href={paraHash({ tela: 'agenda' })}>
