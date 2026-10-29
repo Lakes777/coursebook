@@ -1,4 +1,4 @@
-import { LogIn, LogOut, Trash2, UserPlus } from 'lucide-react'
+import { Cloud, LogIn, LogOut, Trash2, TriangleAlert, UserPlus } from 'lucide-react'
 import { useRef, useState, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
 import type { RespostaErro } from '../api/contrato'
@@ -35,6 +35,7 @@ export function SecaoNuvem() {
   return (
     <section className="cartao dados__secao" aria-labelledby={ID_SECAO_NUVEM}>
       <h3 id={ID_SECAO_NUVEM} ref={titulo} tabIndex={-1} className="dados__subtitulo nuvem__titulo">
+        <Cloud className="icone" size={15} aria-hidden="true" />
         Conta e nuvem
       </h3>
       {nuvem.conta ? (
@@ -459,6 +460,7 @@ function Pergunta({ nuvem, conflito, concluir }: PropsPergunta) {
   return (
     <div className="nuvem__pergunta" role="group" aria-labelledby="nuvem-pergunta">
       <h4 id="nuvem-pergunta" className="nuvem__pergunta-titulo">
+        <TriangleAlert className="icone" size={16} aria-hidden="true" />
         {textos.titulo}
       </h4>
       <p className="dados__texto">

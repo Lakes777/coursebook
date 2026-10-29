@@ -58,49 +58,62 @@ a.situacao-nuvem {
   outline: none;
 }
 
-/* A pergunta do conflito: destacada com a borda da atenção, como os avisos. */
+/* A pergunta do conflito: um bloco interno com a borda no tom da atenção e o ícone
+   no título; a cor nunca vem sozinha, o título diz o que houve. */
 .nuvem__pergunta {
   display: grid;
   gap: 10px;
   width: 100%;
-  padding: 12px 16px;
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--atencao);
-  border-radius: var(--radius-pequeno);
-  background: var(--bg);
+  padding: 14px 16px;
+  border: 1px solid rgb(240 207 106 / 0.45);
+  border-radius: var(--raio-vidro-pequeno);
+  background: rgb(255 255 255 / 0.07);
 }
 
 .nuvem__pergunta-titulo {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
   margin: 0;
   font-size: 1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.nuvem__pergunta-titulo .icone {
+  margin-top: 4px;
+  color: var(--atencao);
 }
 
 .nuvem__pergunta-titulo:focus {
   outline: none;
 }
 
+/* "Criar conta" / "Entrar": um link dentro da frase, no tom claro do bordô. */
 .nuvem__alternar {
   padding: 0;
   background: none;
   border: none;
+  border-radius: 4px;
   color: var(--destaque);
   font: inherit;
+  font-weight: 600;
   text-decoration: underline;
+  text-underline-offset: 3px;
   cursor: pointer;
 }
 
 /* ---------- Seção "Chaves de acesso" na tela Dados ---------- */
 
-/* A chave recém-criada: borda do bordô à esquerda, como um destaque, e o token em fonte fixa. */
+/* A chave recém-criada: o único destaque do painel, com a borda no tom do bordô. */
 .chaves__nova {
   display: grid;
   gap: 10px;
   width: 100%;
-  padding: 12px 16px;
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--marca);
-  border-radius: var(--radius-pequeno);
-  background: var(--bg);
+  padding: 14px 16px;
+  border: 1px solid rgb(234 135 152 / 0.55);
+  border-radius: var(--raio-vidro-pequeno);
+  background: rgb(157 34 53 / 0.18);
 }
 
 .chaves__nova:focus {
@@ -110,14 +123,16 @@ a.situacao-nuvem {
 .chaves__nova-titulo {
   margin: 0;
   font-weight: 600;
+  color: #fff;
 }
 
+/* O token é código: fonte fixa, afundado como um campo. */
 .chaves__token {
   display: block;
-  padding: 8px 10px;
+  padding: 10px 12px;
   border: 1px solid var(--borda-campo);
-  border-radius: var(--radius-pequeno);
-  background: var(--surface);
+  border-radius: 12px;
+  background: rgb(20 10 18 / 0.35);
   font-family: var(--mono);
   font-size: 0.85rem;
   /* 46 caracteres sem espaço: em 320 px quebra em vez de alargar a página. */
@@ -134,15 +149,17 @@ a.situacao-nuvem {
   list-style: none;
 }
 
+/* Cada chave num bloco interno claro, como as aulas da régua do Início. */
 .chaves__item {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 8px 12px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pequeno);
+  padding: 12px 14px;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: var(--raio-vidro-pequeno);
+  background: rgb(255 255 255 / 0.07);
 }
 
 .chaves__dados {
@@ -156,6 +173,7 @@ a.situacao-nuvem {
   align-items: center;
   gap: 6px;
   font-weight: 600;
+  color: #fff;
   overflow-wrap: anywhere;
 }
 
@@ -165,4 +183,10 @@ a.situacao-nuvem {
 
 .chaves__datas {
   font-size: 0.85rem;
+}
+
+/* O cabeçalho e a rota do programa, no texto de apoio da chave nova. */
+.chaves__nova code {
+  font-family: var(--mono);
+  font-size: 0.85em;
 }
