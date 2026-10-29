@@ -135,15 +135,6 @@
 }
 
 /* ---------- Formulário ---------- */
-/* Painéis de formulário: a foto atrás escurece um pouco (brightness), senão o texto de
-   apoio e a borda dos campos somem sobre o brilho do pôr do sol (medido: branco 72%
-   ficava em 2,1:1 ali; com 0,55, 3,8:1 no ponto mais claro e acima de 4,5:1 no resto). */
-.nm .nm-passos,
-.nm-form {
-  -webkit-backdrop-filter: blur(var(--desfoque)) saturate(140%) brightness(0.55);
-  backdrop-filter: blur(var(--desfoque)) saturate(140%) brightness(0.55);
-}
-
 .nm-form {
   display: grid;
   gap: 20px;
@@ -203,33 +194,15 @@
   width: 100%;
 }
 
-/* Sobre o brilho do pôr do sol, a borda branca 40% do .campo fica em 2,4:1. Aqui ela é
-   mais forte e o miolo do campo afunda (escuro), para passar de 3:1 contra o painel.
-   O campo com erro continua com a borda vermelha (:not). */
-.nm-form .campo {
-  background: rgb(20 10 18 / 0.3);
-}
-
-.nm-form .campo:not([aria-invalid='true']) {
-  border-color: rgb(255 255 255 / 0.62);
-}
-
 .nm-campo .campo.nm-campo--curto {
   max-width: 12rem;
 }
 
-.nm-campo__dica,
-.nm-campo__erro {
+/* Dica embaixo do campo (o erro é o .erro-campo do index.css) */
+.nm-campo__dica {
   margin: 0;
   font-size: 0.85rem;
-}
-
-.nm-campo__dica {
-  color: rgb(255 255 255 / 0.72);
-}
-
-.nm-campo__erro {
-  color: var(--perigo);
+  color: rgb(255 255 255 / 0.85);
 }
 
 /* Grupo (horários, avaliações de um RA, regra): um título e o conteúdo embaixo, sem
@@ -282,7 +255,7 @@
 .nm-grupo__vazio {
   margin: 0;
   font-size: 0.9rem;
-  color: rgb(255 255 255 / 0.72);
+  color: rgb(255 255 255 / 0.85);
 }
 
 .nm-item__campos {
@@ -396,7 +369,7 @@
 }
 
 .nm-revisao__dados dt {
-  color: rgb(255 255 255 / 0.72);
+  color: rgb(255 255 255 / 0.85);
 }
 
 .nm-revisao__dados dd {
@@ -483,7 +456,7 @@
   margin: 0;
   font-size: 0.9rem;
   font-variant-numeric: tabular-nums;
-  color: rgb(255 255 255 / 0.72);
+  color: rgb(255 255 255 / 0.85);
 }
 
 .nm-item__botoes {

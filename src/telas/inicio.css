@@ -255,7 +255,8 @@
 .regua__professor {
   position: relative;
   font-size: 0.8rem;
-  color: rgb(255 255 255 / 0.78);
+  /* 88%: sobre o bloco claro da aula, 72% não passaria no contraste */
+  color: rgb(255 255 255 / 0.88);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

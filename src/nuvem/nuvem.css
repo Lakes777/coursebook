@@ -49,15 +49,6 @@ a.situacao-nuvem {
   color: var(--atencao);
 }
 
-.nuvem__erro {
-  margin: 0;
-  color: var(--perigo);
-}
-
-.nuvem__erro:focus {
-  outline: none;
-}
-
 /* A pergunta do conflito: um bloco interno com a borda no tom da atenção e o ícone
    no título; a cor nunca vem sozinha, o título diz o que houve. */
 .nuvem__pergunta {

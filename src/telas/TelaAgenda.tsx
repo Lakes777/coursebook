@@ -207,7 +207,7 @@ function FormNovoEvento() {
     erro?.campo === campo ? { 'aria-invalid': true, 'aria-describedby': ID_ERRO } : {}
   const mensagem = (campo: CampoEvento) =>
     erro?.campo === campo && (
-      <p id={ID_ERRO} className="agenda-form__erro">
+      <p id={ID_ERRO} className="erro-campo">
         {erro.mensagem}
       </p>
     )

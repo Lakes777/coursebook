@@ -209,7 +209,7 @@ function FormularioConta({ nuvem, cadastro, email: emailInicial, emailFixo, aoEn
         </Rotulado>
       )}
       {erroGeral && (
-        <p ref={geral} role="alert" tabIndex={-1} className="nuvem__erro">
+        <p ref={geral} role="alert" tabIndex={-1} className="erro-campo">
           {erroGeral}
         </p>
       )}
@@ -316,7 +316,7 @@ function ComConta({ nuvem, conta, concluir }: { nuvem: Nuvem; conta: ContaGuarda
       )}
 
       {erroGeral && (
-        <p ref={geral} role="alert" tabIndex={-1} className="nuvem__erro">
+        <p ref={geral} role="alert" tabIndex={-1} className="erro-campo">
           {erroGeral}
         </p>
       )}

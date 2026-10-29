@@ -52,13 +52,17 @@ export function TelaMateria({ id }: { id: string }) {
   }
 
   return (
-    <CabecalhoTela titulo={materia.nome}>
-      <p className="materia__voltar">
-        <a className="link-icone" href={LISTA}>
-          <ArrowLeft className="icone" size={14} aria-hidden="true" />
-          Todas as matérias
-        </a>
-      </p>
+    <CabecalhoTela
+      titulo={materia.nome}
+      antes={
+        <p className="materia__voltar">
+          <a className="link-icone" href={LISTA}>
+            <ArrowLeft className="icone" size={14} aria-hidden="true" />
+            Todas as matérias
+          </a>
+        </p>
+      }
+    >
       {/* Um painel só com o que a matéria é (professor, aulas, horários) e como ela está. */}
       <div className="cartao materia__resumo">
         <div className="materia__topo">

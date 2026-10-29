@@ -137,7 +137,7 @@
           <li>Um destaque só: bordô cheio (<code>--marca</code>) atrás de texto branco; o tom claro (<code>--destaque</code>) em texto, ícones e linhas.</li>
           <li>Verde, amarelo e vermelho são só para situação (nota, faltas, prazo), sempre com texto: a cor não pode ser o único jeito de entender.</li>
           <li>Todo número e toda barra medem algo de verdade. Nada de barra "100%" sempre cheia nem gráfico de tendência sem histórico.</li>
-          <li>Texto branco em três forças: 100% (o que importa), 85% (corpo) e 72% (apoio). Abaixo disso não passa no contraste sobre a foto.</li>
+          <li>Texto branco em três forças: 100% (o que importa), 85% (corpo) e 72% (apoio). O 72% só passa (4,5:1) direto no painel; num bloco interno claro, o apoio sobe para 85%. O contraste vem do <code>--filtro-vidro</code>, que escurece a foto atrás (brightness 0,48); medido no ponto mais claro do pôr do sol de cada tela.</li>
           <li>Movimento curto (até 1,1 s na entrada) e hover suave. Com "menos animação" ligado, só um fade.</li>
           <li>No celular: um bloco embaixo do outro, abas numa barra presa no pé e desfoque menor (14px).</li>
         </ul>
@@ -234,7 +234,7 @@
           Painel com 24px de respiro e 24px entre painéis (16px no celular). Raios: 24px no painel
           (<code>--raio-vidro</code>), 14px em blocos internos e botões (<code>--raio-vidro-pequeno</code>), 12px em
           campos e pílula (999px) em selos. Sombra <code>--vidro-sombra</code>: 0 16px 40px, vinho 28%.
-          Desfoque <code>--desfoque</code>: 24px (14px no celular).
+          Desfoque <code>--desfoque</code>: 24px (14px no celular), dentro do <code>--filtro-vidro</code> (blur, saturate 140%, brightness 0,48), o mesmo em todo vidro.
         </p>
         <div class="linha">
           <div class="vidro spot" style="width: 220px">Painel <code>.vidro.spot</code><br />passe o mouse</div>
@@ -257,7 +257,7 @@
 
       <section class="vidro">
         <h2>Campos</h2>
-        <p class="nota">Fundo branco 6%, borda branca 40% (3:1 sobre o vidro), raio 12px; inválido com a borda em <code>--perigo</code>.</p>
+        <p class="nota">Miolo afundado (escuro 30%), borda branca 62% (passa de 3:1 sobre o vidro), raio 12px; inválido com a borda em <code>--perigo</code>; a mensagem de erro é <code>.erro-campo</code>.</p>
         <div class="linha">
           <input class="campo" placeholder="Nome da matéria" />
           <input class="campo" aria-invalid="true" value="Nota 11" />
@@ -271,7 +271,7 @@
 
       <section class="vidro">
         <h2>Selos de situação</h2>
-        <p class="nota">Pílula tingida com a cor da situação, sempre com ícone e texto (o componente é <code>Selo</code>).</p>
+        <p class="nota">Pílula tingida com a cor da situação sobre um fundo escuro (senão o verde e o amarelo somem no céu rosado), sempre com ícone e texto (o componente é <code>Selo</code>).</p>
         <div class="linha">
           <span class="selo selo--ok">Aprovado com 8,5</span>
           <span class="selo selo--atencao">Em recuperação</span>

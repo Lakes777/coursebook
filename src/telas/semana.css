@@ -23,12 +23,10 @@
   }
 }
 
-/* O painel da grade: o vidro do .vidro, um pouco mais escuro, porque as linhas de
-   cima (as aulas da manhã) ficam sobre a parte mais clara do céu. Duas classes para
-   vencer o .vidro do index.css, que pode carregar depois. */
+/* O painel da grade (o contraste sobre o céu claro vem do --filtro-vidro). Duas
+   classes para vencer o .vidro do index.css, que pode carregar depois. */
 .vidro.grade-semana {
   padding: 18px 18px 14px;
-  background: rgb(40 24 34 / 0.45);
 }
 
 .grade-semana__tabela {
@@ -123,7 +121,7 @@
   font-size: 0.8rem;
   font-weight: 400;
   font-variant-numeric: tabular-nums;
-  color: rgb(255 255 255 / 0.72);
+  color: rgb(255 255 255 / 0.85);
 }
 
 /* O bloco de uma aula: o mesmo bloco interno da régua do Início. */
@@ -144,7 +142,7 @@
 
 @media (hover: hover) {
   .grade-semana__bloco:hover {
-    background: rgb(255 255 255 / 0.24);
+    background: rgb(255 255 255 / 0.2);
     border-color: rgb(255 255 255 / 0.4);
   }
 }
@@ -209,7 +207,7 @@
 /* 78%, como o professor da régua (o .muted deixaria em 72%). */
 .aula-semana__professor {
   font-size: 0.8rem;
-  color: rgb(255 255 255 / 0.78);
+  color: rgb(255 255 255 / 0.88);
 }
 
 /* ---------- Pílulas "Hoje" e "Agora" ---------- */
@@ -247,12 +245,6 @@
   gap: 12px;
   min-width: 0;
   padding: 18px;
-}
-
-/* Um pouco mais escuro que o .cartao, como o painel da grade: no celular em pé os
-   primeiros dias ficam sobre o céu claro. Duas classes para vencer o .cartao. */
-.cartao.semana__dia {
-  background: rgb(40 24 34 / 0.32);
 }
 
 /* Hoje: a borda no tom do bordô; a pílula diz em texto o que a borda sugere. */

@@ -38,7 +38,7 @@ export function Rotulado({ id, rotulo, dica, erro, children }: PropsRotulado) {
         </p>
       )}
       {temErro && (
-        <p id={`${id}-erro`} className="nm-campo__erro">
+        <p id={`${id}-erro`} className="erro-campo">
           {erro.mensagem}
         </p>
       )}

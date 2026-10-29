@@ -43,20 +43,6 @@
   min-width: 0;
   /* Os campos da regra (CamposRegra) se arrumam pela largura do painel, não da janela. */
   container-type: inline-size;
-  /* Painel de formulário: a foto atrás escurece um pouco (brightness), senão o texto
-     de apoio e a borda dos campos somem sobre o brilho do pôr do sol. */
-  -webkit-backdrop-filter: blur(var(--desfoque)) saturate(140%) brightness(0.55);
-  backdrop-filter: blur(var(--desfoque)) saturate(140%) brightness(0.55);
-}
-
-/* Os campos daqui: borda mais forte e miolo afundado, para passar de 3:1 contra o
-   painel mesmo sobre o pôr do sol (com a borda branca 40% do .campo, dava 2,4:1). */
-.dados__secao .campo {
-  background: rgb(20 10 18 / 0.3);
-}
-
-.dados__secao .campo:not([aria-invalid='true']) {
-  border-color: rgb(255 255 255 / 0.62);
 }
 
 /* Título de cada painel: o rótulo pequeno do Início, com o ícone do assunto. */

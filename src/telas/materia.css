@@ -3,15 +3,8 @@
    e, embaixo, duas colunas: notas e faltas na larga, pontos extras, regra e remover
    na estreita. Cada seção é um painel de vidro; os RAs são blocos internos dele. */
 
-/* O "Todas as matérias" aparece acima do título, como um caminho de volta. Só a
-   ordem visual muda: no código ele continua depois do título, e o Tab também. */
-section:has(> .materia__voltar) {
-  display: flex;
-  flex-direction: column;
-}
-
+/* O "Todas as matérias" vem antes do título, como um caminho de volta (no código e no Tab também). */
 .materia__voltar {
-  order: -1;
   margin: 0 0 6px;
   font-size: 0.9rem;
 }
@@ -66,13 +59,6 @@ section:has(> .materia__voltar) {
 /* Texto de apoio (o aviso do remover): o branco 72% do design system. */
 .materia__apoio {
   color: rgb(255 255 255 / 0.72);
-}
-
-/* Selos sobre o vidro claro (o trecho rosado da foto): o verde e o amarelo cheios
-   perdiam o contraste. Um fundo escuro por baixo da tinta do selo devolve a leitura. */
-.materia__resumo .selo,
-.materia .selo {
-  background: color-mix(in srgb, currentColor 16%, rgb(28 14 24 / 0.55));
 }
 
 /* ---------- Colunas ---------- */
@@ -186,9 +172,10 @@ section:has(> .materia__voltar) {
   max-width: 320px;
 }
 
-/* A nota de rodapé do status fica vazia até lançar algo; sem altura, não abre vão. */
+/* O status fica vazio até lançar algo. Margem negativa (e não display: none) para não
+   abrir vão: a região viva tem que existir antes, senão o primeiro aviso não é lido. */
 .materia__faltas > [role='status']:empty {
-  display: none;
+  margin-top: -14px;
 }
 
 /* ---------- RAs e avaliações ---------- */
@@ -257,7 +244,7 @@ section:has(> .materia__voltar) {
 
 .ra__peso {
   font-size: 0.85rem;
-  color: rgb(255 255 255 / 0.72);
+  color: rgb(255 255 255 / 0.85);
 }
 
 .ra__nota,
@@ -274,13 +261,13 @@ section:has(> .materia__voltar) {
 }
 
 .ra__vazio {
-  color: rgb(255 255 255 / 0.72);
+  color: rgb(255 255 255 / 0.85);
 }
 
 .ra__extras {
   margin: -4px 0 0;
   font-size: 0.85rem;
-  color: rgb(255 255 255 / 0.72);
+  color: rgb(255 255 255 / 0.85);
 }
 
 .avaliacoes {
@@ -321,7 +308,7 @@ section:has(> .materia__voltar) {
 
 .avaliacao__detalhes {
   font-size: 0.85rem;
-  color: rgb(255 255 255 / 0.72);
+  color: rgb(255 255 255 / 0.85);
 }
 
 .ra__recuperacao {
@@ -364,7 +351,7 @@ section:has(> .materia__voltar) {
 
 .campo-nota__maximo {
   font-size: 0.9rem;
-  color: rgb(255 255 255 / 0.72);
+  color: rgb(255 255 255 / 0.85);
   white-space: nowrap;
 }
 
@@ -373,13 +360,6 @@ section:has(> .materia__voltar) {
   max-width: 28ch;
   font-size: 0.85rem;
   color: rgb(255 255 255 / 0.85);
-}
-
-/* Também usado na tela Dados. */
-.erro-campo {
-  margin: 0;
-  color: var(--perigo);
-  font-size: 0.85rem;
 }
 
 /* ---------- Listas curtas (faltas, pontos extras) ---------- */
