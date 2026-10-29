@@ -1,6 +1,8 @@
-/* ---------- Tela de agenda ---------- */
-
-/* No celular, a lista e o formulário ficam um embaixo do outro; na tela larga, lado a lado. */
+/* ---------- Tela de agenda (identidade "Vidro") ----------
+   Na tela larga, os painéis "A fazer" e "Concluídos" à esquerda e o "Novo evento"
+   à direita, parado na tela enquanto a lista rola. No celular, um embaixo do outro.
+   Cada evento é um bloco interno do painel, como as aulas da régua do Início; a
+   situação (atrasado, hoje, em 5 dias) aparece só no selo, sempre com texto. */
 .agenda {
   display: grid;
   gap: 24px;
@@ -11,28 +13,44 @@
   .agenda {
     grid-template-columns: minmax(0, 1fr) 320px;
   }
-}
 
-.agenda__listas {
-  min-width: 0;
-}
-
-/* Na tela larga, o "A fazer" desce até a linha do "Novo evento" (borda + recuo do
-   cartão ao lado), para os dois títulos ficarem na mesma altura. */
-@media (min-width: 800px) {
-  .agenda__listas > .agenda__subtitulo:first-child {
-    margin-top: 21px;
+  .agenda-form {
+    position: sticky;
+    top: 32px;
   }
 }
 
-.agenda__subtitulo {
-  margin: 0 0 12px;
-  font-size: 1.05rem;
+/* Os painéis da agenda ficam um pouco mais escuros que o .vidro, como o da grade da
+   Semana: os primeiros itens ficam sobre o céu claro, e os selos de situação (rosa,
+   amarelo) sumiriam nele. Duas classes para vencer o .vidro do index.css. */
+.vidro.agenda__painel,
+.vidro.agenda-form {
+  background: rgb(40 24 34 / 0.45);
 }
 
-.agenda__lista + .agenda__subtitulo,
-.agenda__listas > p + .agenda__subtitulo {
-  margin-top: 28px;
+.agenda__listas {
+  display: grid;
+  gap: 24px;
+  min-width: 0;
+}
+
+/* Rótulo no alto de cada painel, com o ícone do assunto (o mesmo dos painéis do Início). */
+.agenda__subtitulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.75);
+}
+
+.agenda__nada,
+.agenda__vazia {
+  margin: 0;
+  color: rgb(255 255 255 / 0.75);
 }
 
 .agenda__lista {
@@ -43,32 +61,9 @@
   list-style: none;
 }
 
-.agenda__vazia {
-  margin: 0;
-}
-
 /* ---------- Item ---------- */
-/* Como os cartões das matérias: o cartão salta ao passar o mouse (ou com o foco dentro dele). */
-.item-agenda {
-  transition:
-    transform 0.35s var(--ease-out),
-    border-color 0.35s,
-    box-shadow 0.35s;
-}
-
-.item-agenda:hover,
-.item-agenda:focus-within {
-  transform: translateY(-4px);
-  box-shadow: 0 18px 40px rgb(0 0 0 / 0.35);
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .item-agenda:hover,
-  .item-agenda:focus-within {
-    transform: none;
-  }
-}
-
+/* Bloco interno do painel: sem backdrop-filter (o painel já desfoca a foto). Ao passar
+   o mouse, ou com o foco dentro, ele clareia devagar, sem pular. */
 .item-agenda {
   display: flex;
   flex-wrap: wrap;
@@ -76,31 +71,24 @@
   justify-content: space-between;
   gap: 12px 16px;
   padding: 14px 16px;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: var(--raio-vidro-pequeno);
+  background: rgb(255 255 255 / 0.06);
+  transition:
+    background-color 0.4s var(--ease-suave),
+    border-color 0.4s var(--ease-suave);
 }
 
-/* A borda da esquerda repete o tom do selo; o texto do selo continua dizendo a situação. */
-.item-agenda--atrasado {
-  border-left: 3px solid var(--perigo);
+.item-agenda:focus-within {
+  background: rgb(255 255 255 / 0.12);
+  border-color: rgb(255 255 255 / 0.3);
 }
 
-.item-agenda--hoje {
-  border-left: 3px solid var(--atencao);
-}
-
-.item-agenda--proximo {
-  border-left: 3px solid var(--marca);
-}
-
-/* A borda grossa tira 2px do recuo; sem compensar, o texto desses itens fica fora
-   do alinhamento dos outros. */
-.item-agenda--atrasado,
-.item-agenda--hoje,
-.item-agenda--proximo {
-  padding-left: 14px;
-}
-
-.item-agenda--concluido .item-agenda__titulo {
-  color: var(--text-muted);
+@media (hover: hover) {
+  .item-agenda:hover {
+    background: rgb(255 255 255 / 0.12);
+    border-color: rgb(255 255 255 / 0.3);
+  }
 }
 
 .item-agenda__info {
@@ -121,24 +109,42 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--text-muted);
+  margin-bottom: 2px;
   font-size: 0.8rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: rgb(255 255 255 / 0.72);
 }
 
 .item-agenda__titulo {
+  font-size: 1.05rem;
   font-weight: 600;
+  line-height: 1.35;
+  color: #fff;
 }
 
-.item-agenda__materia,
+.item-agenda__materia {
+  font-size: 0.9rem;
+  color: rgb(255 255 255 / 0.85);
+}
+
 .item-agenda__data {
   font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+  color: rgb(255 255 255 / 0.72);
 }
 
 .item-agenda__info .item-agenda__data {
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+/* O selo da situação ganha um fundo escuro por baixo da tinta dele: no item que fica
+   sobre o céu rosado, o "Atrasado" (rosa) se perderia. Só aqui, o .selo global não muda. */
+.item-agenda .selo {
+  background: color-mix(in srgb, currentColor 16%, rgb(30 16 26 / 0.6));
+}
+
+/* Feito: o título cai para o branco de apoio; o selo "Concluído" diz o resto. */
+.item-agenda--concluido .item-agenda__titulo {
+  color: rgb(255 255 255 / 0.72);
 }
 
 .item-agenda__acoes {
@@ -151,9 +157,10 @@
 .item-agenda__feito {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
   font-size: 0.9rem;
+  color: rgb(255 255 255 / 0.85);
 }
 
 .item-agenda__feito input {
@@ -161,6 +168,7 @@
   height: 18px;
   margin: 0;
   accent-color: var(--marca);
+  cursor: pointer;
 }
 
 /* ---------- Formulário ---------- */
@@ -176,16 +184,23 @@
 
 .agenda-form__campo {
   display: grid;
-  gap: 4px;
+  gap: 6px;
 }
 
 .agenda-form__campo label {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
+  color: rgb(255 255 255 / 0.85);
 }
 
 .agenda-form__campo .campo {
   width: 100%;
+}
+
+/* As opções do select abrem numa lista do sistema, fora do vidro: fundo escuro opaco. */
+.agenda-form__campo option {
+  background: #2a1c26;
+  color: var(--text);
 }
 
 .agenda-form__erro {
@@ -196,9 +211,23 @@
 
 .agenda-form .botao {
   justify-self: start;
+  margin-top: 4px;
 }
 
 .agenda-form__status {
   margin: 0;
   font-size: 0.9rem;
+}
+
+@media (max-width: 760px) {
+  .agenda,
+  .agenda__listas {
+    gap: 16px;
+  }
+
+  /* Duas classes para vencer o padding do .vidro */
+  .vidro.agenda__painel,
+  .vidro.agenda-form {
+    padding: 18px;
+  }
 }

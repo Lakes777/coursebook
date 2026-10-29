@@ -1,18 +1,20 @@
-/* ---------- Tela da semana ---------- */
-
-/* Tela larga: a tabela do portal. Celular: um dia embaixo do outro. Só um dos dois aparece. */
+/* ---------- Tela da semana (identidade "Vidro") ----------
+   Tela larga: a grade do portal dentro de um painel de vidro, com cada aula num bloco
+   interno, como a régua do Início. Celular: um painel por dia, um embaixo do outro.
+   Só um dos dois aparece. O bordô fica só no dia de hoje e na aula de agora. */
 .grade-semana {
   display: none;
 }
 
 .semana-lista {
   display: grid;
-  gap: 12px;
+  gap: 16px;
 }
 
 @media (min-width: 760px) {
   .grade-semana {
     display: block;
+    /* Em tela estreita a tabela rola dentro do painel, sem rolar a página de lado. */
     overflow-x: auto;
   }
 
@@ -21,81 +23,87 @@
   }
 }
 
+/* O painel da grade: o vidro do .vidro, um pouco mais escuro, porque as linhas de
+   cima (as aulas da manhã) ficam sobre a parte mais clara do céu. Duas classes para
+   vencer o .vidro do index.css, que pode carregar depois. */
+.vidro.grade-semana {
+  padding: 18px 18px 14px;
+  background: rgb(40 24 34 / 0.45);
+}
+
 .grade-semana__tabela {
   width: 100%;
+  min-width: 640px;
+  /* Separadas, com um vão entre as células: cada aula vira um bloco com os cantos redondos. */
   border-collapse: separate;
-  border-spacing: 0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-spacing: 6px;
   table-layout: fixed;
-  overflow: hidden;
+}
+
+/* A legenda da tabela é o rótulo do painel (como "Hoje" e "Semestre" no Início). */
+.grade-semana__rotulo {
+  padding: 0 6px 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-align: left;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.75);
+}
+
+.grade-semana__rotulo .icone {
+  margin-right: 8px;
+  vertical-align: -2px;
 }
 
 .grade-semana__tabela th,
 .grade-semana__tabela td {
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--border);
-  text-align: center;
+  padding: 0;
   vertical-align: middle;
   overflow-wrap: anywhere;
 }
 
-.grade-semana__tabela tbody tr:last-child > * {
-  border-bottom: none;
+/* Com height: 1px na célula, o bloco de dentro consegue ocupar 100% da linha: as
+   aulas de uma mesma linha ficam com a mesma altura. */
+.grade-semana__tabela tbody td {
+  height: 1px;
 }
 
+/* ---------- Cabeçalho: os dias ---------- */
 .grade-semana__tabela thead th {
-  padding-block: 12px;
+  padding: 8px 10px 10px;
+  border-radius: var(--raio-vidro-pequeno);
   font-size: 0.95rem;
+  font-weight: 600;
+  text-align: left;
+  color: rgb(255 255 255 / 0.85);
 }
 
 /* A coluna das aulas é mais estreita que a dos dias. */
 .grade-semana__tabela thead td:first-child,
 .grade-semana__tabela tbody th {
-  width: 118px;
+  width: 112px;
 }
 
-/* Hoje: fundo levemente destacado na coluna inteira, além do rótulo "Hoje". */
-.grade-semana__hoje {
-  background: var(--surface-hover);
+/* Hoje: a coluna inteira com um véu bordô bem leve, o nome em branco cheio e a pílula "Hoje". */
+.grade-semana__tabela .grade-semana__hoje {
+  border-radius: var(--raio-vidro-pequeno);
+  background: rgb(157 34 53 / 0.16);
 }
 
 .grade-semana__tabela thead .grade-semana__hoje {
-  box-shadow: inset 0 -2px 0 var(--destaque);
-}
-
-/* A aula em andamento: borda de destaque na célula, além do rótulo "Agora". */
-.grade-semana__tabela .grade-semana__agora {
-  box-shadow: inset 0 0 0 2px var(--destaque);
-}
-
-.semana__aulas .semana__linha--agora {
-  margin-inline: -8px;
-  padding-inline: 6px;
-  border: 2px solid var(--destaque);
-  border-radius: var(--radius);
-}
-
-/* No celular, o rótulo fica no começo da linha da matéria; na tabela, em cima do nome. */
-.semana__agora {
-  display: inline-block;
-  margin-bottom: 4px;
-}
-
-.semana__linha--agora .semana__agora {
-  margin-bottom: 2px;
+  color: #fff;
 }
 
 .grade-semana__tabela thead .semana__hoje {
-  margin-left: 6px;
+  margin-left: 8px;
+  vertical-align: 1px;
 }
 
-.grade-semana__tabela .grade-semana__vazia td {
-  padding-block: 6px;
-  background: var(--bg);
-  color: var(--text-muted);
-  font-size: 0.85rem;
+/* ---------- Linhas: a aula da tabela da PUC ---------- */
+.grade-semana__tabela tbody th {
+  padding: 8px 8px 8px 6px;
+  text-align: left;
 }
 
 .grade-semana__aula {
@@ -104,64 +112,163 @@
 }
 
 .grade-semana__numero {
-  font-weight: 700;
   font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
 }
 
+/* "19:00 às 19:45" numa linha só: quebrado, parecia duas informações. */
 .grade-semana__faixa {
-  color: var(--text-muted);
+  white-space: nowrap;
+  font-size: 0.8rem;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: rgb(255 255 255 / 0.72);
+}
+
+/* O bloco de uma aula: o mesmo bloco interno da régua do Início. */
+.grade-semana__bloco {
+  display: grid;
+  align-content: center;
+  gap: 6px;
+  height: 100%;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 1px solid var(--vidro-borda);
+  border-radius: var(--raio-vidro-pequeno);
+  background: var(--vidro-forte);
+  transition:
+    background-color 0.4s var(--ease-suave),
+    border-color 0.4s var(--ease-suave);
+}
+
+@media (hover: hover) {
+  .grade-semana__bloco:hover {
+    background: rgb(255 255 255 / 0.24);
+    border-color: rgb(255 255 255 / 0.4);
+  }
+}
+
+/* A aula de agora: bordô quase opaco, como a da régua do Início. */
+.grade-semana__agora .grade-semana__bloco {
+  border-color: rgb(234 135 152 / 0.75);
+  background: rgb(120 28 44 / 0.82);
+}
+
+@media (hover: hover) {
+  .grade-semana__agora .grade-semana__bloco:hover {
+    background: rgb(140 32 50 / 0.9);
+    border-color: rgb(234 135 152 / 0.75);
+  }
+}
+
+/* O intervalo sem aulas: um texto de apoio entre duas linhas tracejadas, como as horas da régua. */
+.grade-semana__intervalo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 6px;
   font-size: 0.8rem;
   font-variant-numeric: tabular-nums;
-  font-weight: 400;
+  color: rgb(255 255 255 / 0.72);
 }
 
-.semana__linha {
+.grade-semana__intervalo::before,
+.grade-semana__intervalo::after {
+  content: '';
+  flex: 1;
+  border-top: 1px dashed rgb(255 255 255 / 0.22);
+}
+
+/* ---------- As matérias de uma aula ---------- */
+.aula-semana {
   display: grid;
-  grid-template-columns: 104px minmax(0, 1fr);
-  gap: 10px;
-  align-items: center;
-  padding: 8px 0;
-  border-top: 1px solid var(--border);
+  gap: 2px;
+  font-size: 0.9rem;
+  /* Lê do começo, como os blocos da régua */
+  text-align: left;
 }
 
-.semana__linha:first-child {
-  border-top: none;
-  padding-top: 0;
+.aula-semana + .aula-semana {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgb(255 255 255 / 0.14);
 }
 
-.semana__fora ul {
-  margin: 0;
-  padding-left: 20px;
+.aula-semana__materia {
+  font-weight: 600;
+  line-height: 1.3;
+  color: #fff;
+  text-decoration: none;
 }
 
+.aula-semana__materia:hover {
+  text-decoration: underline;
+}
+
+/* 78%, como o professor da régua (o .muted deixaria em 72%). */
+.aula-semana__professor {
+  font-size: 0.8rem;
+  color: rgb(255 255 255 / 0.78);
+}
+
+/* ---------- Pílulas "Hoje" e "Agora" ---------- */
+/* Hoje: contorno no tom claro do bordô. */
+.semana__hoje {
+  display: inline-block;
+  padding: 1px 9px;
+  border: 1px solid rgb(234 135 152 / 0.55);
+  border-radius: 999px;
+  background: rgb(234 135 152 / 0.12);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 1.5;
+  text-transform: uppercase;
+  color: var(--destaque);
+}
+
+/* Agora: bordô cheio atrás do texto branco, como o selo da régua. */
+.semana__hoje.semana__agora {
+  justify-self: start;
+  border-color: transparent;
+  background: var(--marca);
+  color: #fff;
+}
+
+/* No celular, o rótulo fica no começo da linha da matéria. */
+.semana__linha .semana__agora {
+  margin-bottom: 4px;
+}
+
+/* ---------- Celular: um painel por dia ---------- */
 .semana__dia {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   min-width: 0;
-  padding: 14px;
+  padding: 18px;
 }
 
-/* Hoje: borda e rótulo no tom de destaque; o rótulo diz em texto o que a borda sugere. */
+/* Um pouco mais escuro que o .cartao, como o painel da grade: no celular em pé os
+   primeiros dias ficam sobre o céu claro. Duas classes para vencer o .cartao. */
+.cartao.semana__dia {
+  background: rgb(40 24 34 / 0.32);
+}
+
+/* Hoje: a borda no tom do bordô; a pílula diz em texto o que a borda sugere. */
 .semana__dia--hoje {
-  border-color: var(--destaque);
+  border-color: rgb(234 135 152 / 0.55);
 }
 
 .semana__nome {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 4px 8px;
+  gap: 4px 10px;
   margin: 0;
-  font-size: 1rem;
-}
-
-.semana__hoje {
-  padding: 0 8px;
-  border: 1px solid var(--destaque);
-  border-radius: var(--radius-pequeno);
-  color: var(--destaque);
-  font-size: 0.75rem;
+  font-size: 1.05rem;
   font-weight: 600;
+  color: #fff;
 }
 
 .semana__sem-aulas {
@@ -171,37 +278,49 @@
 
 .semana__aulas {
   display: grid;
-  gap: 0;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.aula-semana {
+/* Cada aula do dia é um bloco interno, como na régua. */
+.semana__linha {
   display: grid;
-  gap: 2px;
-  font-size: 0.9rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 14px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: var(--raio-vidro-pequeno);
+  background: rgb(255 255 255 / 0.06);
 }
 
-.aula-semana + .aula-semana {
-  margin-top: 6px;
+.semana__linha > span:last-child {
+  display: grid;
+  min-width: 0;
 }
 
-.aula-semana__professor {
-  font-size: 0.8rem;
+.semana__aulas .semana__linha--agora {
+  border-color: rgb(234 135 152 / 0.75);
+  background: rgb(120 28 44 / 0.82);
 }
 
-.aula-semana__materia {
-  color: var(--text);
-  font-weight: 600;
-  text-decoration: underline;
-  text-decoration-color: var(--borda-campo);
-  text-underline-offset: 3px;
+/* ---------- Fora da grade e matérias sem horário ---------- */
+.semana__fora {
+  display: grid;
+  gap: 8px;
+  margin-top: 24px;
 }
 
-.aula-semana__materia:hover {
-  color: var(--destaque);
-  text-decoration-color: currentColor;
+.semana__fora p {
+  margin: 0;
+}
+
+.semana__fora ul {
+  margin: 0;
+  padding-left: 20px;
+  color: rgb(255 255 255 / 0.85);
 }
 
 .semana__editar {
@@ -209,4 +328,39 @@
   gap: 4px;
   margin: 0;
   padding-left: 20px;
+}
+
+/* Tela média (com a barra lateral, a grade fica com ~135 px por dia): blocos e
+   letras um pouco menores, para o nome da matéria não quebrar em tantas linhas. */
+@media (min-width: 760px) and (max-width: 1200px) {
+  .vidro.grade-semana {
+    padding: 14px 12px 10px;
+  }
+
+  .grade-semana__tabela {
+    border-spacing: 4px;
+  }
+
+  .grade-semana__tabela thead td:first-child,
+  .grade-semana__tabela tbody th {
+    width: 104px;
+  }
+
+  .grade-semana__bloco {
+    padding: 8px 10px;
+  }
+
+  .aula-semana {
+    font-size: 0.85rem;
+  }
+
+  .aula-semana__professor {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 759px) {
+  .semana__fora {
+    margin-top: 16px;
+  }
 }
