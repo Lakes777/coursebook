@@ -1,3 +1,4 @@
+import { ClipboardCheck } from 'lucide-react'
 import { useId, useState } from 'react'
 import { Selo } from '../../componentes/Selo'
 import { usePainel } from '../../estado/contexto'
@@ -28,21 +29,22 @@ export function SecaoNotas({ materia, regra, situacao }: Props) {
       avaliacaoId: avaliacao.id,
       campos: { nota },
     })
-    setSalvo(nota === null ? `Nota de ${avaliacao.nome} apagada.` : `Nota de ${avaliacao.nome} salva: ${formatarNota(nota)}.`)
+    setSalvo(
+      nota === null ? `Nota de ${avaliacao.nome} apagada.` : `Nota de ${avaliacao.nome} salva: ${formatarNota(nota)}.`,
+    )
   }
 
   function salvarRecuperacao(ra: ResultadoAprendizagem, nota: number | null) {
     despachar({ tipo: 'ra/editar', materiaId: materia.id, raId: ra.id, campos: { notaRecuperacao: nota } })
     setSalvo(
-      nota === null
-        ? `Recuperação de ${ra.nome} apagada.`
-        : `Recuperação de ${ra.nome} salva: ${formatarNota(nota)}.`,
+      nota === null ? `Recuperação de ${ra.nome} apagada.` : `Recuperação de ${ra.nome} salva: ${formatarNota(nota)}.`,
     )
   }
 
   return (
     <section className="cartao materia__secao materia__notas" aria-labelledby="secao-notas">
       <h3 id="secao-notas" className="materia__subtitulo">
+        <ClipboardCheck className="icone" size={15} aria-hidden="true" />
         Notas
       </h3>
       {materia.ras.length === 0 ? (
@@ -97,7 +99,8 @@ function CartaoRA({ ra, fracao, regra, situacao, extra, pontosExtras, aoSalvarNo
   const variasAvaliacoes = ra.avaliacoes.length > 1
 
   return (
-    <section className="cartao ra" aria-labelledby={idTitulo}>
+    // Bloco interno do painel de Notas, sem vidro próprio: vidro dentro de vidro não desfoca a foto.
+    <section className="ra" aria-labelledby={idTitulo}>
       <div className="ra__cabecalho">
         <h4 id={idTitulo} className="ra__nome">
           {ra.nome}

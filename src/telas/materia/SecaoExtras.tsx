@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react'
+import { Plus, Sparkles } from 'lucide-react'
 import { useRef, useState, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { BotaoRemover } from '../../componentes/BotaoRemover'
@@ -41,6 +41,7 @@ export function SecaoExtras({ materia }: { materia: Materia }) {
   return (
     <section className="cartao materia__secao" aria-labelledby={ID_TITULO}>
       <h3 id={ID_TITULO} ref={titulo} tabIndex={-1} className="materia__subtitulo">
+        <Sparkles className="icone" size={15} aria-hidden="true" />
         Pontos extras
       </h3>
       <p className="materia__texto">
