@@ -1,38 +1,56 @@
-/* ---------- Tela de nova matéria ---------- */
+/* ---------- Formulário de matéria "vidro" (Nova matéria e Editar) ----------
+   Na tela larga, os 5 passos ficam numa coluna de vidro à esquerda, que acompanha a
+   rolagem, e o formulário num painel ao lado. Na estreita, os passos viram uma barra
+   em cima do formulário; no celular, só o passo atual mostra o nome.
+   Os campos (.nm-campo, .nm-grupo, .nm-item) também servem à regra padrão e à conta
+   na tela Dados. */
 
+/* A introdução fica direto sobre a foto, como o título: a sombra segura a leitura. */
 .nm-intro {
-  margin: 0 0 16px;
+  margin: -6px 0 24px;
   max-width: 65ch;
+  color: rgb(255 255 255 / 0.85);
+  text-shadow: 0 1px 14px rgb(20 8 16 / 0.6);
+}
+
+.nm {
+  display: grid;
+  gap: 16px;
+  align-items: start;
 }
 
 /* ---------- Passos ---------- */
-.nm-passos {
+.nm .nm-passos {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 6px;
-  margin: 0 0 16px;
-  padding: 0;
+  gap: 4px;
+  margin: 0;
+  padding: 6px;
+  border-radius: 20px;
   list-style: none;
 }
 
 .nm-passos__item {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   min-width: 0;
-  padding-top: 8px;
-  border-top: 3px solid var(--border);
-  color: var(--text-muted);
+  padding: 8px 10px;
+  border-radius: var(--raio-vidro-pequeno);
+  color: rgb(255 255 255 / 0.72);
   font-size: 0.85rem;
+  line-height: 1.25;
 }
 
 .nm-passos__item--feito {
-  border-top-color: var(--marca-escura);
+  color: rgb(255 255 255 / 0.85);
 }
 
+/* O passo atual é o destaque da tela: a mesma pílula bordô da aba ativa. */
 .nm-passos__item--atual {
-  border-top-color: var(--marca);
-  color: var(--text);
+  background: rgb(157 34 53 / 0.85);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18);
+  color: #fff;
   font-weight: 600;
 }
 
@@ -40,22 +58,52 @@
   display: inline-grid;
   place-items: center;
   flex-shrink: 0;
-  width: 24px;
-  height: 24px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pequeno);
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgb(255 255 255 / 0.3);
+  border-radius: 999px;
   font-size: 0.8rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Feito: o "certo" no tom claro do bordô. */
+.nm-passos__item--feito .nm-passos__numero {
+  border-color: rgb(234 135 152 / 0.6);
+  color: var(--destaque);
 }
 
 .nm-passos__item--atual .nm-passos__numero {
-  background: var(--marca);
-  border-color: var(--marca);
-  color: #fff;
+  background: #fff;
+  border-color: #fff;
+  color: var(--marca);
 }
 
 .nm-passos__nome {
   min-width: 0;
   overflow-wrap: anywhere;
+}
+
+/* Tela larga: os passos numa coluna ao lado do formulário, presos ao rolar. */
+@media (min-width: 1200px) {
+  .nm {
+    grid-template-columns: 14.5rem minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .nm .nm-passos {
+    position: sticky;
+    top: 32px;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+    padding: 12px;
+    border-radius: var(--raio-vidro);
+  }
+
+  .nm-passos__item {
+    padding: 10px 12px;
+    font-size: 0.92rem;
+  }
 }
 
 /* No celular não cabem os 5 nomes: só o do passo atual aparece (o título do passo
@@ -70,30 +118,67 @@
     white-space: nowrap;
   }
 
-  .nm-passos {
+  .nm .nm-passos {
     display: flex;
+  }
+
+  .nm-passos__item {
+    justify-content: center;
+    padding: 6px;
   }
 
   .nm-passos__item--atual {
     flex: 1;
+    justify-content: flex-start;
+    padding-right: 12px;
   }
 }
 
 /* ---------- Formulário ---------- */
+/* Painéis de formulário: a foto atrás escurece um pouco (brightness), senão o texto de
+   apoio e a borda dos campos somem sobre o brilho do pôr do sol (medido: branco 72%
+   ficava em 2,1:1 ali; com 0,55, 3,8:1 no ponto mais claro e acima de 4,5:1 no resto). */
+.nm .nm-passos,
 .nm-form {
-  display: grid;
-  gap: 16px;
-  max-width: 760px;
-  min-width: 0;
+  -webkit-backdrop-filter: blur(var(--desfoque)) saturate(140%) brightness(0.55);
+  backdrop-filter: blur(var(--desfoque)) saturate(140%) brightness(0.55);
 }
 
+.nm-form {
+  display: grid;
+  gap: 20px;
+  max-width: 860px;
+  min-width: 0;
+  /* Os campos se arrumam pela largura do painel, não da janela (ver .nm-item__campos). */
+  container-type: inline-size;
+}
+
+/* "Passo 2 de 5" como rótulo pequeno e o nome do passo grande e leve, como os títulos. */
 .nm-form__titulo {
+  display: grid;
+  gap: 4px;
   margin: 0;
-  font-size: 1.1rem;
+  font-weight: 400;
 }
 
 .nm-form__titulo:focus {
   outline: none;
+}
+
+.nm-form__contagem {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.75);
+}
+
+.nm-form__nome {
+  font-size: 1.6rem;
+  font-weight: 300;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  color: #fff;
 }
 
 .nm-texto {
@@ -103,7 +188,7 @@
 
 .nm-campo {
   display: grid;
-  gap: 4px;
+  gap: 6px;
   align-content: start;
   min-width: 0;
 }
@@ -111,10 +196,22 @@
 .nm-campo label {
   font-size: 0.9rem;
   font-weight: 600;
+  color: #fff;
 }
 
 .nm-campo .campo {
   width: 100%;
+}
+
+/* Sobre o brilho do pôr do sol, a borda branca 40% do .campo fica em 2,4:1. Aqui ela é
+   mais forte e o miolo do campo afunda (escuro), para passar de 3:1 contra o painel.
+   O campo com erro continua com a borda vermelha (:not). */
+.nm-form .campo {
+  background: rgb(20 10 18 / 0.3);
+}
+
+.nm-form .campo:not([aria-invalid='true']) {
+  border-color: rgb(255 255 255 / 0.62);
 }
 
 .nm-campo .campo.nm-campo--curto {
@@ -127,45 +224,65 @@
   font-size: 0.85rem;
 }
 
+.nm-campo__dica {
+  color: rgb(255 255 255 / 0.72);
+}
+
 .nm-campo__erro {
   color: var(--perigo);
 }
 
-/* Grupo (horários, avaliações de um RA, regra) e item (um horário, um RA, uma avaliação). */
-.nm-grupo,
+/* Grupo (horários, avaliações de um RA, regra): um título e o conteúdo embaixo, sem
+   caixa em volta. A legenda flutuante vira um item comum da grade, com o mesmo espaço
+   dos outros. */
+.nm-grupo {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.nm-grupo > legend {
+  float: left;
+  width: 100%;
+  padding: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+/* Item (um horário, um RA, uma avaliação): um bloco interno claro, com o raio dos
+   blocos (14px). Sem desfoque: vidro dentro de vidro não enxerga a foto. */
 .nm-item {
   display: grid;
   gap: 12px;
   min-width: 0;
   margin: 0;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pequeno);
+  padding: 14px 16px 16px;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: var(--raio-vidro-pequeno);
+  background: rgb(255 255 255 / 0.07);
 }
 
-.nm-grupo {
-  padding: 12px 16px 16px;
-}
-
-.nm-item {
-  padding: 10px 14px 14px;
-  background: var(--bg);
-}
-
-.nm-grupo > legend,
 .nm-item > legend {
-  padding: 0 6px;
+  float: left;
+  width: 100%;
+  padding: 0;
+  font-size: 0.78rem;
   font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.75);
   overflow-wrap: anywhere;
-}
-
-.nm-item > legend {
-  font-size: 0.9rem;
-  color: var(--text-muted);
 }
 
 .nm-grupo__vazio {
   margin: 0;
   font-size: 0.9rem;
+  color: rgb(255 255 255 / 0.72);
 }
 
 .nm-item__campos {
@@ -173,7 +290,7 @@
   gap: 12px;
 }
 
-@media (min-width: 560px) {
+@container (min-width: 420px) {
   .nm-item__campos {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -183,7 +300,7 @@
   }
 }
 
-@media (min-width: 800px) {
+@container (min-width: 640px) {
   /* Dia, primeira aula e última aula (ou início e fim) numa linha só. */
   .nm-item__campos--horario {
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -207,9 +324,11 @@
 .nm-caixa {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  justify-self: start;
   cursor: pointer;
   font-size: 0.95rem;
+  color: rgb(255 255 255 / 0.85);
 }
 
 .nm-caixa input {
@@ -222,11 +341,18 @@
 
 .nm-soma {
   margin: 0;
+  color: rgb(255 255 255 / 0.85);
+}
+
+.nm-soma strong {
+  color: #fff;
+  font-variant-numeric: tabular-nums;
 }
 
 .nm-regra-resumo {
   margin: 0;
-  padding-left: 34px;
+  /* O marcador fica embaixo do texto da opção (18px do botão + 10px de espaço). */
+  padding-left: 44px;
   font-size: 0.9rem;
 }
 
@@ -234,12 +360,15 @@
   margin-top: -6px;
 }
 
-/* ---------- Revisar ---------- */
+/* ---------- Revisar ----------
+   Cada parte (matéria, RAs, regra) num bloco interno, com o "Alterar" no canto. */
 .nm-revisao {
   display: grid;
-  gap: 8px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border);
+  gap: 10px;
+  padding: 16px 18px;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: var(--raio-vidro-pequeno);
+  background: rgb(255 255 255 / 0.07);
   overflow-wrap: anywhere;
 }
 
@@ -252,27 +381,32 @@
 
 .nm-revisao__topo h4 {
   margin: 0 auto 0 0;
-  font-size: 1rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.75);
 }
 
 .nm-revisao__dados {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
-  gap: 4px 16px;
+  gap: 6px 20px;
   margin: 0;
 }
 
 .nm-revisao__dados dt {
-  color: var(--text-muted);
+  color: rgb(255 255 255 / 0.72);
 }
 
 .nm-revisao__dados dd {
   margin: 0;
+  color: #fff;
 }
 
 .nm-revisao__ras {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -281,11 +415,17 @@
 .nm-revisao__ras ul {
   margin: 4px 0 0;
   padding-left: 20px;
+  color: rgb(255 255 255 / 0.85);
 }
 
 .nm-revisao__ras p,
 .nm-revisao__ra {
   margin: 0;
+  color: rgb(255 255 255 / 0.85);
+}
+
+.nm-revisao__ra strong {
+  color: #fff;
 }
 
 .nm-revisao .nm-regra-resumo {
@@ -307,6 +447,12 @@
 .nm-status {
   margin: 0;
   font-size: 0.9rem;
+}
+
+/* Vazio, o status não deixa o vão da grade no pé do painel. Ele continua na página (e
+   não display: none): o leitor de tela só anuncia mudanças numa região que já existia. */
+.nm-status:empty {
+  margin-top: -20px;
 }
 
 /* ---------- Confirmação ao cancelar ---------- */
@@ -337,10 +483,25 @@
   margin: 0;
   font-size: 0.9rem;
   font-variant-numeric: tabular-nums;
+  color: rgb(255 255 255 / 0.72);
 }
 
 .nm-item__botoes {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+@media (max-width: 760px) {
+  .nm-intro {
+    margin-bottom: 16px;
+  }
+
+  .nm-form__nome {
+    font-size: 1.35rem;
+  }
+
+  .nm-item {
+    padding: 12px 14px 14px;
+  }
 }

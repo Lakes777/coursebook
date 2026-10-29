@@ -1,4 +1,4 @@
-import { Bot, Download, Eye, Pencil, RotateCcw, Trash2, Upload } from 'lucide-react'
+import { Bot, Download, Eye, Pencil, RotateCcw, Scale, Trash2, Upload } from 'lucide-react'
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { CabecalhoTela } from '../componentes/CabecalhoTela'
@@ -37,6 +37,14 @@ import './dados.css'
 
 export function TelaDados() {
   const comConta = useNuvem()?.conta != null
+  // Com conta, a nuvem e as chaves já enchem a coluna da esquerda: exportar e exemplo
+  // vão para a da direita, para as duas colunas terminarem perto uma da outra.
+  const exportarERecomecar = (
+    <>
+      <SecaoExportar />
+      <SecaoRecomecar />
+    </>
+  )
   return (
     <CabecalhoTela titulo="Dados">
       <p className="muted dados__intro">
@@ -52,12 +60,12 @@ export function TelaDados() {
           <SecaoNuvem />
           {/* Só com a conta conectada. */}
           <SecaoChaves />
-          <SecaoExportar />
-          <SecaoRecomecar />
+          {!comConta && exportarERecomecar}
         </div>
         <div className="dados__coluna">
           <SecaoImportar />
           <SecaoRegra />
+          {comConta && exportarERecomecar}
         </div>
         <SecaoIA />
       </div>
@@ -84,6 +92,7 @@ function SecaoExportar() {
   return (
     <section className="cartao dados__secao" aria-labelledby="dados-exportar">
       <h3 id="dados-exportar" className="dados__subtitulo">
+        <Download className="icone" size={15} aria-hidden="true" />
         Exportar
       </h3>
       <p className="dados__texto">
@@ -144,6 +153,7 @@ function SecaoRecomecar() {
   return (
     <section className="cartao dados__secao" aria-labelledby="dados-recomecar">
       <h3 id="dados-recomecar" ref={titulo} tabIndex={-1} className="dados__subtitulo">
+        <RotateCcw className="icone" size={15} aria-hidden="true" />
         Exemplo e recomeço
       </h3>
       <p className="dados__texto">
@@ -297,6 +307,7 @@ function SecaoRegra() {
   return (
     <section className="cartao dados__secao" aria-labelledby="dados-regra">
       <h3 id="dados-regra" ref={titulo} tabIndex={-1} className="dados__subtitulo">
+        <Scale className="icone" size={15} aria-hidden="true" />
         Regra padrão de aprovação
       </h3>
       <p className="dados__texto">
@@ -458,6 +469,7 @@ function SecaoImportar() {
   return (
     <section className="cartao dados__secao" aria-labelledby="dados-importar">
       <h3 id="dados-importar" ref={titulo} tabIndex={-1} className="dados__subtitulo">
+        <Upload className="icone" size={15} aria-hidden="true" />
         Importar
       </h3>
       <p className="dados__texto">
@@ -598,6 +610,7 @@ function SecaoIA() {
   return (
     <section className="cartao dados__secao" aria-labelledby="dados-ia">
       <h3 id="dados-ia" className="dados__subtitulo">
+        <Bot className="icone" size={15} aria-hidden="true" />
         Cadastrar com uma IA
       </h3>
       <ol className="dados__passos">

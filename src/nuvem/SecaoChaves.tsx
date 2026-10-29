@@ -134,6 +134,7 @@ function Chaves({ nuvem }: { nuvem: Nuvem }) {
   return (
     <section className="cartao dados__secao" aria-labelledby={ID_TITULO}>
       <h3 id={ID_TITULO} ref={titulo} tabIndex={-1} className="dados__subtitulo nuvem__titulo">
+        <KeyRound className="icone" size={15} aria-hidden="true" />
         Chaves de acesso
       </h3>
       <p className="dados__texto">
