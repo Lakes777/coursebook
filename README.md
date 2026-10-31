@@ -16,17 +16,17 @@ mostra como ele fica em uso).
 
 ## Demonstração
 
-![Página de entrada do Coursebook: a grade da semana ocupa o fundo, com a aula de agora acesa, e o nome enorme em letra larga por cima, com os destaques e o botão Começar](docs/lobby.png)
+![Tela Início do Coursebook sobre a foto de uma escrivaninha ao entardecer: a frase do dia no topo, o resumo do semestre, a régua de hoje com a aula de agora marcada, o que está atrasado e os próximos prazos, em painéis de vidro](docs/inicio.jpg)
 
-![Lista de matérias com o resumo do semestre, a situação de cada uma e os próximos prazos](docs/materias.png)
+![Lista de matérias com o resumo do semestre, a situação de cada uma e os próximos prazos](docs/materias.jpg)
 
-![Tela de uma matéria: notas por RA, faltas, pontos extras e regra](docs/materia.png)
+![Tela de uma matéria: notas por RA, faltas, pontos extras e regra](docs/materia.jpg)
 
-![Grade da semana com os horários de todas as matérias, o dia de hoje e a aula de agora marcados](docs/semana.png)
+![Grade da semana com os horários de todas as matérias, o dia de hoje e a aula de agora marcados](docs/semana.jpg)
 
 <p>
-  <img src="docs/agenda.png" alt="Agenda com provas atrasadas, de hoje e chegando" width="64%">
-  <img src="docs/celular.png" alt="Tela de uma matéria em recuperação, no celular" width="32%">
+  <img src="docs/agenda.jpg" alt="Agenda com provas atrasadas, de hoje e chegando" width="64%">
+  <img src="docs/celular.jpg" alt="Tela de uma matéria em recuperação, no celular" width="32%">
 </p>
 
 Os prints usam os dados de exemplo (matérias e professores inventados), que qualquer um pode
@@ -50,6 +50,9 @@ carregar no painel vazio com "Ver com dados de exemplo".
   coluna por dia, o nome da matéria em cada aula que ela ocupa e o dia de hoje marcado. Aulas
   vazias seguidas (entre a manhã e a noite) viram uma linha só; no celular, um dia embaixo do outro.
   A aula que está acontecendo agora aparece marcada com "Agora" e muda sozinha com a tela aberta.
+- **Início:** uma frase resume o dia ("Programação Orientada a Objetos agora, Entrega do relatório
+  final hoje e uma matéria pedindo atenção"), com a régua das aulas de hoje e a hora atual, o
+  resumo do semestre, o que está atrasado e os próximos prazos.
 - **Visão do semestre:** a lista de matérias mostra um resumo (aprovadas, em andamento, pedem
   atenção) e o cartão "Próximos prazos", com os 3 itens da agenda que vêm primeiro.
 - **Agenda:** provas, trabalhos e apresentações, com o que está atrasado, é hoje ou está chegando.
@@ -174,7 +177,7 @@ tests/           Espelha o src/ (logica, estado, telas, navegacao, tema, nuvem) 
   intervalo); horário que não bate com a tabela aparece numa lista à parte, para não sumir.
 - **Rotas no `#`:** `#/materia/<id>`, `#/agenda`... Assim o botão voltar funciona e o site
   estático não precisa de configuração de rotas no servidor. A raiz (`#/`) é a página de
-  entrada (o lobby, com a aba "Início"), e a lista de matérias fica em `#/materias`.
+  entrada (a tela Início), e a lista de matérias fica em `#/materias`.
 - **Importação tolerante, validação rígida:** o JSON importado pode vir sem ids, sem versão ou
   com texto em volta; mas qualquer valor errado recusa tudo, com o caminho do erro
   ("Matéria 1 (POO) > RA 2 > Avaliação 1: ...").
@@ -194,11 +197,13 @@ tests/           Espelha o src/ (logica, estado, telas, navegacao, tema, nuvem) 
   pedido com o cabeçalho `Authorization` (403), então a chave não muda dados, não cria outras
   chaves nem apaga a conta. Os prazos são calculados no servidor com as mesmas funções da agenda
   do site, e o "hoje" é o de Brasília (a Vercel roda em UTC). Formato em [docs/nuvem.md](docs/nuvem.md).
-- **Visual ("Grade", de quadro de horários):** fundo quase preto, linhas retas e cantos quase sem
-  arredondar; títulos em Archivo largo e em caixa alta (o texto corrido fica na largura normal, para
-  não cansar), etiquetas em IBM Plex Mono e o bordô da PUC-PR (Pantone 201) só atrás de texto
-  branco; em texto, um tom claro dele, para ter contraste. A página de entrada é a própria grade
-  da semana, com a aula de agora acesa e o nome do lado oposto ao dela.
+- **Visual ("Vidro"):** os painéis são de vidro fosco (`backdrop-filter`) sobre a foto de uma
+  escrivaninha ao entardecer, em fonte Figtree e com o bordô da PUC-PR (Pantone 201) nos
+  destaques. O vidro foi escurecido até o texto ter contraste sobre qualquer parte da foto
+  (medido pixel a pixel nos prints); sem suporte a `backdrop-filter`, vira um painel escuro opaco. Um bloco que tem vidro
+  dentro não se anima com `filter` nem opacidade (isso faria o vidro de dentro perder a foto);
+  quem se anima é cada vidro. A interface saiu de uma imagem gerada por IA, recriada em código, e
+  as regras ficam em [docs/design-system.html](docs/design-system.html).
 - **Feito com o Claude Code:** o formulário de nova matéria, a agenda, a grade da semana e a
   edição da regra padrão foram feitos por subagentes em `git worktree` separados, ao mesmo tempo que outras telas, e um agente revisor
   confere cada mudança antes do commit.
@@ -216,4 +221,5 @@ tests/           Espelha o src/ (logica, estado, telas, navegacao, tema, nuvem) 
 - [x] Guardar os dados na nuvem, para usar em mais de um aparelho
 - [x] Página de entrada (lobby)
 - [x] Identidade visual própria ("Grade") e página de entrada com a grade da semana no fundo
+- [x] Visual novo ("Vidro") e tela Início com o resumo do dia
 - [x] Chaves de acesso para um bot ler os prazos sem a senha
