@@ -1,20 +1,16 @@
-/* Identidade "Grade": quadro de horários. Fundo quase preto, linhas retas, cantos quase
-   sem arredondar, títulos em Archivo largo e em caixa alta, e o bordô da PUCPR.
-   O bordô da marca é o Pantone 201 (#9d2235). Sobre o fundo escuro ele tem pouco
-   contraste, então aparece cheio só atrás de texto branco (botões, faixa do topo);
-   em texto e ícones vai o tom claro dele, --destaque. A letra larga fica só em títulos,
-   marca, números e botões: no texto corrido ela cansaria. */
+/* Identidade "Vidro" (desde 29/10/2026, no lugar da "Grade"): painéis de vidro fosco
+   sobre uma foto de escrivaninha com janelão ao entardecer rosado, como as janelas
+   do visionOS. Texto branco, um destaque só (o bordô da PUCPR, #9d2235, cheio atrás
+   de texto branco; o tom claro dele, --destaque, em texto e ícones) e as cores de
+   situação. Fonte Figtree; a IBM Plex Mono só em chaves e códigos.
+   Referência viva: docs/design-system.html (abre com o npm run dev). */
 :root {
   color-scheme: dark;
 
-  --bg: #0e0e10;
-  --surface: #151518;
-  --surface-hover: #1d1d21;
-  --border: #26262b;
-  --topo: #0e0e10;
-
-  --text: #ecebee;
-  --text-muted: #8f8e97;
+  --text: #f6f2f4;
+  /* Branco 72%: o mínimo que passa no contraste direto no painel de vidro (num bloco
+     claro de dentro dele, o apoio sobe para 85%) */
+  --text-muted: rgb(255 255 255 / 0.72);
 
   --marca: #9d2235;
   --marca-escura: #7a1a29;
@@ -24,16 +20,56 @@
   --atencao: #f0cf6a;
   --perigo: #ef9a9a;
   /* Borda dos campos: precisa de 3:1 sobre o fundo para o campo não sumir. */
-  --borda-campo: #62656d;
+  --borda-campo: rgb(255 255 255 / 0.62);
 
-  --font: 'Archivo', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  /* Figtree: sem serifa geométrica e arredondada, que lê bem em letra pequena (notas,
+     tabelas) e tem o 1 com bandeira, que não vira um l nos números finos. */
+  --font: 'Figtree', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --mono: 'IBM Plex Mono', ui-monospace, monospace;
-  /* Cantos quase retos, como as células de uma grade */
-  --radius: 3px;
-  --radius-pequeno: 2px;
   /* As mesmas curvas do portfólio */
   --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-texto: cubic-bezier(0, -0.02, 0.49, 0.99);
+
+  /* ---------- Vidro ----------
+     Painéis de vidro fosco sobre uma foto de escrivaninha com janelão ao entardecer
+     rosado. A foto fica fixa atrás de tudo e um véu escuro por cima dela garante o
+     contraste do texto branco. A foto foi gerada no Gemini (cópia reduzida em
+     docs/referencias/foto-original.webp) e convertida para WebP em public/fundo/. */
+  --foto: url('/fundo/escrivaninha-2560.webp');
+  /* No celular em pé, um recorte vertical centrado na escrivaninha. */
+  --foto-em-pe: url('/fundo/escrivaninha-em-pe.webp');
+  /* Enquanto a foto carrega (e se ela falhar), o fundo fica na cor média dela. */
+  --cor-foto: #241a22;
+  --veu:
+    linear-gradient(90deg, rgb(20 10 18 / 0.4) 0%, rgb(20 10 18 / 0.08) 50%, rgb(20 10 18 / 0.2) 100%),
+    linear-gradient(to bottom, rgb(20 10 18 / 0.15) 0%, transparent 35%, rgb(20 10 18 / 0.4) 100%);
+
+  --vidro: rgb(255 255 255 / 0.1);
+  --vidro-forte: rgb(255 255 255 / 0.16);
+  --vidro-borda: rgb(255 255 255 / 0.22);
+  --vidro-sombra: 0 16px 40px rgb(20 8 16 / 0.28);
+  --desfoque: 24px;
+  /* O filtro do vidro: desfoca, satura e escurece a foto atrás. O brightness segura o
+     contraste do texto branco sobre o brilho do pôr do sol (medido: sem ele, branco 72%
+     dava 2,1:1 no ponto mais claro; com 0,48, o 72% passa de 4,5:1 direto no painel e o 85% nos blocos claros de dentro). */
+  --filtro-vidro: blur(var(--desfoque)) saturate(140%) brightness(0.48);
+  --raio-vidro: 24px;
+  --raio-vidro-pequeno: 14px;
+  /* Curva dos hovers do vidro: começa rápido e assenta devagar */
+  --ease-suave: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (max-width: 1600px) {
+  :root {
+    --foto: url('/fundo/escrivaninha-1600.webp');
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    /* Desfoque menor no celular: em aparelho fraco, vidro grande desfocado pesa. */
+    --desfoque: 14px;
+  }
 }
 
 *,
@@ -44,10 +80,39 @@
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: var(--cor-foto);
   color: var(--text);
   font-family: var(--font);
   line-height: 1.5;
+}
+
+/* A foto e o véu ficam presos à janela (position: fixed, e não background-attachment,
+   que falha no Safari do iPhone) e atrás de todo o conteúdo. */
+body::before,
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+body::before {
+  background: var(--foto);
+  background-size: cover;
+  background-position: center;
+}
+
+body::after {
+  background: var(--veu);
+}
+
+@media (orientation: portrait) and (max-width: 640px) {
+  body::before {
+    background: var(--foto-em-pe);
+    background-size: cover;
+    background-position: center;
+  }
 }
 
 /* Sem isto, um display do CSS (como o do .botao) venceria o atributo hidden. */
@@ -93,12 +158,14 @@ a {
   outline: none;
 }
 
-/* Títulos das telas: Archivo largo (font-stretch), pesado e em caixa alta */
+/* Títulos das telas (as que ainda não ganharam o vidro): pesados e em caixa alta */
+/* Título de cada tela: grande e leve, direto sobre a foto, como a frase do Início */
 .titulo-tela {
-  font-stretch: 125%;
-  font-weight: 800;
+  margin: 0 0 20px;
+  font-size: clamp(1.6rem, 1.1rem + 1.2vw, 2.15rem);
+  font-weight: 300;
   letter-spacing: -0.01em;
-  text-transform: uppercase;
+  text-shadow: 0 1px 18px rgb(20 8 16 / 0.45);
 }
 
 /* Quem prefere menos animação (ex.: "Efeitos de animação" desligado no Windows) não vê
@@ -112,51 +179,130 @@ a {
   }
 }
 
-.container {
-  width: min(1100px, 100% - 32px);
-  margin-inline: auto;
-}
-
 .icone {
   flex-shrink: 0;
 }
 
-/* ---------- Topo ---------- */
-.topo {
-  background: var(--topo);
-  border-bottom: 2px solid var(--marca);
+/* ---------- Vidro ----------
+   Painel de vidro fosco: branco translúcido, a foto desfocada atrás, borda clara de
+   1px e sombra suave. Sem suporte a backdrop-filter, fica um painel escuro opaco. */
+.vidro {
+  padding: 24px;
+  border: 1px solid var(--vidro-borda);
+  border-radius: var(--raio-vidro);
+  background: var(--vidro);
+  -webkit-backdrop-filter: var(--filtro-vidro);
+  backdrop-filter: var(--filtro-vidro);
+  box-shadow: var(--vidro-sombra);
 }
 
-/* No computador o topo acompanha a rolagem (no celular ele ocupa 2 linhas e roubaria espaço). */
-@media (min-width: 640px) {
-  html {
-    /* --altura-topo é medida no App.tsx (o topo pode quebrar em 2 linhas) */
-    scroll-padding-top: calc(var(--altura-topo, 80px) + 16px);
-  }
+/* Hover do vidro: a borda clareia e o painel sobe um pouco, devagar. */
+.vidro {
+  transition:
+    border-color 0.5s var(--ease-suave),
+    box-shadow 0.5s var(--ease-suave),
+    translate 0.5s var(--ease-suave);
+}
 
-  .topo {
-    position: sticky;
-    top: 0;
-    z-index: 5;
-    background: rgb(14 14 16 / 0.92);
-    backdrop-filter: blur(10px);
+@media (hover: hover) {
+  .vidro.spot:hover {
+    border-color: rgb(255 255 255 / 0.34);
+    box-shadow: 0 22px 50px rgb(20 8 16 / 0.34);
+    translate: 0 -2px;
   }
 }
 
-.topo__conteudo {
+/* No vidro, o brilho que segue o mouse é branco, como luz batendo no vidro. */
+.vidro.spot::before {
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgb(255 255 255 / 0.07), transparent 60%);
+}
+
+.vidro.spot::after {
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgb(255 255 255 / 0.55), transparent 70%);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .vidro,
+  .lateral,
+  .abas {
+    background: rgb(40 24 34 / 0.88);
+  }
+}
+
+/* ---------- Barra lateral ----------
+   Flutua à esquerda, de cima a baixo: o nome no alto, as abas em coluna (ícone em
+   cima, nome embaixo) e a situação da nuvem no pé. */
+.lateral {
+  position: fixed;
+  top: 24px;
+  bottom: 24px;
+  left: 24px;
+  z-index: 5;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px 24px;
-  padding-block: 14px;
+  width: 112px;
+  padding: 20px 10px;
+  border: 1px solid var(--vidro-borda);
+  border-radius: var(--raio-vidro);
+  background: var(--vidro);
+  -webkit-backdrop-filter: var(--filtro-vidro);
+  backdrop-filter: var(--filtro-vidro);
+  box-shadow: var(--vidro-sombra);
+}
+
+.lateral__marca {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+/* O nome do painel é o link de volta ao Início: parece título, não link. */
+.lateral__link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border-radius: 8px;
+  color: #fff;
+  text-decoration: none;
+}
+
+/* O logo (grade) fica na cor do texto; só a célula da "aula de agora" é bordô */
+.lateral__link .icone {
+  color: #fff;
+}
+
+.lateral__nuvem {
+  margin-top: auto;
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+/* O conteúdo começa depois da barra (24 + 112 + 32 px) */
+/* Espaço embaixo para o aviso de desfazer não tampar o fim da página */
+.principal {
+  padding: 32px 32px 96px 168px;
+}
+
+.principal > * {
+  max-width: 1240px;
+  margin-inline: auto;
+}
+
+/* As outras telas mantêm a largura de leitura de antes */
+.principal.conteudo > * {
+  max-width: 1100px;
 }
 
 /* ---------- Abas ---------- */
 .abas {
   position: relative;
   display: flex;
-  gap: 4px;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+  margin-top: 28px;
 }
 
 /* Fundo da aba ativa: desliza de uma aba para a outra (posição medida no App.tsx). */
@@ -164,22 +310,25 @@ a {
   position: absolute;
   top: 0;
   left: 0;
-  border-radius: var(--radius-pequeno);
-  background: var(--surface);
-  box-shadow: inset 0 -2px 0 var(--marca);
+  border-radius: var(--raio-vidro-pequeno);
+  background: rgb(157 34 53 / 0.85);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18);
   pointer-events: none;
   transition:
     transform 0.35s var(--ease-out),
-    width 0.35s var(--ease-out);
+    width 0.35s var(--ease-out),
+    height 0.35s var(--ease-out);
 }
 
 .abas__item {
-  display: inline-flex;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  border-radius: var(--radius-pequeno);
-  color: var(--text-muted);
+  gap: 6px;
+  padding: 12px 4px;
+  border-radius: var(--raio-vidro-pequeno);
+  color: rgb(255 255 255 / 0.72);
+  font-size: 0.78rem;
   font-weight: 600;
   text-decoration: none;
   /* Por cima da pílula */
@@ -190,80 +339,85 @@ a {
     background-color 0.25s;
 }
 
-.abas__item:hover {
-  color: var(--text);
-}
-
-.abas__item:not([aria-current='page']):hover {
-  background: rgb(236 235 238 / 0.04);
-}
-
+.abas__item:hover,
 .abas__item[aria-current='page'] {
-  color: var(--text);
-}
-
-.abas__item .icone {
-  transition: color 0.25s;
-}
-
-.abas__item[aria-current='page'] .icone {
-  color: var(--destaque);
-}
-
-/* Celular estreito: as 4 abas não cabem com ícone; o texto fica e o ícone sai. */
-@media (max-width: 420px) {
-  /* As abas ocupam a linha toda e dividem a sobra; em 320 px as 4 cabem sem rolar. */
-  .abas {
-    width: 100%;
-    gap: 2px;
-  }
-
-  .abas__item {
-    flex: 1 1 auto;
-    justify-content: center;
-    padding-inline: 6px;
-    font-size: 0.9rem;
-  }
-
-  .abas__item .icone {
-    display: none;
-  }
-}
-
-.topo__titulo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
-  font-size: 1.2rem;
-  font-stretch: 125%;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-}
-
-/* O logo (grade) fica na cor do texto; só a célula da "aula de agora" é bordô */
-.topo__titulo .icone {
-  color: var(--text);
-}
-
-/* O nome do painel é o link de volta ao lobby: parece título, não link. */
-.topo__link {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  border-radius: 6px;
-  color: inherit;
-  text-decoration: none;
-}
-
-.topo__link:hover {
   color: #fff;
 }
 
-.conteudo {
-  /* Espaço embaixo para o aviso de desfazer não tampar o fim da página. */
-  padding-block: 24px 96px;
+.abas__item:not([aria-current='page']):hover {
+  background: rgb(255 255 255 / 0.08);
+}
+
+/* ---------- Celular (e tela baixa, como o celular deitado) ----------
+   A barra vira uma faixa no alto, com o nome e a nuvem, e as abas descem para uma
+   barra de vidro presa no pé da tela, ao alcance do polegar. Na tela baixa a coluna
+   de abas não caberia em pé e "Dados" ficaria fora da tela. */
+@media (max-width: 760px), (max-height: 560px) {
+  html {
+    /* A rolagem até um campo para acima da barra de abas */
+    scroll-padding-bottom: 104px;
+  }
+
+  .lateral {
+    position: static;
+    flex-direction: row;
+    justify-content: space-between;
+    gap: 12px;
+    width: auto;
+    margin: 12px 16px 0;
+    padding: 10px 16px;
+    /* Sem backdrop-filter aqui: com ele, a barra de abas (position: fixed, filha
+       desta) ficaria presa dentro da faixa em vez de presa à tela. */
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background: rgb(40 24 34 / 0.55);
+  }
+
+  .lateral__link {
+    flex-direction: row;
+    font-size: 0.95rem;
+  }
+
+  .lateral__nuvem {
+    margin-top: 0;
+  }
+
+  .abas {
+    position: fixed;
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+    z-index: 6;
+    flex-direction: row;
+    gap: 2px;
+    width: auto;
+    margin: 0;
+    padding: 6px;
+    border: 1px solid var(--vidro-borda);
+    border-radius: 22px;
+    background: rgb(40 24 34 / 0.5);
+    -webkit-backdrop-filter: var(--filtro-vidro);
+    backdrop-filter: var(--filtro-vidro);
+    box-shadow: var(--vidro-sombra);
+  }
+
+  /* Em 320 px as 5 abas cabem lado a lado, com o nome pequeno embaixo do ícone */
+  .abas__item {
+    flex: 1 1 0;
+    min-width: 0;
+    gap: 4px;
+    padding: 8px 2px;
+    font-size: 0.68rem;
+  }
+
+  /* Espaço no pé para a barra de abas e, por cima dela, o aviso de desfazer */
+  .principal {
+    padding: 16px 16px 176px;
+  }
+
+  .desfazer {
+    bottom: 100px;
+  }
 }
 
 .muted {
@@ -277,10 +431,12 @@ a {
   gap: 10px;
   margin: 0 0 16px;
   padding: 12px 16px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: rgb(40 24 34 / 0.6);
+  border: 1px solid var(--vidro-borda);
   border-left: 3px solid var(--destaque);
-  border-radius: var(--radius-pequeno);
+  border-radius: var(--raio-vidro-pequeno);
+  -webkit-backdrop-filter: var(--filtro-vidro);
+  backdrop-filter: var(--filtro-vidro);
 }
 
 .aviso .icone {
@@ -329,11 +485,13 @@ a {
   align-items: center;
   gap: 10px;
   padding: 10px 12px 10px 16px;
-  background: var(--surface-hover);
-  border: 1px solid var(--border);
+  background: rgb(40 24 34 / 0.85);
+  border: 1px solid var(--vidro-borda);
   border-left: 3px solid var(--destaque);
-  border-radius: var(--radius-pequeno);
-  box-shadow: 0 6px 24px rgb(0 0 0 / 0.5);
+  border-radius: var(--raio-vidro-pequeno);
+  -webkit-backdrop-filter: var(--filtro-vidro);
+  backdrop-filter: var(--filtro-vidro);
+  box-shadow: var(--vidro-sombra);
   pointer-events: auto;
 }
 
@@ -349,26 +507,51 @@ a {
 }
 
 /* ---------- Cartões ---------- */
+/* O cartão das telas é o painel de vidro (.vidro), com o mesmo hover se tiver .spot */
 .cartao {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 20px;
+  padding: 24px;
+  border: 1px solid var(--vidro-borda);
+  border-radius: var(--raio-vidro);
+  background: var(--vidro);
+  -webkit-backdrop-filter: var(--filtro-vidro);
+  backdrop-filter: var(--filtro-vidro);
+  box-shadow: var(--vidro-sombra);
+  transition:
+    border-color 0.5s var(--ease-suave),
+    box-shadow 0.5s var(--ease-suave),
+    translate 0.5s var(--ease-suave);
+}
+
+@media (hover: hover) {
+  .cartao.spot:hover {
+    border-color: rgb(255 255 255 / 0.34);
+    box-shadow: 0 22px 50px rgb(20 8 16 / 0.34);
+  }
+}
+
+.cartao.spot::before {
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, 50%), rgb(255 255 255 / 0.07), transparent 60%);
+}
+
+.cartao.spot::after {
+  background: radial-gradient(260px circle at var(--mx, 50%) var(--my, 50%), rgb(255 255 255 / 0.55), transparent 70%);
 }
 
 /* ---------- Selos de situação ---------- */
-/* Etiqueta reta, em letra de máquina e caixa alta, como a marcação de uma célula da grade */
+/* Pílula de vidro tingida com a cor da situação: o texto e a borda na cor, o fundo
+   com um pouco dela. Caixa alta pequena, como o selo "Agora" da régua do Início. */
 .selo {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 2px 8px;
-  border: 1px solid currentColor;
-  border-radius: var(--radius-pequeno);
-  font-family: var(--mono);
+  padding: 3px 10px;
+  border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+  border-radius: 999px;
+  /* Fundo escuro por baixo da tinta: sem ele, o verde e o amarelo sumiam no céu rosado. */
+  background: color-mix(in srgb, currentColor 16%, rgb(28 14 24 / 0.55));
   font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.04em;
+  font-weight: 600;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   max-width: 100%;
 }
@@ -396,15 +579,16 @@ a {
 }
 
 .selo--neutro {
-  color: var(--text-muted);
-  border-color: var(--border);
+  color: rgb(255 255 255 / 0.78);
 }
 
 /* ---------- Campos e botões ---------- */
+/* Miolo afundado (escuro) e borda branca 62%: passa de 3:1 contra o vidro mesmo sobre
+   o pôr do sol (com 40% dava 2,4:1). */
 .campo {
-  background: var(--bg);
+  background: rgb(20 10 18 / 0.3);
   border: 1px solid var(--borda-campo);
-  border-radius: var(--radius-pequeno);
+  border-radius: 12px;
   color: var(--text);
   font: inherit;
   padding: 10px 12px;
@@ -419,19 +603,36 @@ a {
   border-color: var(--perigo);
 }
 
+/* As opções de um select abrem numa lista do sistema, fora do vidro: fundo escuro opaco. */
+.campo option {
+  background: #2a1c26;
+  color: var(--text);
+}
+
+/* Mensagem de erro de um campo ou de um formulário (todas as telas). Quando o erro
+   recebe o foco pelo código (role="alert"), o contorno só confundiria. */
+.erro-campo {
+  margin: 0;
+  color: var(--perigo);
+  font-size: 0.85rem;
+}
+
+.erro-campo:focus {
+  outline: none;
+}
+
 .botao {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   background: var(--marca);
   border: 1px solid var(--marca);
-  border-radius: var(--radius-pequeno);
+  border-radius: var(--raio-vidro-pequeno);
   color: #fff;
   cursor: pointer;
   font: inherit;
-  font-stretch: 112%;
-  font-weight: 700;
-  letter-spacing: 0.03em;
+  font-weight: 600;
+  letter-spacing: 0.01em;
   padding: 10px 18px;
   text-decoration: none;
   transition:
@@ -491,14 +692,14 @@ a {
 }
 
 .botao--fantasma {
-  background: transparent;
-  border-color: var(--border);
+  background: rgb(255 255 255 / 0.08);
+  border-color: var(--vidro-borda);
   color: var(--text);
 }
 
 .botao--fantasma:hover:not(:disabled) {
-  background: var(--surface-hover);
-  border-color: var(--border);
+  background: rgb(255 255 255 / 0.16);
+  border-color: var(--vidro-borda);
 }
 
 .botao--perigo {
@@ -508,7 +709,7 @@ a {
 }
 
 .botao--perigo:hover:not(:disabled) {
-  background: var(--surface-hover);
+  background: rgb(255 255 255 / 0.16);
   border-color: var(--perigo);
   color: var(--perigo);
 }
@@ -523,28 +724,58 @@ a {
 /* ---------- Animações (as mesmas do portfólio) ---------- */
 
 /* Entrada da tela em blocos: o título em 0,1 s, o primeiro bloco em 0,3 s e o resto
-   em 0,5 s; cada um sobe 10px e aparece. "translate" (e não "transform") para não
-   brigar com o salto dos cartões. */
-.tela--entrando > section > * {
+   em 0,5 s; cada um sobe 12px, aparece e fica nítido. "translate" (e não "transform")
+   para não brigar com o salto dos cartões.
+   Cuidado com o vidro: um elemento com filter ou opacidade vira a "raiz" do
+   backdrop-filter de tudo o que está dentro dele, e aí o vidro de dentro não enxerga a
+   foto (fica transparente e só fica fosco quando a animação acaba, de repente). Por
+   isso um bloco que CONTÉM vidro não se anima: quem se anima são os vidros dele. */
+.tela--entrando > section > :not(:has(.cartao, .vidro)) {
   animation: surgir 0.5s var(--ease-texto) 0.5s both;
 }
 
-.tela--entrando > section > :first-child {
+.tela--entrando > section > :first-child:not(:has(.cartao, .vidro)) {
   animation-delay: 0.1s;
 }
 
-.tela--entrando > section > :nth-child(2) {
+.tela--entrando > section > :nth-child(2):not(:has(.cartao, .vidro)) {
   animation-delay: 0.3s;
 }
 
+/* Os vidros que estão dentro de um bloco entram em cascata, cada um com o seu filtro. */
+.tela--entrando > section > * :is(.cartao, .vidro) {
+  animation: surgir 0.5s var(--ease-texto) 0.3s both;
+}
+
+.tela--entrando > section > * :is(.cartao, .vidro):nth-child(2) {
+  animation-delay: 0.36s;
+}
+
+.tela--entrando > section > * :is(.cartao, .vidro):nth-child(3) {
+  animation-delay: 0.42s;
+}
+
+.tela--entrando > section > * :is(.cartao, .vidro):nth-child(n + 4) {
+  animation-delay: 0.48s;
+}
+
+/* Vidro dentro de vidro não anima de novo (o de fora já está entrando). */
+.tela--entrando :is(.cartao, .vidro) :is(.cartao, .vidro) {
+  animation: none;
+}
+
+/* Como as janelas do vídeo de referência: o bloco chega desfocado e vai ficando nítido. */
 @keyframes surgir {
   from {
     opacity: 0;
-    translate: 0 10px;
+    translate: 0 12px;
+    filter: blur(10px);
   }
+  /* "none" (e não blur(0)) no fim: blur(0) ainda é um filtro e prenderia o vidro de dentro. */
   to {
     opacity: 1;
     translate: 0 0;
+    filter: none;
   }
 }
 
@@ -599,15 +830,28 @@ a {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tela--entrando > section > * {
+  .tela--entrando > section > :not(:has(.cartao, .vidro)),
+  .tela--entrando > section > * :is(.cartao, .vidro) {
     animation: aparecer 0.5s ease-out 0.5s both !important;
   }
 
-  .tela--entrando > section > :first-child {
+  .tela--entrando > section > :first-child:not(:has(.cartao, .vidro)) {
     animation-delay: 0.1s !important;
   }
 
-  .tela--entrando > section > :nth-child(2) {
+  .tela--entrando > section > :nth-child(2):not(:has(.cartao, .vidro)) {
     animation-delay: 0.3s !important;
+  }
+
+  .tela--entrando :is(.cartao, .vidro) :is(.cartao, .vidro) {
+    animation: none !important;
+  }
+}
+
+/* Na barra estreita, o ícone fica em cima do texto da situação da nuvem */
+@media (min-width: 761px) and (min-height: 561px) {
+  .lateral__nuvem .situacao-nuvem {
+    flex-direction: column;
+    font-size: 0.72rem;
   }
 }

@@ -57,7 +57,7 @@ function outraAbaSalvou(chave: string | null = CHAVE) {
   })
 }
 
-/** O App já na lista de matérias (no endereço raiz ele mostra o lobby, sem os avisos). */
+/** O App já na lista de matérias. */
 function renderApp(inicial: Partial<Carregamento>, nav = navegador()) {
   window.location.hash = '#/materias'
   render(

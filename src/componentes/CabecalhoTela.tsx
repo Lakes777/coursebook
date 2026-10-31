@@ -5,6 +5,8 @@ export const ID_TITULO_TELA = 'titulo-tela'
 
 interface Props {
   titulo: string
+  /** O que vem antes do título, como um caminho de volta ("Todas as matérias"). */
+  antes?: ReactNode
   children?: ReactNode
 }
 
@@ -12,13 +14,14 @@ interface Props {
  * Moldura de toda tela: a seção com nome acessível, o título (que recebe o foco
  * ao trocar de tela) e o título da aba do navegador, que aparece no histórico.
  */
-export function CabecalhoTela({ titulo, children }: Props) {
+export function CabecalhoTela({ titulo, antes, children }: Props) {
   useEffect(() => {
     document.title = `${titulo} · Coursebook`
   }, [titulo])
 
   return (
     <section aria-labelledby={ID_TITULO_TELA}>
+      {antes}
       {/* tabIndex -1: dá para pôr o foco pelo código, mas o Tab não para aqui. */}
       <h2 id={ID_TITULO_TELA} tabIndex={-1} className="titulo-tela">
         {titulo}

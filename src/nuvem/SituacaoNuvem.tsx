@@ -5,7 +5,7 @@ import { TEXTO_CURTO } from './formularios'
 import type { Situacao } from './sincronizador'
 import './nuvem.css'
 
-/** Id do título da seção "Conta e nuvem" na tela Dados: o link do topo leva até ele. */
+/** Id do título da seção "Conta e nuvem" na tela Dados: o link da barra lateral leva até ele. */
 export const ID_SECAO_NUVEM = 'dados-nuvem'
 
 const ICONES: Record<Situacao['tipo'], LucideIcon> = {
@@ -34,7 +34,7 @@ function irParaSecao(e: MouseEvent<HTMLAnchorElement>) {
   secao.scrollIntoView?.({ block: 'start' })
 }
 
-/** A situação da sincronização no topo, ao lado do título. Só aparece com conta. */
+/** A situação da sincronização, no pé da barra lateral. Só aparece com conta. */
 export function SituacaoNuvem() {
   const nuvem = useNuvem()
   if (!nuvem?.conta) return null

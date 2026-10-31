@@ -1,13 +1,21 @@
-/* ---------- Tela de dados (exportar, importar, IA) ---------- */
+/* ---------- Tela Dados "vidro" ----------
+   Conta e nuvem, chaves, exportar, exemplo, importar, regra padrão e IA, cada um num
+   painel de vidro (.cartao). Na tela larga, duas colunas de altura parecida e a IA na
+   largura toda embaixo; no celular, um painel embaixo do outro. O que fica dentro de um
+   painel (prévia, confirmação, resumo da regra, instruções) vai num bloco interno, e não
+   atrás de uma linha: as linhas duras eram da identidade "Grade". */
 
+/* A introdução fica direto sobre a foto, como o título: a sombra larga segura a leitura. */
 .dados__intro {
-  margin: -4px 0 20px;
+  margin: -6px 0 24px;
   max-width: 70ch;
+  color: rgb(255 255 255 / 0.85);
+  text-shadow: 0 1px 14px rgb(20 8 16 / 0.6);
 }
 
 .dados {
   display: grid;
-  gap: 16px;
+  gap: 24px;
   align-items: start;
 }
 
@@ -22,16 +30,32 @@
   }
 }
 
-.dados__secao {
+.dados__coluna {
   display: grid;
-  gap: 12px;
-  justify-items: start;
+  gap: 24px;
   min-width: 0;
 }
 
+.dados__secao {
+  display: grid;
+  gap: 14px;
+  justify-items: start;
+  min-width: 0;
+  /* Os campos da regra (CamposRegra) se arrumam pela largura do painel, não da janela. */
+  container-type: inline-size;
+}
+
+/* Título de cada painel: o rótulo pequeno do Início, com o ícone do assunto. */
 .dados__subtitulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.75);
 }
 
 .dados__texto,
@@ -41,16 +65,30 @@
   max-width: 70ch;
 }
 
+.dados__texto {
+  color: rgb(255 255 255 / 0.85);
+}
+
+.dados__texto strong {
+  color: #fff;
+}
+
 .dados__nota,
 .dados__status {
   font-size: 0.9rem;
+  color: rgb(255 255 255 / 0.72);
 }
 
-/* O texto logo abaixo do título de cada cartão explica para que ele serve: é texto de
-   apoio, em cinza, como nos estados vazios e no "Remover matéria". Perguntas de
-   confirmação e avisos continuam na cor cheia. */
+/* Vazio, o status não deixa o vão da grade no pé do painel. Ele continua na página (e
+   não display: none): o leitor de tela só anuncia mudanças numa região que já existia. */
+.dados__status:empty {
+  margin-top: -14px;
+}
+
+/* O texto logo abaixo do título explica para que o painel serve: é apoio (72%).
+   Perguntas de confirmação e avisos continuam mais fortes. */
 .dados__subtitulo + .dados__texto {
-  color: var(--text-muted);
+  color: rgb(255 255 255 / 0.72);
 }
 
 /* O campo de arquivo fica escondido; o rótulo é o botão, e o contorno de foco vai nele. */
@@ -61,7 +99,7 @@
 
 .dados__campo {
   display: grid;
-  gap: 4px;
+  gap: 6px;
   width: 100%;
 }
 
@@ -70,6 +108,7 @@
   font-weight: 600;
 }
 
+/* O JSON é código: fonte fixa, e o campo afundado no painel. */
 .dados__texto-json {
   width: 100%;
   font-family: var(--mono);
@@ -77,19 +116,35 @@
   resize: vertical;
 }
 
+/* ---------- Blocos internos ----------
+   Prévia da importação e perguntas de confirmação: um bloco claro dentro do painel,
+   com o raio dos blocos internos (14px). Sem desfoque: vidro dentro de vidro não
+   enxerga a foto (o painel de fora já é a raiz do desfoque). */
 .dados__previa,
-.dados__confirmar {
+.dados__confirmar,
+.dados__regra {
   display: grid;
   gap: 10px;
   width: 100%;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
+  padding: 14px 16px;
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: var(--raio-vidro-pequeno);
+  background: rgb(255 255 255 / 0.07);
+}
+
+.dados__regra {
+  gap: 6px;
 }
 
 .dados__lista {
   margin: 0;
   padding-left: 1.2em;
   overflow-wrap: anywhere;
+  color: rgb(255 255 255 / 0.85);
+}
+
+.dados__lista li::marker {
+  color: rgb(255 255 255 / 0.72);
 }
 
 .dados__aviso {
@@ -99,13 +154,27 @@
 .dados__botoes {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
+/* Os passos da IA: o número no tom claro do bordô, como os destaques do Início vazio. */
 .dados__passos {
+  display: grid;
+  gap: 6px;
   margin: 0;
-  padding-left: 1.4em;
-  max-width: 70ch;
+  padding-left: 1.6em;
+  max-width: 75ch;
+  color: rgb(255 255 255 / 0.85);
+}
+
+.dados__passos li {
+  padding-left: 4px;
+}
+
+.dados__passos li::marker {
+  color: var(--destaque);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .dados__instrucoes {
@@ -113,45 +182,52 @@
 }
 
 .dados__instrucoes summary {
+  width: fit-content;
+  border-radius: 8px;
   cursor: pointer;
   color: var(--destaque);
+  font-weight: 600;
 }
 
+.dados__instrucoes summary:hover {
+  text-decoration: underline;
+}
+
+/* O texto das instruções é o que vai para a IA: fonte fixa, num bloco afundado. */
 .dados__instrucoes pre {
   max-height: 360px;
   overflow: auto;
-  margin: 8px 0 0;
-  padding: 12px;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-pequeno);
+  margin: 12px 0 0;
+  padding: 14px 16px;
+  background: rgb(20 10 18 / 0.35);
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: var(--raio-vidro-pequeno);
+  color: rgb(255 255 255 / 0.85);
   font-family: var(--mono);
   font-size: 0.8rem;
+  line-height: 1.55;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-.dados__coluna {
-  display: grid;
-  gap: 16px;
-  min-width: 0;
-}
-
 /* ---------- Regra padrão ---------- */
-.dados__regra {
-  display: grid;
-  gap: 4px;
-}
-
 .dados__regra-resumo {
   font-size: 0.9rem;
-  color: var(--text-muted);
 }
 
 .dados__regra-form {
   display: grid;
-  gap: 12px;
+  gap: 16px;
   width: 100%;
-  padding-top: 12px;
-  border-top: 1px solid var(--border);
+}
+
+@media (max-width: 760px) {
+  .dados,
+  .dados__coluna {
+    gap: 16px;
+  }
+
+  .dados__intro {
+    margin-bottom: 16px;
+  }
 }

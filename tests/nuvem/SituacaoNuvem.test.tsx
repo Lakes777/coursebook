@@ -12,7 +12,7 @@ import { criarUsuario } from '../usuario'
 
 function montar(nuvem: NuvemFalsa, conta?: ContaGuardada, dados: Dados = dadosVazios()) {
   const nav = navegador(conta ? { [CHAVE_NUVEM]: JSON.stringify(conta) } : {})
-  // A situação fica no topo do painel; o lobby (endereço raiz) não tem topo.
+  // A situação fica no pé da barra lateral; começa na lista de matérias, como antes.
   if (!window.location.hash) window.location.hash = '#/materias'
   render(
     <ProvedorPainel inicial={{ dados, aviso: null, podeSalvar: true }} armazenamento={nav}>

@@ -10,7 +10,7 @@ import { SituacaoNuvem } from './nuvem/SituacaoNuvem'
 import { TelaAgenda } from './telas/TelaAgenda'
 import { TelaDados } from './telas/TelaDados'
 import { TelaEditarMateria } from './telas/TelaEditarMateria'
-import { TelaLobby } from './telas/TelaLobby'
+import { TelaInicio } from './telas/TelaInicio'
 import { TelaMateria } from './telas/TelaMateria'
 import { TelaMaterias } from './telas/TelaMaterias'
 import { TelaNovaMateria } from './telas/TelaNovaMateria'
@@ -36,8 +36,8 @@ function abaDe(rota: Rota): Aba {
 function Tela({ rota }: { rota: Rota }) {
   switch (rota.tela) {
     case 'lobby':
-      // O lobby desenha os avisos dele por cima da grade de fundo.
-      return <TelaLobby avisos={<Avisos />} />
+      // A raiz do site: a frase do dia, a régua de hoje e os prazos.
+      return <TelaInicio />
     case 'materias':
       return <TelaMaterias />
     case 'materia':
@@ -139,66 +139,47 @@ function useBrilhoNosCartoes() {
   }, [])
 }
 
-/**
- * Guarda a altura do topo em --altura-topo: com o topo fixo, a rolagem até um campo ou
- * seção para logo abaixo dele (scroll-padding-top), mesmo quando ele quebra em 2 linhas.
- */
-function useAlturaDoTopo() {
-  const topo = useRef<HTMLElement>(null)
-  useEffect(() => {
-    const elemento = topo.current
-    if (!elemento || typeof ResizeObserver === 'undefined') return
-    const observador = new ResizeObserver(() => {
-      document.documentElement.style.setProperty('--altura-topo', `${elemento.offsetHeight}px`)
-    })
-    observador.observe(elemento)
-    return () => observador.disconnect()
-  }, [])
-  return topo
-}
-
 function App() {
   const rota = useRota()
   const aba = abaDe(rota)
-  const noLobby = rota.tela === 'lobby'
+  const noInicio = rota.tela === 'lobby'
   useFocoAoTrocarDeTela(rota)
   const { nav, pilula } = usePilulaDasAbas(aba)
   useBrilhoNosCartoes()
-  const topo = useAlturaDoTopo()
-  // Um h1 por tela: no lobby, o h1 é o título grande dele; o nome no topo vira texto comum.
-  const Marca = noLobby ? 'p' : 'h1'
+  // Um h1 por tela: no Início, o h1 é a frase do dia; o nome na barra vira texto comum.
+  const Marca = noInicio ? 'p' : 'h1'
   return (
     <>
-      <header className="topo" ref={topo}>
-        <div className="container topo__conteudo">
-          <div className="topo__marca">
-            <Marca className="topo__titulo">
-              {/* O nome leva de volta ao lobby (passa pelo aviso de sair do formulário, como as abas). */}
-              <a href={paraHash(LOBBY)} className="topo__link">
-                <LogoGrade />
-                Coursebook
-              </a>
-            </Marca>
-            <SituacaoNuvem />
-          </div>
-          <nav aria-label="Seções" className="abas" ref={nav}>
-            <span className="abas__pilula" ref={pilula} aria-hidden="true" />
-            {ABAS.map(({ tela, nome, Icone }) => (
-              <a
-                key={tela}
-                href={paraHash({ tela })}
-                className="abas__item"
-                aria-current={aba === tela ? 'page' : undefined}
-              >
-                <Icone className="icone" size={18} />
-                {nome}
-              </a>
-            ))}
-          </nav>
+      {/* Barra lateral de vidro, flutuando à esquerda; no celular, o nome fica no alto
+          e as abas descem para uma barra presa no pé da tela. */}
+      <header className="lateral">
+        <Marca className="lateral__marca">
+          {/* O nome leva de volta ao Início (passa pelo aviso de sair do formulário, como as abas). */}
+          <a href={paraHash(LOBBY)} className="lateral__link">
+            <LogoGrade />
+            Coursebook
+          </a>
+        </Marca>
+        <nav aria-label="Seções" className="abas" ref={nav}>
+          <span className="abas__pilula" ref={pilula} aria-hidden="true" />
+          {ABAS.map(({ tela, nome, Icone }) => (
+            <a
+              key={tela}
+              href={paraHash({ tela })}
+              className="abas__item"
+              aria-current={aba === tela ? 'page' : undefined}
+            >
+              <Icone className="icone" size={20} />
+              {nome}
+            </a>
+          ))}
+        </nav>
+        <div className="lateral__nuvem">
+          <SituacaoNuvem />
         </div>
       </header>
-      <main className={noLobby ? 'conteudo-lobby' : 'container conteudo'}>
-        {!noLobby && <Avisos />}
+      <main className={noInicio ? 'principal' : 'principal conteudo'}>
+        <Avisos />
         {/* key: cada endereço é uma tela nova, que entra com a animação. */}
         <EntradaDaTela key={paraHash(rota)}>
           <Tela rota={rota} />

@@ -1,4 +1,4 @@
-import { Plus } from 'lucide-react'
+import { CalendarPlus, CircleCheck, ListTodo, Plus } from 'lucide-react'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { BotaoRemover } from '../componentes/BotaoRemover'
@@ -79,21 +79,27 @@ export function TelaAgenda() {
             </p>
           ) : (
             <>
-              <h3 id={ID_A_FAZER} ref={tituloAFazer} tabIndex={-1} className="agenda__subtitulo">
-                A fazer
-              </h3>
-              {pendentes.length > 0 ? (
-                lista(pendentes, ID_A_FAZER)
-              ) : (
-                <p className="muted">Tudo feito por enquanto.</p>
-              )}
+              {/* Cada lista num painel de vidro; os itens são blocos internos (sem vidro
+                  próprio: vidro dentro de vidro não desfoca a foto). */}
+              <div className="vidro agenda__painel">
+                <h3 id={ID_A_FAZER} ref={tituloAFazer} tabIndex={-1} className="agenda__subtitulo">
+                  <ListTodo className="icone" size={15} aria-hidden="true" />
+                  A fazer
+                </h3>
+                {pendentes.length > 0 ? (
+                  lista(pendentes, ID_A_FAZER)
+                ) : (
+                  <p className="agenda__nada">Tudo feito por enquanto.</p>
+                )}
+              </div>
               {concluidos.length > 0 && (
-                <>
+                <div className="vidro agenda__painel">
                   <h3 id={ID_CONCLUIDOS} ref={tituloConcluidos} tabIndex={-1} className="agenda__subtitulo">
+                    <CircleCheck className="icone" size={15} aria-hidden="true" />
                     Concluídos
                   </h3>
                   {lista(concluidos, ID_CONCLUIDOS)}
-                </>
+                </div>
               )}
             </>
           )}
@@ -125,7 +131,7 @@ function ItemAgenda({ evento, materia, tomarFoco, aoMarcar, aoRemover }: PropsIt
   }, [])
 
   return (
-    <li className={`cartao item-agenda item-agenda--${evento.destaque} spot`}>
+    <li className={`item-agenda item-agenda--${evento.destaque}`}>
       <div className="item-agenda__info">
         <p className="item-agenda__tipo">
           <Icone className="icone" size={16} />
@@ -201,7 +207,7 @@ function FormNovoEvento() {
     erro?.campo === campo ? { 'aria-invalid': true, 'aria-describedby': ID_ERRO } : {}
   const mensagem = (campo: CampoEvento) =>
     erro?.campo === campo && (
-      <p id={ID_ERRO} className="agenda-form__erro">
+      <p id={ID_ERRO} className="erro-campo">
         {erro.mensagem}
       </p>
     )
@@ -211,8 +217,9 @@ function FormNovoEvento() {
   }
 
   return (
-    <form className="cartao agenda-form" onSubmit={enviar} noValidate aria-labelledby="novo-evento-titulo">
+    <form className="vidro agenda-form" onSubmit={enviar} noValidate aria-labelledby="novo-evento-titulo">
       <h3 id="novo-evento-titulo" className="agenda__subtitulo">
+        <CalendarPlus className="icone" size={15} aria-hidden="true" />
         Novo evento
       </h3>
       <div className="agenda-form__campo">

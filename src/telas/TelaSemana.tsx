@@ -1,4 +1,4 @@
-import { Eye, Plus } from 'lucide-react'
+import { CalendarDays, Eye, Plus } from 'lucide-react'
 import { CabecalhoTela } from '../componentes/CabecalhoTela'
 import { useAgora } from '../componentes/useHoje'
 import { useVerExemplo } from '../componentes/useVerExemplo'
@@ -119,12 +119,19 @@ interface PropsGrade {
   aulaAgora: AulaPUC | null
 }
 
-/** Tela larga: a grade do portal, com uma linha por aula e uma coluna por dia. */
+/**
+ * Tela larga: a grade do portal, com uma linha por aula e uma coluna por dia, toda
+ * dentro de um painel de vidro (nenhuma célula fica com texto direto sobre a foto).
+ */
 function TabelaSemana({ grade, diaDeHoje, aulaAgora }: PropsGrade) {
   return (
-    <div className="grade-semana">
+    <div className="vidro grade-semana">
       <table className="grade-semana__tabela">
-        <caption className="invisivel">Aulas da semana</caption>
+        {/* A legenda da tabela é o rótulo do painel, como os do Início. */}
+        <caption className="grade-semana__rotulo">
+          <CalendarDays className="icone" size={15} aria-hidden="true" />
+          Aulas da semana
+        </caption>
         <thead>
           <tr>
             <td />
@@ -146,7 +153,10 @@ function TabelaSemana({ grade, diaDeHoje, aulaAgora }: PropsGrade) {
             linha.tipo === 'vazio' ? (
               <tr key={`vazio-${linha.de}`} className="grade-semana__vazia">
                 <td colSpan={grade.dias.length + 1}>
-                  Sem aulas das {linha.de} às {linha.ate}
+                  {/* O span leva as linhas tracejadas dos lados (a célula não pode virar flex). */}
+                  <span className="grade-semana__intervalo">
+                    Sem aulas das {linha.de} às {linha.ate}
+                  </span>
                 </td>
               </tr>
             ) : (
@@ -168,8 +178,14 @@ function TabelaSemana({ grade, diaDeHoje, aulaAgora }: PropsGrade) {
                       className={classes.length > 0 ? classes.join(' ') : undefined}
                       aria-current={agora ? 'time' : undefined}
                     >
-                      {agora && <RotuloAgora />}
-                      <Materias aulas={aulas} />
+                      {/* O bloco da aula (como na régua do Início) fica num div: a célula
+                          continua célula e o bloco ocupa a altura toda da linha. */}
+                      {aulas.length > 0 && (
+                        <div className="grade-semana__bloco">
+                          {agora && <RotuloAgora />}
+                          <Materias aulas={aulas} />
+                        </div>
+                      )}
                     </td>
                   )
                 })}

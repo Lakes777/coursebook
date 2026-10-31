@@ -848,92 +848,103 @@ export function FormularioMateria({
         {introducao}
       </p>
       {aviso}
-      <ol className="nm-passos" aria-label="Passos">
-        {PASSOS.map((nome, i) => (
-          <li
-            key={nome}
-            className={`nm-passos__item${i === passo ? ' nm-passos__item--atual' : ''}${i < passo ? ' nm-passos__item--feito' : ''}`}
-            aria-current={i === passo ? 'step' : undefined}
-          >
-            <span className="nm-passos__numero" aria-hidden="true">
-              {i + 1}
-            </span>
-            <span className="nm-passos__nome">{nome}</span>
-          </li>
-        ))}
-      </ol>
-      <form className="cartao nm-form" onSubmit={enviar} noValidate aria-labelledby={ID_TITULO_PASSO}>
-        <h3 id={ID_TITULO_PASSO} ref={tituloPasso} tabIndex={-1} className="nm-form__titulo">
-          Passo {passo + 1} de {PASSOS.length}: {PASSOS[passo]}
-        </h3>
-        {conteudo()}
-        <div className="nm-acoes">
-          {passo > 0 && (
-            <button type="button" className="botao botao--fantasma" onClick={() => irPara(passo - 1)}>
-              <ArrowLeft className="icone" size={18} aria-hidden="true" />
-              Voltar
-            </button>
-          )}
-          <button type="submit" className="botao">
-            {passo === ULTIMO ? (
-              <>
-                <Check className="icone" size={18} aria-hidden="true" />
-                Salvar matéria
-              </>
-            ) : (
-              <>
-                Continuar
-                <ArrowRight className="icone" size={18} aria-hidden="true" />
-              </>
-            )}
-          </button>
-          {preenchido ? (
-            <button
-              ref={botaoCancelar}
-              type="button"
-              className="botao botao--fantasma nm-acoes__cancelar"
-              onClick={pedirConfirmacaoDeSaida}
-              aria-expanded={confirmandoSaida}
-              aria-controls="nm-sair"
+      {/* Na tela larga, os passos ficam numa coluna de vidro ao lado do formulário (e
+          acompanham a rolagem); na estreita, numa barra em cima dele. */}
+      <div className="nm">
+        <ol className="vidro nm-passos" aria-label="Passos">
+          {PASSOS.map((nome, i) => (
+            <li
+              key={nome}
+              className={`nm-passos__item${i === passo ? ' nm-passos__item--atual' : ''}${i < passo ? ' nm-passos__item--feito' : ''}`}
+              aria-current={i === passo ? 'step' : undefined}
             >
-              Cancelar
+              {/* Só desenho: o leitor de tela já ouve a posição na lista e o "passo atual". */}
+              <span className="nm-passos__numero" aria-hidden="true">
+                {i < passo ? <Check className="icone" size={14} strokeWidth={2.5} /> : i + 1}
+              </span>
+              <span className="nm-passos__nome">{nome}</span>
+            </li>
+          ))}
+        </ol>
+        <form className="cartao nm-form" onSubmit={enviar} noValidate aria-labelledby={ID_TITULO_PASSO}>
+          {/* O nome lido continua "Passo 2 de 5: RAs"; na tela, a contagem vira um rótulo
+              pequeno em cima e o nome do passo fica grande. */}
+          <h3 id={ID_TITULO_PASSO} ref={tituloPasso} tabIndex={-1} className="nm-form__titulo">
+            <span className="nm-form__contagem">
+              Passo {passo + 1} de {PASSOS.length}
+              <span className="invisivel">: </span>
+            </span>
+            <span className="nm-form__nome">{PASSOS[passo]}</span>
+          </h3>
+          {conteudo()}
+          <div className="nm-acoes">
+            {passo > 0 && (
+              <button type="button" className="botao botao--fantasma" onClick={() => irPara(passo - 1)}>
+                <ArrowLeft className="icone" size={18} aria-hidden="true" />
+                Voltar
+              </button>
+            )}
+            <button type="submit" className="botao">
+              {passo === ULTIMO ? (
+                <>
+                  <Check className="icone" size={18} aria-hidden="true" />
+                  Salvar matéria
+                </>
+              ) : (
+                <>
+                  Continuar
+                  <ArrowRight className="icone" size={18} aria-hidden="true" />
+                </>
+              )}
             </button>
-          ) : (
-            <a href={sair} className="botao botao--fantasma nm-acoes__cancelar">
-              Cancelar
-            </a>
-          )}
-        </div>
-        {confirmandoSaida && (
-          <div id="nm-sair" className="aviso aviso--atencao nm-sair" role="group" aria-labelledby="nm-sair-texto">
-            <p id="nm-sair-texto" className="aviso__texto">
-              <strong>Sair sem salvar?</strong> Tudo o que você preencheu nesta matéria será apagado.
-            </p>
-            <div className="nm-sair__botoes">
+            {preenchido ? (
               <button
-                ref={botaoFicar}
+                ref={botaoCancelar}
                 type="button"
-                className="botao botao--fantasma botao--pequeno"
-                onClick={continuarPreenchendo}
+                className="botao botao--fantasma nm-acoes__cancelar"
+                onClick={pedirConfirmacaoDeSaida}
+                aria-expanded={confirmandoSaida}
+                aria-controls="nm-sair"
               >
-                Continuar preenchendo
+                Cancelar
               </button>
-              {/* Botão, e não link: um link passaria pelo bloqueio e perguntaria de novo. */}
-              <button
-                type="button"
-                className="botao botao--perigo botao--pequeno"
-                onClick={() => sairPara(destinoSaida ?? sair)}
-              >
-                Sair sem salvar
-              </button>
-            </div>
+            ) : (
+              <a href={sair} className="botao botao--fantasma nm-acoes__cancelar">
+                Cancelar
+              </a>
+            )}
           </div>
-        )}
-        {/* Fica sempre na página: o leitor de tela só anuncia mudanças numa região que já existia. */}
-        <p role="status" className="nm-status muted">
-          {status}
-        </p>
-      </form>
+          {confirmandoSaida && (
+            <div id="nm-sair" className="aviso aviso--atencao nm-sair" role="group" aria-labelledby="nm-sair-texto">
+              <p id="nm-sair-texto" className="aviso__texto">
+                <strong>Sair sem salvar?</strong> Tudo o que você preencheu nesta matéria será apagado.
+              </p>
+              <div className="nm-sair__botoes">
+                <button
+                  ref={botaoFicar}
+                  type="button"
+                  className="botao botao--fantasma botao--pequeno"
+                  onClick={continuarPreenchendo}
+                >
+                  Continuar preenchendo
+                </button>
+                {/* Botão, e não link: um link passaria pelo bloqueio e perguntaria de novo. */}
+                <button
+                  type="button"
+                  className="botao botao--perigo botao--pequeno"
+                  onClick={() => sairPara(destinoSaida ?? sair)}
+                >
+                  Sair sem salvar
+                </button>
+              </div>
+            </div>
+          )}
+          {/* Fica sempre na página: o leitor de tela só anuncia mudanças numa região que já existia. */}
+          <p role="status" className="nm-status muted">
+            {status}
+          </p>
+        </form>
+      </div>
     </CabecalhoTela>
   )
 }

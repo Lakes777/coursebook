@@ -1,0 +1,32 @@
+/* Barra de faltas usadas (cartão da lista e seção Faltas): trilho branco fraco e o
+   enchimento no tom claro do bordô, como a barra do "Semestre" no Início. */
+.barra-faltas {
+  display: block;
+  width: 100%;
+  height: 4px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.18);
+  overflow: hidden;
+}
+
+.barra-faltas > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--destaque);
+  transform-origin: left;
+}
+
+/* Enche junto com a entrada da tela (o mesmo "encher" do Início, no inicio.css). */
+.tela--entrando .barra-faltas > span {
+  animation: encher-faltas 0.7s var(--ease-suave) 0.4s both;
+}
+
+@keyframes encher-faltas {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}

@@ -1,0 +1,589 @@
+/* ---------- Início "vidro" ----------
+   Esqueleto em docs/referencias/wireframe.svg. Na tela larga, a frase e o semestre
+   dividem a primeira linha, a régua do dia ocupa a do meio e, embaixo, "Atrasado" e
+   "Próximos prazos" ficam nas pontas, com a foto aparecendo no vão. No celular, um
+   bloco embaixo do outro, na ordem de leitura. */
+.inicio {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.55fr) minmax(0, 0.75fr);
+  grid-template-areas:
+    'frase frase semestre'
+    'hoje hoje hoje'
+    'atrasado . prazos';
+  align-items: start;
+  gap: 24px;
+}
+
+/* A frase fica direto sobre a foto (sem vidro): o normal um pouco apagado e o que
+   importa em branco cheio. A sombra larga e fraca segura a leitura sobre o céu claro. */
+.inicio__frase {
+  grid-area: frase;
+  margin: 0;
+  max-width: 32ch;
+  font-size: clamp(1.5rem, 1rem + 1.4vw, 2.15rem);
+  font-weight: 300;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  color: rgb(255 255 255 / 0.82);
+  text-shadow: 0 1px 18px rgb(20 8 16 / 0.45);
+}
+
+.inicio__frase:focus {
+  outline: none;
+}
+
+.inicio__frase strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* Rótulo pequeno no alto de cada painel, com o ícone do assunto */
+.inicio__rotulo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.75);
+}
+
+.inicio__vazio {
+  margin: 0;
+  color: rgb(255 255 255 / 0.75);
+}
+
+/* ---------- Semestre ---------- */
+.inicio__semestre {
+  grid-area: semestre;
+}
+
+.numeros {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 16px;
+  margin: 0;
+}
+
+.numeros__item {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: flex-end;
+  gap: 4px;
+  min-width: 0;
+}
+
+.numeros__item dt {
+  font-size: 0.8rem;
+  color: rgb(255 255 255 / 0.72);
+  overflow-wrap: anywhere;
+}
+
+.numeros__item dd {
+  margin: 0;
+  color: rgb(255 255 255 / 0.8);
+}
+
+/* Números grandes e finos, com algarismos de mesma largura (não dançam ao mudar) */
+.numeros__valor {
+  font-size: 2.4rem;
+  font-weight: 300;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+.numeros__barra {
+  display: block;
+  height: 4px;
+  margin-top: 8px;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.18);
+  overflow: hidden;
+}
+
+.numeros__barra > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--destaque);
+}
+
+/* ---------- Hoje: a régua ---------- */
+.inicio__hoje {
+  grid-area: hoje;
+}
+
+.regua {
+  --altura-aula: 108px;
+  position: relative;
+  /* Espaço das horas no alto + uma linha por faixa de aulas */
+  padding-top: 40px;
+}
+
+.regua__horas {
+  position: absolute;
+  inset: 0 0 0;
+  border-top: 0;
+  pointer-events: none;
+}
+
+/* Cada hora: o número no alto e uma linha fina descendo até o pé da régua */
+.regua__horas span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(var(--x) * 1%);
+  translate: -50% 0;
+  font-size: 0.8rem;
+  color: rgb(255 255 255 / 0.7);
+}
+
+.regua__horas span::after {
+  content: '';
+  position: absolute;
+  top: 24px;
+  bottom: 0;
+  left: 50%;
+  border-left: 1px dashed rgb(255 255 255 / 0.16);
+}
+
+/* As horas das pontas não saem do painel */
+.regua__horas span:first-child {
+  translate: 0 0;
+}
+
+.regua__horas span:first-child::after {
+  left: 0;
+}
+
+.regua__horas span:last-child {
+  translate: -100% 0;
+}
+
+.regua__horas span:last-child::after {
+  left: 100%;
+}
+
+.regua__agora {
+  position: absolute;
+  top: 18px;
+  bottom: -4px;
+  left: calc(var(--x) * 1%);
+  border-left: 2px solid var(--destaque);
+  pointer-events: none;
+}
+
+.regua__agora::before {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -5px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--destaque);
+}
+
+/* "19:40" no pé da linha, onde não briga com as horas nem com o título */
+.regua__agora span {
+  position: absolute;
+  bottom: -20px;
+  left: 0;
+  translate: -50% 0;
+  padding: 0 6px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--destaque);
+  white-space: nowrap;
+}
+
+/* As aulas ficam por cima da linha de agora: o vidro deixa a linha aparecer sem
+   cortar o texto do bloco. */
+.regua__aulas {
+  position: relative;
+  z-index: 1;
+  height: calc(var(--faixas) * (var(--altura-aula) + 12px));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.regua__aula {
+  position: absolute;
+  top: calc(var(--faixa) * (var(--altura-aula) + 12px));
+  left: calc(var(--x) * 1%);
+  width: calc(var(--largura) * 1%);
+  /* Uma aula de 45 min num dia com aulas de manhã e de noite ficaria fina demais. */
+  min-width: 112px;
+  height: var(--altura-aula);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  padding: 12px 16px;
+  border: 1px solid var(--vidro-borda);
+  border-radius: var(--raio-vidro-pequeno);
+  background: var(--vidro-forte);
+  overflow: hidden;
+}
+
+/* A aula de agora é sempre a que a linha cruza: o fundo quase opaco esconde a linha
+   atrás do texto. */
+.regua__aula--agora {
+  border-color: rgb(234 135 152 / 0.75);
+  background: rgb(120 28 44 / 0.82);
+}
+
+/* Divisões entre as aulas da tabela da PUC dentro do mesmo bloco */
+.regua__divisao {
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: calc(var(--x) * 1%);
+  border-left: 1px solid rgb(255 255 255 / 0.14);
+}
+
+.regua__faixa {
+  font-variant-numeric: tabular-nums;
+}
+
+.regua__faixa,
+.regua__professor {
+  position: relative;
+  font-size: 0.8rem;
+  /* 88%: sobre o bloco claro da aula, 72% não passaria no contraste */
+  color: rgb(255 255 255 / 0.88);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.regua__materia {
+  position: relative;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #fff;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.regua__materia:hover {
+  text-decoration: underline;
+}
+
+.regua__selo {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--marca);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fff;
+}
+
+.inicio__para-hoje {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 6px;
+  margin: 28px 0 0;
+  padding: 10px 14px;
+  border-radius: var(--raio-vidro-pequeno);
+  background: rgb(255 255 255 / 0.08);
+  color: rgb(255 255 255 / 0.85);
+}
+
+.inicio__para-hoje strong {
+  color: #fff;
+}
+
+.inicio__para-hoje .icone {
+  align-self: center;
+  color: var(--atencao);
+}
+
+/* ---------- Atrasado e próximos prazos ---------- */
+.inicio__atrasado {
+  grid-area: atrasado;
+}
+
+.inicio__prazos {
+  grid-area: prazos;
+}
+
+.inicio__lista {
+  display: grid;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.inicio__lista li {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.inicio__prazos .inicio__lista li {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.inicio__quando {
+  flex-shrink: 0;
+  width: 6.2em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+.inicio__quando::first-letter {
+  text-transform: uppercase;
+}
+
+.inicio__titulo-item {
+  font-weight: 600;
+  color: #fff;
+  overflow-wrap: anywhere;
+}
+
+.inicio__tipo {
+  margin-right: 8px;
+  vertical-align: -2px;
+  color: rgb(255 255 255 / 0.65);
+}
+
+.inicio__prazos .inicio__titulo-item {
+  font-weight: 400;
+  color: rgb(255 255 255 / 0.85);
+}
+
+.inicio__detalhe {
+  font-size: 0.85rem;
+  color: rgb(255 255 255 / 0.72);
+}
+
+.inicio__atrasado .inicio__detalhe {
+  color: var(--perigo);
+}
+
+.inicio__mais {
+  margin-top: 16px;
+  color: #fff;
+}
+
+/* ---------- Sem nada cadastrado ---------- */
+.inicio--vazio {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  grid-template-areas:
+    'frase .'
+    'apresentacao .';
+}
+
+.inicio__apresentacao {
+  grid-area: apresentacao;
+}
+
+.inicio__destaques {
+  display: grid;
+  gap: 12px;
+  margin: 0 0 24px;
+  padding: 0;
+  list-style: none;
+  color: rgb(255 255 255 / 0.88);
+}
+
+.inicio__destaques li {
+  display: flex;
+  gap: 12px;
+}
+
+.inicio__numero {
+  font-weight: 700;
+  color: var(--destaque);
+}
+
+.inicio__botoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.inicio__codigo {
+  margin-top: 20px;
+  color: rgb(255 255 255 / 0.8);
+}
+
+/* ---------- Movimento ----------
+   A tela entra em cascata (frase, semestre, régua, atrasado, prazos), cada bloco
+   desfocado ficando nítido (@keyframes surgir no index.css). Depois a aula de hoje se
+   desenha da esquerda para a direita e a barra de faltas enche. Tudo cabe nos 1,1 s
+   em que a tela fica com .tela--entrando (App.tsx). */
+.tela--entrando > section.inicio > * {
+  animation-duration: 0.6s;
+}
+
+.tela--entrando .inicio > :nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.tela--entrando .inicio > :nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.tela--entrando .inicio > :nth-child(3) {
+  animation-delay: 0.25s;
+}
+
+.tela--entrando .inicio > :nth-child(4) {
+  animation-delay: 0.35s;
+}
+
+.tela--entrando .inicio > :nth-child(5) {
+  animation-delay: 0.45s;
+}
+
+.tela--entrando .regua__aula {
+  animation: desenhar 0.6s var(--ease-suave) 0.45s both;
+}
+
+.tela--entrando .numeros__barra > span {
+  animation: encher 0.7s var(--ease-suave) 0.35s both;
+}
+
+@keyframes desenhar {
+  from {
+    clip-path: inset(0 100% 0 0 round var(--raio-vidro-pequeno));
+  }
+  to {
+    clip-path: inset(0 0 0 0 round var(--raio-vidro-pequeno));
+  }
+}
+
+@keyframes encher {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.numeros__barra > span {
+  transform-origin: left;
+}
+
+/* O ponto da linha de agora pulsa devagar, como um "ao vivo". */
+.regua__agora::before {
+  animation: pulsar 2.4s ease-out infinite;
+}
+
+@keyframes pulsar {
+  from {
+    box-shadow: 0 0 0 0 rgb(234 135 152 / 0.6);
+  }
+  to {
+    box-shadow: 0 0 0 9px rgb(234 135 152 / 0);
+  }
+}
+
+/* Hover das aulas e dos itens: clareia, sem pular. */
+.regua__aula {
+  transition:
+    background-color 0.4s var(--ease-suave),
+    border-color 0.4s var(--ease-suave);
+}
+
+@media (hover: hover) {
+  .regua__aula:not(.regua__aula--agora):hover {
+    background: rgb(255 255 255 / 0.24);
+    border-color: rgb(255 255 255 / 0.4);
+  }
+
+  .regua__aula--agora:hover {
+    background: rgb(140 32 50 / 0.9);
+  }
+}
+
+/* ---------- Tela média: o semestre desce para baixo da frase ---------- */
+@media (max-width: 1100px) {
+  .inicio {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-areas:
+      'frase frase'
+      'semestre semestre'
+      'hoje hoje'
+      'atrasado prazos';
+  }
+
+  .inicio--vazio {
+    grid-template-areas:
+      'frase frase'
+      'apresentacao apresentacao';
+  }
+}
+
+/* ---------- Celular: a régua vira lista, uma aula embaixo da outra ---------- */
+@media (max-width: 760px) {
+  .inicio,
+  .inicio--vazio {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'frase' 'semestre' 'hoje' 'atrasado' 'prazos';
+    gap: 16px;
+  }
+
+  .inicio--vazio {
+    grid-template-areas: 'frase' 'apresentacao';
+  }
+
+  .numeros {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .numeros__valor {
+    font-size: 1.9rem;
+  }
+
+  .regua {
+    padding-top: 0;
+  }
+
+  .regua__horas,
+  .regua__agora,
+  .regua__divisao {
+    display: none;
+  }
+
+  .regua__aulas {
+    display: grid;
+    gap: 10px;
+    height: auto;
+  }
+
+  .regua__aula {
+    position: relative;
+    top: auto;
+    left: auto;
+    width: auto;
+    height: auto;
+    padding-right: 76px;
+  }
+
+  .regua__materia {
+    white-space: normal;
+  }
+}

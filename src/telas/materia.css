@@ -1,8 +1,28 @@
-/* ---------- Tela de uma matéria ---------- */
+/* ---------- Tela de uma matéria no "Vidro" ----------
+   O link de volta em cima do título, um painel com quem é a matéria e como ela está
+   e, embaixo, duas colunas: notas e faltas na larga, pontos extras, regra e remover
+   na estreita. Cada seção é um painel de vidro; os RAs são blocos internos dele. */
 
+/* O "Todas as matérias" vem antes do título, como um caminho de volta (no código e no Tab também). */
 .materia__voltar {
-  margin: -8px 0 4px;
+  margin: 0 0 6px;
   font-size: 0.9rem;
+}
+
+.materia__voltar a {
+  color: rgb(255 255 255 / 0.85);
+  text-shadow: 0 1px 14px rgb(20 8 16 / 0.6);
+}
+
+.materia__voltar a:hover {
+  color: #fff;
+}
+
+/* ---------- Painel de resumo ---------- */
+.materia__resumo {
+  display: grid;
+  gap: 14px;
+  margin-bottom: 24px;
 }
 
 .materia__topo {
@@ -10,20 +30,15 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 8px 16px;
-  margin-bottom: 16px;
+  gap: 10px 16px;
 }
 
 .materia__detalhes {
+  flex: 1 1 320px;
   margin: 0;
   min-width: 0;
+  color: rgb(255 255 255 / 0.85);
   overflow-wrap: anywhere;
-}
-
-.materia__resumo {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 24px;
 }
 
 .materia__selos {
@@ -34,9 +49,20 @@
 
 .materia__texto {
   margin: 0;
+  color: rgb(255 255 255 / 0.85);
 }
 
-/* No celular, uma coluna; na tela larga, as notas à esquerda e o resto ao lado. */
+.materia__explicacao {
+  max-width: 70ch;
+}
+
+/* Texto de apoio (o aviso do remover): o branco 72% do design system. */
+.materia__apoio {
+  color: rgb(255 255 255 / 0.72);
+}
+
+/* ---------- Colunas ---------- */
+/* No celular, uma coluna; na tela larga, notas e faltas à esquerda e o resto ao lado. */
 .materia {
   display: grid;
   gap: 24px;
@@ -45,14 +71,14 @@
 
 @media (min-width: 900px) {
   .materia {
-    grid-template-columns: minmax(0, 1fr) 360px;
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
   }
 }
 
 .materia__principal,
 .materia__lateral {
   display: grid;
-  gap: 16px;
+  gap: 24px;
   min-width: 0;
 }
 
@@ -60,79 +86,192 @@
   display: grid;
   gap: 12px;
   justify-items: start;
+  align-content: start;
   min-width: 0;
 }
 
-/* Os cartões dos RAs ocupam a largura toda da coluna. */
-.materia__principal .materia__secao {
+/* Os blocos dos RAs ocupam a largura toda da coluna. */
+.materia__notas {
   justify-items: stretch;
 }
 
+/* Título de cada painel: o rótulo do Início (pequeno, caixa alta, com o ícone). */
 .materia__subtitulo {
-  margin: 0;
-  font-size: 1.05rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 2px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgb(255 255 255 / 0.75);
 }
 
-/* Notas: o título fica no cartão, como em Faltas e Pontos extras; cada RA vira um
-   bloco por dentro dele, no fundo escuro (como os itens do formulário da matéria). */
-.materia__notas .ra {
-  background: var(--bg);
-  border-radius: var(--radius-pequeno);
+/* O título recebe o foco pelo código (depois de remover algo): sem contorno no clique. */
+.materia__subtitulo:focus:not(:focus-visible) {
+  outline: none;
 }
 
 .materia__nota-rodape {
-  margin: -6px 0 0;
+  margin: -4px 0 0;
   font-size: 0.85rem;
+  color: rgb(255 255 255 / 0.72);
 }
 
 .materia__regra {
+  display: grid;
+  gap: 4px;
   margin: 0;
   padding-left: 1.2em;
   font-size: 0.9rem;
+  color: rgb(255 255 255 / 0.85);
 }
 
-.materia__perigo {
-  border-color: color-mix(in srgb, var(--perigo) 35%, var(--border));
+.materia__regra li::marker {
+  color: rgb(255 255 255 / 0.5);
+}
+
+/* "Matéria não encontrada": o texto num painel, nunca solto na foto. */
+.materia__sumiu {
+  max-width: 640px;
+  margin: 0;
+  color: rgb(255 255 255 / 0.85);
+}
+
+.materia__sumiu a {
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ---------- Faltas ----------
+   Duas colunas por dentro quando o painel é largo (a situação e o lançar), uma
+   embaixo da outra quando não cabe: o flex-wrap decide sozinho pela largura. */
+.materia__faltas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 12px 32px;
+}
+
+.materia__faltas > .materia__subtitulo,
+.materia__faltas > [role='status'] {
+  flex-basis: 100%;
+}
+
+.faltas__situacao,
+.faltas__lancar {
+  flex: 1 1 260px;
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+  min-width: 0;
+}
+
+.faltas__situacao .barra-faltas {
+  max-width: 320px;
+}
+
+/* O status fica vazio até lançar algo. Margem negativa (e não display: none) para não
+   abrir vão: a região viva tem que existir antes, senão o primeiro aviso não é lido. */
+.materia__faltas > [role='status']:empty {
+  margin-top: -14px;
 }
 
 /* ---------- RAs e avaliações ---------- */
 .lista-ras {
   display: grid;
   gap: 12px;
+  /* A nota do RA vai ao lado do nome só quando o bloco tem largura (abaixo). */
+  container-type: inline-size;
 }
 
+/* Bloco interno do painel de Notas: branco fraco, borda clara e o raio menor. Com
+   espaço, o nome e o peso à esquerda e a nota do RA à direita; o resto ocupa a linha. */
 .ra {
   display: grid;
-  gap: 8px;
-  justify-items: start;
-  padding: 16px;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: baseline;
+  gap: 8px 16px;
+  padding: 16px 18px;
+  border: 1px solid rgb(255 255 255 / 0.12);
+  border-radius: var(--raio-vidro-pequeno);
+  background: rgb(255 255 255 / 0.06);
+}
+
+.ra > * {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+@container (min-width: 520px) {
+  .ra {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .ra > .ra__cabecalho {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .ra > .ra__nota {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+}
+
+.ra > .avaliacoes,
+.ra > .ra__recuperacao {
+  justify-self: stretch;
 }
 
 .ra__cabecalho {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 12px;
+  gap: 2px 12px;
+  min-width: 0;
 }
 
 .ra__nome {
   margin: 0;
-  font-size: 1rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #fff;
   overflow-wrap: anywhere;
 }
 
 .ra__peso {
   font-size: 0.85rem;
+  color: rgb(255 255 255 / 0.85);
 }
 
 .ra__nota,
 .ra__vazio {
   margin: 0;
+  color: rgb(255 255 255 / 0.85);
+}
+
+.ra__nota strong {
+  font-size: 1.25rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+}
+
+.ra__vazio {
+  color: rgb(255 255 255 / 0.85);
+}
+
+.ra__extras {
+  margin: -4px 0 0;
+  font-size: 0.85rem;
+  color: rgb(255 255 255 / 0.85);
 }
 
 .avaliacoes {
   display: grid;
-  width: 100%;
   margin: 4px 0 0;
   padding: 0;
   list-style: none;
@@ -145,7 +284,11 @@
   justify-content: space-between;
   gap: 8px 16px;
   padding-block: 12px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgb(255 255 255 / 0.12);
+}
+
+.avaliacao:last-child {
+  padding-bottom: 0;
 }
 
 .avaliacao__info {
@@ -160,16 +303,23 @@
 
 .avaliacao__nome {
   font-weight: 600;
+  color: #fff;
 }
 
 .avaliacao__detalhes {
   font-size: 0.85rem;
+  color: rgb(255 255 255 / 0.85);
 }
 
 .ra__recuperacao {
-  width: 100%;
   padding-top: 12px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgb(255 255 255 / 0.12);
+}
+
+@media (max-width: 560px) {
+  .ra {
+    padding: 14px;
+  }
 }
 
 /* ---------- Campo de nota ---------- */
@@ -182,6 +332,7 @@
 .campo-nota__rotulo {
   font-size: 0.85rem;
   font-weight: 600;
+  color: rgb(255 255 255 / 0.85);
 }
 
 .campo-nota__linha {
@@ -190,15 +341,17 @@
   gap: 8px;
 }
 
+/* Figtree com algarismos de mesma largura: as notas alinham sem a letra mono. */
 .campo-nota__entrada {
-  width: 6.5em;
+  width: 5.5em;
   padding-block: 6px;
-  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
   text-align: right;
 }
 
 .campo-nota__maximo {
   font-size: 0.9rem;
+  color: rgb(255 255 255 / 0.85);
   white-space: nowrap;
 }
 
@@ -206,12 +359,7 @@
   margin: 0;
   max-width: 28ch;
   font-size: 0.85rem;
-}
-
-.erro-campo {
-  margin: 0;
-  color: var(--perigo);
-  font-size: 0.85rem;
+  color: rgb(255 255 255 / 0.85);
 }
 
 /* ---------- Listas curtas (faltas, pontos extras) ---------- */
@@ -230,8 +378,17 @@
   justify-content: space-between;
   gap: 6px 12px;
   padding-block: 8px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid rgb(255 255 255 / 0.12);
   font-size: 0.9rem;
+  color: rgb(255 255 255 / 0.85);
+}
+
+.lista-simples__item strong {
+  color: #fff;
+}
+
+.lista-simples__item .muted {
+  color: rgb(255 255 255 / 0.72);
 }
 
 .lista-simples__texto {
@@ -267,10 +424,13 @@
 .form-linha__campo label {
   font-size: 0.85rem;
   font-weight: 600;
+  color: rgb(255 255 255 / 0.85);
 }
 
+/* Mesma altura em todos (o de data é um pouco mais alto): os rótulos ficam alinhados. */
 .form-linha__campo .campo {
   width: 100%;
+  min-height: 46px;
 }
 
 .form-linha__contador {
@@ -293,7 +453,15 @@
   margin-top: -6px;
 }
 
-.ra__extras {
-  margin: -4px 0 0;
-  font-size: 0.85rem;
+/* ---------- Celular ---------- */
+@media (max-width: 760px) {
+  .materia__resumo {
+    margin-bottom: 16px;
+  }
+
+  .materia,
+  .materia__principal,
+  .materia__lateral {
+    gap: 16px;
+  }
 }

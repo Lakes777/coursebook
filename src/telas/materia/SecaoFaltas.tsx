@@ -1,4 +1,4 @@
-import { UserX } from 'lucide-react'
+import { CalendarX, UserX } from 'lucide-react'
 import { useRef, useState, type FormEvent } from 'react'
 import { flushSync } from 'react-dom'
 import { BotaoRemover } from '../../componentes/BotaoRemover'
@@ -13,6 +13,7 @@ import { formatarPorcentagem } from '../../logica/numeros'
 import type { DiaSemana, Falta, Materia } from '../../logica/tipos'
 import { plural, textoFaltas } from '../../tema/textos'
 import { tomFaltas } from '../../tema/tons'
+import { BarraFaltas } from './BarraFaltas'
 import { erroDaFalta, faltasOrdenadas, lerCampoNumero, type ErroCampo, type CampoFalta } from '../materiaUtil'
 
 interface Props {
@@ -61,53 +62,63 @@ export function SecaoFaltas({ materia, situacao }: Props) {
   const aulasHoje = aulasDeHoje(hoje)
 
   return (
-    <section className="cartao materia__secao" aria-labelledby={ID_TITULO}>
+    <section className="cartao materia__secao materia__faltas" aria-labelledby={ID_TITULO}>
       <h3 id={ID_TITULO} ref={titulo} tabIndex={-1} className="materia__subtitulo">
+        <CalendarX className="icone" size={15} aria-hidden="true" />
         Faltas
       </h3>
-      <Selo tom={tomFaltas(situacao.nivel)}>{textoFaltas(situacao)}</Selo>
-      <p className="materia__texto">
-        {situacao.frequencia !== null && <>Frequência de {formatarPorcentagem(situacao.frequencia)}. </>}
-        {restantes}
-      </p>
-      <p className="muted materia__nota-rodape">Cada aula de 45 minutos perdida é uma falta.</p>
-
-      <button
-        type="button"
-        className="botao botao--vivo"
-        // O mesmo "hoje" do texto do botão: o que está escrito é o que é lançado.
-        onClick={() => adicionar({ id: novoId(), data: paraDataISO(hoje), quantidade: aulasHoje || 1 })}
-        aria-describedby={aulasHoje === 0 ? 'faltas-sem-aula' : undefined}
-      >
-        <UserX className="icone" size={16} />
-        {aulasHoje > 0 ? `Faltei hoje (${aulasHoje} ${plural(aulasHoje, 'aula', 'aulas')})` : 'Faltei hoje (1 aula)'}
-      </button>
-      {aulasHoje === 0 && (
-        <p id="faltas-sem-aula" className="muted materia__nota-rodape">
-          {materia.horarios.length === 0
-            ? 'Com os horários da matéria cadastrados, o botão lança as aulas do dia de uma vez.'
-            : 'Hoje não tem aula desta matéria pelos horários; para outro dia ou mais aulas, use o formulário abaixo.'}
+      {/* Com o painel largo, a situação fica à esquerda e o lançar (formulário e lista) à direita. */}
+      <div className="faltas__situacao">
+        <Selo tom={tomFaltas(situacao.nivel)}>{textoFaltas(situacao)}</Selo>
+        <BarraFaltas situacao={situacao} />
+        <p className="materia__texto">
+          {situacao.frequencia !== null && <>Frequência de {formatarPorcentagem(situacao.frequencia)}. </>}
+          {restantes}
         </p>
-      )}
+        <p className="muted materia__nota-rodape">Cada aula de 45 minutos perdida é uma falta.</p>
 
-      <FormFalta aoAdicionar={adicionar} />
+        <button
+          type="button"
+          className="botao botao--vivo"
+          // O mesmo "hoje" do texto do botão: o que está escrito é o que é lançado.
+          onClick={() => adicionar({ id: novoId(), data: paraDataISO(hoje), quantidade: aulasHoje || 1 })}
+          aria-describedby={aulasHoje === 0 ? 'faltas-sem-aula' : undefined}
+        >
+          <UserX className="icone" size={16} />
+          {aulasHoje > 0 ? `Faltei hoje (${aulasHoje} ${plural(aulasHoje, 'aula', 'aulas')})` : 'Faltei hoje (1 aula)'}
+        </button>
+        {aulasHoje === 0 && (
+          <p id="faltas-sem-aula" className="muted materia__nota-rodape">
+            {materia.horarios.length === 0
+              ? 'Com os horários da matéria cadastrados, o botão lança as aulas do dia de uma vez.'
+              : 'Hoje não tem aula desta matéria pelos horários; para outro dia ou mais aulas, use o formulário abaixo.'}
+          </p>
+        )}
+      </div>
 
-      {faltas.length > 0 && (
-        <ul className="lista-simples" aria-label="Faltas lançadas">
-          {faltas.map((falta) => {
-            const aulas = `${falta.quantidade} ${plural(falta.quantidade, 'aula', 'aulas')}`
-            return (
-              <li key={falta.id} className="lista-simples__item">
-                <span>
-                  <time dateTime={falta.data}>{formatarData(falta.data)}</time>
-                  <span className="muted"> · {aulas}</span>
-                </span>
-                <BotaoRemover nome={`a falta de ${formatarData(falta.data)}, ${aulas}`} aoConfirmar={() => remover(falta)} />
-              </li>
-            )
-          })}
-        </ul>
-      )}
+      <div className="faltas__lancar">
+        <FormFalta aoAdicionar={adicionar} />
+
+        {faltas.length > 0 && (
+          <ul className="lista-simples" aria-label="Faltas lançadas">
+            {faltas.map((falta) => {
+              const aulas = `${falta.quantidade} ${plural(falta.quantidade, 'aula', 'aulas')}`
+              return (
+                <li key={falta.id} className="lista-simples__item">
+                  <span>
+                    <time dateTime={falta.data}>{formatarData(falta.data)}</time>
+                    <span className="muted"> · {aulas}</span>
+                  </span>
+                  <BotaoRemover
+                    nome={`a falta de ${formatarData(falta.data)}, ${aulas}`}
+                    aoConfirmar={() => remover(falta)}
+                  />
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </div>
       {/* Visível: com várias aulas por clique, um toque duplo sem querer precisa ser notado (e removido). */}
       <p role="status" className="muted materia__nota-rodape">
         {anuncio}

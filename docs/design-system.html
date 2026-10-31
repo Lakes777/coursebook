@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Design system · Coursebook "Vidro"</title>
+    <!--
+      Referência viva da identidade "Vidro" (29/10/2026). Usa o CSS de verdade do site
+      (src/index.css e src/telas/inicio.css): abra com o `npm run dev` rodando, em
+      http://localhost:5173/docs/design-system.html. É a base de todas as telas
+      (Início, Matérias, Matéria, Semana, Agenda, Dados e o formulário).
+    -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Figtree:wght@300..800&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/src/index.css" />
+    <link rel="stylesheet" href="/src/telas/inicio.css" />
+    <style>
+      /* Só o que organiza esta página; nada aqui é usado pelo site. */
+      .ds {
+        max-width: 1100px;
+        margin: 0 auto;
+        padding: 48px 24px 96px;
+        display: grid;
+        gap: 32px;
+      }
+      .ds h1 {
+        margin: 0;
+        font-size: 2.15rem;
+        font-weight: 300;
+      }
+      .ds h1 strong {
+        font-weight: 600;
+      }
+      .ds h2 {
+        margin: 0 0 6px;
+        font-size: 1.15rem;
+        font-weight: 600;
+      }
+      .ds .nota {
+        margin: 0 0 18px;
+        color: rgb(255 255 255 / 0.72);
+        max-width: 70ch;
+      }
+      .ds code {
+        font-family: var(--mono);
+        font-size: 0.85em;
+        color: var(--destaque);
+      }
+      .grade {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+        gap: 14px;
+      }
+      .amostra {
+        display: grid;
+        gap: 8px;
+        font-size: 0.85rem;
+      }
+      .amostra__cor {
+        height: 64px;
+        border-radius: var(--raio-vidro-pequeno);
+        border: 1px solid var(--vidro-borda);
+      }
+      .amostra span {
+        color: rgb(255 255 255 / 0.72);
+      }
+      .linha {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+      }
+      .escala > div {
+        display: grid;
+        grid-template-columns: 200px 1fr;
+        align-items: baseline;
+        gap: 16px;
+        padding: 10px 0;
+        border-bottom: 1px solid rgb(255 255 255 / 0.1);
+      }
+      .escala span {
+        color: rgb(255 255 255 / 0.72);
+        font-size: 0.8rem;
+      }
+      .regras {
+        margin: 0;
+        padding-left: 20px;
+        display: grid;
+        gap: 8px;
+        color: rgb(255 255 255 / 0.88);
+      }
+      /* As classes do Início têm grid-area; aqui elas não estão na grade do Início. */
+      .ds [class*='inicio__'] {
+        grid-area: auto;
+      }
+      /* A barra lateral de verdade é fixa; aqui ela fica parada dentro da página. */
+      .ds .lateral {
+        position: relative;
+        inset: auto;
+        height: 520px;
+      }
+      .foco-demo {
+        outline: 2px solid var(--destaque);
+        outline-offset: 2px;
+      }
+      @media (max-width: 760px) {
+        .ds .lateral {
+          display: none;
+        }
+        .escala > div {
+          grid-template-columns: 1fr;
+          gap: 4px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="ds">
+      <header>
+        <h1>Coursebook <strong>"Vidro"</strong></h1>
+        <p class="nota">
+          Painéis de vidro fosco sobre uma foto de escrivaninha com janelão ao entardecer rosado, como as janelas
+          do visionOS. Texto branco, um destaque só (o bordô da PUCPR) e as cores de situação. Tela de referência: o
+          Início (<code>src/telas/TelaInicio.tsx</code>); imagens de origem em <code>docs/referencias/</code>.
+        </p>
+      </header>
+
+      <section class="vidro">
+        <h2>Regras</h2>
+        <ul class="regras">
+          <li>A foto (<code>public/fundo/</code>) fica fixa atrás de tudo, com o véu escuro por cima. Nunca texto direto na foto sem véu.</li>
+          <li>Conteúdo vai em <code>.vidro</code>. Só o título grande de uma tela (a frase do Início) fica sem painel, com a sombra de leitura.</li>
+          <li>Um destaque só: bordô cheio (<code>--marca</code>) atrás de texto branco; o tom claro (<code>--destaque</code>) em texto, ícones e linhas.</li>
+          <li>Verde, amarelo e vermelho são só para situação (nota, faltas, prazo), sempre com texto: a cor não pode ser o único jeito de entender.</li>
+          <li>Todo número e toda barra medem algo de verdade. Nada de barra "100%" sempre cheia nem gráfico de tendência sem histórico.</li>
+          <li>Texto branco em três forças: 100% (o que importa), 85% (corpo) e 72% (apoio). O 72% só passa (4,5:1) direto no painel; num bloco interno claro, o apoio sobe para 85%. O contraste vem do <code>--filtro-vidro</code>, que escurece a foto atrás (brightness 0,48); medido no ponto mais claro do pôr do sol de cada tela.</li>
+          <li>Movimento curto (até 1,1 s na entrada) e hover suave. Com "menos animação" ligado, só um fade.</li>
+          <li>No celular: um bloco embaixo do outro, abas numa barra presa no pé e desfoque menor (14px).</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Cores</h2>
+        <p class="nota">Os tokens ficam no <code>:root</code> do <code>src/index.css</code>.</p>
+        <div class="grade">
+          <div class="amostra">
+            <div class="amostra__cor" style="background: var(--cor-foto)"></div>
+            <b>--cor-foto</b><span>#241a22 · enquanto a foto carrega</span>
+          </div>
+          <div class="amostra">
+            <div class="amostra__cor vidro" style="padding: 0"></div>
+            <b>--vidro</b><span>branco 10% · painel</span>
+          </div>
+          <div class="amostra">
+            <div class="amostra__cor" style="background: var(--vidro-forte)"></div>
+            <b>--vidro-forte</b><span>branco 16% · bloco dentro do painel</span>
+          </div>
+          <div class="amostra">
+            <div class="amostra__cor" style="background: transparent; border: 1px solid var(--vidro-borda)"></div>
+            <b>--vidro-borda</b><span>branco 22% · borda de 1px</span>
+          </div>
+          <div class="amostra">
+            <div class="amostra__cor" style="background: var(--marca)"></div>
+            <b>--marca</b><span>#9d2235 · só atrás de texto branco</span>
+          </div>
+          <div class="amostra">
+            <div class="amostra__cor" style="background: var(--marca-escura)"></div>
+            <b>--marca-escura</b><span>#7a1a29 · hover do botão</span>
+          </div>
+          <div class="amostra">
+            <div class="amostra__cor" style="background: var(--destaque)"></div>
+            <b>--destaque</b><span>#ea8798 · texto, ícone, foco, linha de agora</span>
+          </div>
+          <div class="amostra">
+            <div class="amostra__cor" style="background: var(--ok)"></div>
+            <b>--ok</b><span>#86c99a · aprovado, faltas em dia</span>
+          </div>
+          <div class="amostra">
+            <div class="amostra__cor" style="background: var(--atencao)"></div>
+            <b>--atencao</b><span>#f0cf6a · recuperação, perto do limite, hoje</span>
+          </div>
+          <div class="amostra">
+            <div class="amostra__cor" style="background: var(--perigo)"></div>
+            <b>--perigo</b><span>#ef9a9a · reprovado, atrasado</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="vidro">
+        <h2>Tipografia</h2>
+        <p class="nota">
+          Figtree (300 a 800): sem serifa geométrica e arredondada, legível em letra pequena, com o "1" de
+          bandeira. IBM Plex Mono só em chaves e códigos. Números com <code>tabular-nums</code>.
+        </p>
+        <div class="escala">
+          <div>
+            <span>Frase · clamp(1,5–2,15rem) · 300/600</span>
+            <p class="inicio__frase" style="max-width: none">Quinta, 29 de outubro. <strong>Cálculo às 19:00</strong>, nada atrasado.</p>
+          </div>
+          <div>
+            <span>Número · 2,4rem · 300</span>
+            <p style="margin: 0"><span class="numeros__valor">12</span> de 15</p>
+          </div>
+          <div>
+            <span>Título de item · 1,15rem · 600</span>
+            <p style="margin: 0; font-size: 1.15rem; font-weight: 600">Programação Orientada a Objetos</p>
+          </div>
+          <div>
+            <span>Corpo · 1rem · 400 · branco 85%</span>
+            <p style="margin: 0; color: rgb(255 255 255 / 0.85)">Precisa de 7,5 (de 10) no que falta.</p>
+          </div>
+          <div>
+            <span>Rótulo · 0,78rem · 600 · caixa alta · 0,08em</span>
+            <p class="inicio__rotulo" style="margin: 0">Próximos prazos</p>
+          </div>
+          <div>
+            <span>Apoio · 0,8rem · 400 · branco 72%</span>
+            <p style="margin: 0; font-size: 0.8rem; color: rgb(255 255 255 / 0.72)">Prof. Ricardo Matos</p>
+          </div>
+          <div>
+            <span>Código · Plex Mono</span>
+            <p style="margin: 0; font-family: var(--mono)">cb_9f2c…</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2>Espaço, raios e sombra</h2>
+        <p class="nota">
+          Painel com 24px de respiro e 24px entre painéis (16px no celular). Raios: 24px no painel
+          (<code>--raio-vidro</code>), 14px em blocos internos e botões (<code>--raio-vidro-pequeno</code>), 12px em
+          campos e pílula (999px) em selos. Sombra <code>--vidro-sombra</code>: 0 16px 40px, vinho 28%.
+          Desfoque <code>--desfoque</code>: 24px (14px no celular), dentro do <code>--filtro-vidro</code> (blur, saturate 140%, brightness 0,48), o mesmo em todo vidro.
+        </p>
+        <div class="linha">
+          <div class="vidro spot" style="width: 220px">Painel <code>.vidro.spot</code><br />passe o mouse</div>
+          <div class="vidro" style="width: 220px; padding: 14px; border-radius: var(--raio-vidro-pequeno); background: var(--vidro-forte)">Bloco interno</div>
+        </div>
+      </section>
+
+      <section class="vidro">
+        <h2>Botões</h2>
+        <p class="nota">O bordô cheio só no botão principal; o resto é vidro. Hover: o principal sobe 2px com brilho.</p>
+        <div class="linha">
+          <button type="button" class="botao botao--vivo">Cadastrar matéria</button>
+          <button type="button" class="botao botao--fantasma">Ver com dados de exemplo</button>
+          <button type="button" class="botao botao--perigo">Remover</button>
+          <button type="button" class="botao botao--pequeno">Pequeno</button>
+          <button type="button" class="botao botao--vivo" disabled>Desativado</button>
+          <button type="button" class="botao botao--fantasma foco-demo">Com foco (teclado)</button>
+        </div>
+      </section>
+
+      <section class="vidro">
+        <h2>Campos</h2>
+        <p class="nota">Miolo afundado (escuro 30%), borda branca 62% (passa de 3:1 sobre o vidro), raio 12px; inválido com a borda em <code>--perigo</code>; a mensagem de erro é <code>.erro-campo</code>.</p>
+        <div class="linha">
+          <input class="campo" placeholder="Nome da matéria" />
+          <input class="campo" aria-invalid="true" value="Nota 11" />
+          <input class="campo" disabled value="Desativado" />
+          <select class="campo">
+            <option>Prova</option>
+            <option>Trabalho</option>
+          </select>
+        </div>
+      </section>
+
+      <section class="vidro">
+        <h2>Selos de situação</h2>
+        <p class="nota">Pílula tingida com a cor da situação sobre um fundo escuro (senão o verde e o amarelo somem no céu rosado), sempre com ícone e texto (o componente é <code>Selo</code>).</p>
+        <div class="linha">
+          <span class="selo selo--ok">Aprovado com 8,5</span>
+          <span class="selo selo--atencao">Em recuperação</span>
+          <span class="selo selo--perigo">Atrasado</span>
+          <span class="selo selo--destaque">Em 5 dias</span>
+          <span class="selo selo--neutro">Sem avaliações</span>
+          <span class="regua__selo" style="position: static">Agora</span>
+        </div>
+      </section>
+
+      <section>
+        <h2>Navegação</h2>
+        <p class="nota">
+          Barra lateral de vidro com as 5 abas (ícone em cima, nome embaixo) e a pílula bordô que desliza até a aba
+          ativa. No celular, ela vira uma barra presa no pé da tela.
+        </p>
+        <header class="lateral">
+          <p class="lateral__marca"><a class="lateral__link" href="#">Coursebook</a></p>
+          <nav class="abas" aria-label="Exemplo">
+            <span class="abas__pilula" style="width: 92px; height: 66px"></span>
+            <a class="abas__item" aria-current="page" href="#">Início</a>
+            <a class="abas__item" href="#">Matérias</a>
+            <a class="abas__item" href="#">Semana</a>
+            <a class="abas__item" href="#">Agenda</a>
+            <a class="abas__item" href="#">Dados</a>
+          </nav>
+        </header>
+      </section>
+
+      <section class="vidro">
+        <h2 class="inicio__rotulo">Régua do dia</h2>
+        <p class="nota">
+          Da hora cheia antes da primeira aula à hora cheia depois da última. Cada bloco mostra as aulas da tabela da
+          PUC; a aula de agora fica em bordô (quase opaco, para a linha de agora não cortar o texto).
+        </p>
+        <div class="regua" style="--faixas: 1">
+          <div class="regua__horas" aria-hidden="true">
+            <span style="--x: 0">18h</span><span style="--x: 20">19h</span><span style="--x: 40">20h</span>
+            <span style="--x: 60">21h</span><span style="--x: 80">22h</span><span style="--x: 100">23h</span>
+          </div>
+          <div class="regua__agora" style="--x: 33.3"><span>19:40</span></div>
+          <ul class="regua__aulas">
+            <li class="regua__aula regua__aula--agora" style="--x: 20; --largura: 65; --faixa: 0">
+              <span class="regua__faixa">19:00 – 22:15 · 4 aulas</span>
+              <a class="regua__materia" href="#">Programação Orientada a Objetos</a>
+              <span class="regua__professor">Prof. Ricardo Matos</span>
+              <span class="regua__selo">Agora</span>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section class="vidro">
+        <h2>Movimento</h2>
+        <ul class="regras">
+          <li><b>Entrada da tela</b> (<code>@keyframes surgir</code>): cada bloco chega desfocado (10px), 12px abaixo e transparente, e assenta em 0,6 s, em cascata de 0,1 s. Fica tudo dentro de 1,1 s.</li>
+          <li><b>Régua</b>: a aula se desenha da esquerda para a direita (<code>desenhar</code>, clip-path, 0,6 s); a barra de faltas enche (<code>encher</code>, 0,7 s); o ponto de agora pulsa a cada 2,4 s.</li>
+          <li><b>Hover do vidro</b> (<code>.vidro.spot</code>): borda clareia, sobe 2px e um brilho branco segue o mouse; 0,5 s em <code>--ease-suave</code> (cubic-bezier(.22, 1, .36, 1)).</li>
+          <li><b>Abas</b>: a pílula desliza em 0,35 s em <code>--ease-out</code>.</li>
+          <li><b>Menos animação</b> (<code>prefers-reduced-motion</code>): nada se mexe; a troca de tela vira um fade.</li>
+        </ul>
+        <p style="margin: 18px 0 0">
+          <button type="button" class="botao botao--fantasma" id="repetir">Ver a entrada de novo</button>
+        </p>
+        <div id="palco" style="margin-top: 18px">
+          <section class="linha">
+            <div class="vidro" style="width: 180px">Bloco 1</div>
+            <div class="vidro" style="width: 180px">Bloco 2</div>
+            <div class="vidro" style="width: 180px">Bloco 3</div>
+          </section>
+        </div>
+      </section>
+    </main>
+    <script>
+      // Repete a entrada em cascata dos blocos de exemplo (a mesma classe que o App usa).
+      document.getElementById('repetir').addEventListener('click', () => {
+        const palco = document.getElementById('palco')
+        palco.classList.remove('tela--entrando')
+        void palco.offsetWidth
+        palco.classList.add('tela--entrando')
+      })
+    </script>
+  </body>
+</html>

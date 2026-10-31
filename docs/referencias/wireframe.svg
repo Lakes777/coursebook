@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="1440" height="900" font-family="system-ui, sans-serif">
+  <!-- Esqueleto do Início "vidro" (composição da referência inicio-2-regua.webp + frase da inicio-3-frase.webp).
+       Textos dos dados de exemplo numa quinta às 19:40. Cinza = painel de vidro; tracejado = foto aparecendo. -->
+  <rect width="1440" height="900" fill="#d9d9d9"/>
+  <text x="720" y="455" text-anchor="middle" font-size="15" fill="#9a9a9a">foto de fundo (escrivaninha, janelão, entardecer rosado)</text>
+
+  <!-- Barra lateral -->
+  <rect x="24" y="24" width="112" height="852" rx="24" fill="#bdbdbd" stroke="#8a8a8a"/>
+  <g fill="#555">
+    <rect x="66" y="48" width="28" height="28" rx="4" fill="none" stroke="#555" stroke-dasharray="3 3"/>
+    <text x="80" y="96" text-anchor="middle" font-size="12" font-weight="600">Coursebook</text>
+    <rect x="36" y="128" width="88" height="64" rx="14" fill="#7a7a7a"/>
+    <text x="80" y="176" text-anchor="middle" font-size="12" fill="#fff">Início</text>
+    <circle cx="80" cy="150" r="9" fill="#fff"/>
+    <circle cx="80" cy="222" r="9" fill="#888"/><text x="80" y="248" text-anchor="middle" font-size="12">Matérias</text>
+    <circle cx="80" cy="292" r="9" fill="#888"/><text x="80" y="318" text-anchor="middle" font-size="12">Semana</text>
+    <circle cx="80" cy="362" r="9" fill="#888"/><text x="80" y="388" text-anchor="middle" font-size="12">Agenda</text>
+    <circle cx="80" cy="432" r="9" fill="#888"/><text x="80" y="458" text-anchor="middle" font-size="12">Dados</text>
+    <circle cx="80" cy="824" r="6" fill="#888"/><text x="80" y="850" text-anchor="middle" font-size="11">Na nuvem</text>
+  </g>
+
+  <!-- Frase-resumo (h1) -->
+  <g font-size="40" fill="#333">
+    <text x="176" y="96">Quinta, 29 de outubro. <tspan font-weight="700">Uma aula hoje,</tspan></text>
+    <text x="176" y="148"><tspan font-weight="700">Prova do RA2</tspan> em 5 dias e <tspan font-weight="700">duas</tspan></text>
+    <text x="176" y="200"><tspan font-weight="700">matérias</tspan> pedindo atenção.</text>
+  </g>
+
+  <!-- Números do semestre (só o que mede algo) -->
+  <rect x="984" y="24" width="432" height="176" rx="20" fill="#c4c4c4" stroke="#8a8a8a"/>
+  <g fill="#444">
+    <text x="1008" y="58" font-size="12" font-weight="600">SEMESTRE</text>
+    <text x="1008" y="112" font-size="34" font-weight="700">2<tspan font-size="18" font-weight="400"> de 3</tspan></text>
+    <text x="1008" y="138" font-size="12">pedem atenção</text>
+    <text x="1136" y="112" font-size="34" font-weight="700">12<tspan font-size="18" font-weight="400"> de 15</tspan></text>
+    <text x="1136" y="138" font-size="12">faltas</text><text x="1136" y="154" font-size="12">Cálculo Numérico</text>
+    <rect x="1136" y="168" width="110" height="5" rx="2" fill="#999"/><rect x="1136" y="168" width="88" height="5" rx="2" fill="#555"/>
+    <text x="1300" y="112" font-size="34" font-weight="700">5<tspan font-size="18" font-weight="400"> dias</tspan></text>
+    <text x="1300" y="138" font-size="12">próxima prova</text>
+  </g>
+
+  <!-- Régua do dia: vai da 1ª aula do dia menos 1 h até a última mais 1 h -->
+  <rect x="176" y="240" width="1240" height="384" rx="24" fill="#c4c4c4" stroke="#8a8a8a"/>
+  <g fill="#444">
+    <text x="208" y="282" font-size="14" font-weight="700">HOJE · QUINTA, 29 DE OUTUBRO</text>
+    <g font-size="13" text-anchor="middle">
+      <text x="240" y="328">18h</text><text x="460" y="328">19h</text><text x="680" y="328">20h</text>
+      <text x="900" y="328">21h</text><text x="1120" y="328">22h</text><text x="1340" y="328">23h</text>
+    </g>
+    <line x1="240" y1="340" x2="1340" y2="340" stroke="#888"/>
+    <g stroke="#aaa" stroke-dasharray="2 4">
+      <line x1="240" y1="340" x2="240" y2="540"/><line x1="460" y1="340" x2="460" y2="540"/><line x1="680" y1="340" x2="680" y2="540"/>
+      <line x1="900" y1="340" x2="900" y2="540"/><line x1="1120" y1="340" x2="1120" y2="540"/><line x1="1340" y1="340" x2="1340" y2="540"/>
+    </g>
+    <!-- Linha da hora atual (19:40) -->
+    <line x1="607" y1="340" x2="607" y2="540" stroke="#333" stroke-width="2"/>
+    <circle cx="607" cy="340" r="5" fill="#333"/>
+    <text x="607" y="366" text-anchor="middle" font-size="11" font-weight="700">19:40</text>
+    <!-- Bloco da aula: 19:00 a 22:15, dividido nas 4 aulas da tabela da PUC -->
+    <rect x="460" y="380" width="715" height="120" rx="16" fill="#8f8f8f" stroke="#555" stroke-width="2"/>
+    <g stroke="#6d6d6d"><line x1="640" y1="384" x2="640" y2="496"/><line x1="820" y1="384" x2="820" y2="496"/><line x1="995" y1="384" x2="995" y2="496"/></g>
+    <text x="484" y="412" font-size="13" fill="#fff">19:00 – 22:15 · 4 aulas</text>
+    <text x="484" y="446" font-size="22" font-weight="700" fill="#fff">Programação Orientada a Objetos</text>
+    <text x="484" y="474" font-size="13" fill="#fff">Prof. Ricardo Matos</text>
+    <rect x="1080" y="396" width="76" height="24" rx="12" fill="#555"/><text x="1118" y="413" text-anchor="middle" font-size="12" fill="#fff">AGORA</text>
+    <!-- Prazo do dia: a agenda só tem a data, então ele fica numa faixa, sem hora -->
+    <rect x="208" y="560" width="1176" height="40" rx="12" fill="#b0b0b0"/>
+    <text x="228" y="585" font-size="14"><tspan font-weight="700">Para hoje:</tspan> Entrega do relatório final · Estruturas de Dados</text>
+  </g>
+
+  <!-- Atrasados -->
+  <rect x="176" y="660" width="400" height="216" rx="20" fill="#c4c4c4" stroke="#8a8a8a"/>
+  <g fill="#444">
+    <text x="204" y="700" font-size="13" font-weight="700">ATRASADO</text>
+    <text x="204" y="738" font-size="16" font-weight="600">Lista de exercícios 5</text>
+    <text x="204" y="762" font-size="13">Cálculo Numérico · há 2 dias</text>
+  </g>
+
+  <!-- Próximos prazos -->
+  <rect x="936" y="660" width="480" height="216" rx="20" fill="#c4c4c4" stroke="#8a8a8a"/>
+  <g fill="#444">
+    <text x="964" y="700" font-size="13" font-weight="700">PRÓXIMOS PRAZOS</text>
+    <text x="964" y="740" font-size="15"><tspan font-weight="700">Em 5 dias</tspan> · Prova do RA2 (POO)</text>
+    <text x="964" y="776" font-size="15"><tspan font-weight="700">Em 12 dias</tspan> · Recuperação do RA1 (Cálculo Numérico)</text>
+    <text x="964" y="812" font-size="15"><tspan font-weight="700">Em 40 dias</tspan> · Apresentação do projeto (POO)</text>
+    <text x="964" y="852" font-size="13" text-decoration="underline">Ver a agenda</text>
+  </g>
+</svg>

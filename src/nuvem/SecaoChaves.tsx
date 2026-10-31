@@ -134,6 +134,7 @@ function Chaves({ nuvem }: { nuvem: Nuvem }) {
   return (
     <section className="cartao dados__secao" aria-labelledby={ID_TITULO}>
       <h3 id={ID_TITULO} ref={titulo} tabIndex={-1} className="dados__subtitulo nuvem__titulo">
+        <KeyRound className="icone" size={15} aria-hidden="true" />
         Chaves de acesso
       </h3>
       <p className="dados__texto">
@@ -168,7 +169,7 @@ function Chaves({ nuvem }: { nuvem: Nuvem }) {
       )}
 
       {lista.tipo === 'carregando' && <p className="muted dados__nota">Carregando as chaves...</p>}
-      {lista.tipo === 'erro' && <p className="nuvem__erro">Não deu para carregar as chaves: {lista.mensagem}</p>}
+      {lista.tipo === 'erro' && <p className="erro-campo">Não deu para carregar as chaves: {lista.mensagem}</p>}
       {lista.tipo === 'pronta' &&
         (chaves.length === 0 ? (
           <p className="muted dados__nota">Nenhuma chave criada.</p>
@@ -193,7 +194,7 @@ function Chaves({ nuvem }: { nuvem: Nuvem }) {
         ))}
 
       {erroGeral && (
-        <p ref={geral} role="alert" tabIndex={-1} className="nuvem__erro">
+        <p ref={geral} role="alert" tabIndex={-1} className="erro-campo">
           {erroGeral}
         </p>
       )}

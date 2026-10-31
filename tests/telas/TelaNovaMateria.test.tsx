@@ -564,7 +564,7 @@ describe('TelaNovaMateria', () => {
       expect(screen.getByRole('heading', { level: 2, name: 'Agenda' })).toBeInTheDocument()
     })
 
-    it('o nome do painel no topo (volta ao lobby) também pergunta antes', async () => {
+    it('o nome do painel na barra lateral (volta ao Início) também pergunta antes', async () => {
       montarApp()
       await digitar(screen.getByLabelText('Nome da matéria'), 'Cálculo')
       await user.click(screen.getByRole('link', { name: 'Coursebook' }))
@@ -575,7 +575,7 @@ describe('TelaNovaMateria', () => {
       await user.click(screen.getByRole('button', { name: 'Sair sem salvar' }))
       act(() => void window.dispatchEvent(new HashChangeEvent('hashchange')))
       expect(window.location.hash).toBe('#/')
-      expect(screen.getByRole('link', { name: 'Começar' })).toBeInTheDocument()
+      expect(screen.getByRole('link', { name: /Cadastrar a primeira matéria/ })).toBeInTheDocument()
     })
 
     /** Matérias -> Nova matéria de verdade no histórico do jsdom, com o formulário preenchido. */
